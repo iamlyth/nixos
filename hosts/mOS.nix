@@ -4,9 +4,13 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      ../modules/radarr.nix
-      ../modules/plex.nix
+      ../modules/default.nix
     ];
+  plexmodule = {
+    enable = true;
+  };
+  radarrmodule.enable = true;
+  
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
@@ -41,6 +45,7 @@
     unzip
     wget
     screen
+    nmap
   ];
 
   # List services that you want to enable:
