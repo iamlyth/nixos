@@ -3,5 +3,6 @@
   imports = [
     ./plex.nix
     ./radarr.nix
+    ./ssh.nix
   ];
 }

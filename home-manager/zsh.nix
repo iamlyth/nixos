@@ -20,6 +20,7 @@
     oh-my-zsh.plugins = [
       "git"
       "history"
+      "colored-man-pages"
     ];
 
     shellAliases = {
@@ -29,6 +30,10 @@
       gitlog = "git log --graph --abbrev-commit --decorate
       --date=format:'(%m_%d)' --format=format:'%C(bold blue)%h%C(reset) %C(bold
       green)%ad%C(reset) %C(white)- %an%C(reset)%C(auto)%d%C(reset)'";
+    };
+
+    sessionVariables = {
+      EDITOR = "vim";
     };
   };
 }

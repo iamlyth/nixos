@@ -2,7 +2,7 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan.
+    [
       ./hardware-configuration.nix
       ../modules/default.nix
     ];
@@ -10,7 +10,10 @@
     enable = true;
   };
   radarrmodule.enable = true;
-  
+  sshmodule = {
+    enable = true;
+    port = [55];
+  };
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
@@ -49,18 +52,6 @@
   ];
 
   # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  services.openssh = {
-    enable = true;
-    ports = [55];
-    settings = {
-      PasswordAuthentication = true;
-      AllowUsers = null;
-      UseDns = true;
-    };
-  };
-  
   nixpkgs.config.allowUnfree = true; # Plex is unfree
 
   # Copy the NixOS configuration file and link it from the resulting system
