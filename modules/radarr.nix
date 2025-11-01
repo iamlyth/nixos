@@ -27,8 +27,9 @@ in{
       services.radarr = {
       enable = true;
       user = "radarr";
-      group = "vboxsf";
-      openFirewall = cfg.enable;
+      group = "vboxs
+          ";
+      openFirewall = cfg.openFirewall;
     };
   }; 
 }
