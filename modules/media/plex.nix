@@ -9,7 +9,7 @@ in{
       default = false;
       example = true;
       description = ''
-        Whether or not to enable the Radarr service.
+        Whether or not to enable the Plex service.
         '';
     };
 

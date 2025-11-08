@@ -2,6 +2,7 @@
 with lib; let
   cfg = config.radarrmodule;
   defaultPort = 7878;
+  media = config.media;
 in{
   options.radarrmodule = {
     enable = mkOption {
@@ -21,14 +22,26 @@ in{
         Whether or not to expose the firewall 
         '';
     };
+    
+    stateDir = mkOption {
+      type = types.path;
+      default = "${media.stateDir}/radarr";
+      defaultText = literalExpression ''"''${media.stateDir}/radarr"'';
+      example = "/nixarr/.state/radarr";
+      description = ''
+        The location of the state directory for the Radarr service.
+      '';
+    };
+
+
   };
 
   config = mkIf cfg.enable {
-      services.radarr = {
+    services.radarr = {
       enable = true;
       user = "radarr";
-      group = "vboxsf";
-      openFirewall = cfg.enable;
+      group = media.mediavalues.globals.libraryOwner.group;
+      openFirewall = cfg.openFirewall;
     };
   }; 
 }

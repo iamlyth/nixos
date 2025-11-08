@@ -7,7 +7,7 @@
       ../modules/default.nix
     ];
 
-  nixpkgs.config.allowUnfree = true; # Plex is unfree
+  #nixpkgs.config.allowUnfree = true;
 
   ###SHELL
   programs.zsh.enable = true;
@@ -25,12 +25,6 @@
     nmap
   ];
 
-  ### MEDIA OPTIONS
-
-  media = {
-    enable = true;
-  };
-
   ### SSH
   sshmodule = {
     enable = true;
@@ -41,7 +35,37 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "mOS"; # Define your hostname.
+
+  #bootloader
+  # boot.loader.grub.enable = true;
+  # boot.loader.grub.device = "/dev/sda";
+  # boot.loader.grub.useOSProber = true;
+
+  networking.hostName = "dOS";
+  networking.networkmanager.enable = true;
+
+  #enable X11
+  services.xserver.enable = true;
+
+  #enable GNOME
+  services.xserver.displayManager.gdm.enable = true;
+  services.xserver.desktopManager.gnome.enable = true;
+
+  #keymap in X11
+  services.xserver.xkb = {
+	layout = "us";
+	variant = "";
+  };
+
+  #enable sound
+  services.pulseaudio.enable = false;
+  security.rtkit.enable = true;
+  services.pipewire = {
+	enable = true;
+	alsa.enable = true;
+	alsa.supportt32bit = true;
+	pulse.enable = true;
+  };
 
   # Set your time zone.
   time.timeZone = "US/Michigan";
