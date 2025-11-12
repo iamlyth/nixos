@@ -25,8 +25,10 @@
     nmap
   ];
 
-  ### MEDIA OPTIONS
+  ### VPN
+  services.mullvad-vpn.enable = true;
 
+  ### MEDIA OPTIONS
   media = {
     enable = true;
   };

@@ -35,6 +35,17 @@ in {
       description = "Open firewall for SABnzbd";
     };
 
+    vpn.enable = mkOption {
+      type = types.bool;
+      default = false;
+      example = true;
+      description = ''
+        **Required options:** [`nixarr.vpn.enable`](#nixarr.vpn.enable)
+
+        Route SABnzbd traffic through the VPN.
+      '';
+    };
+
   };
 
   config = let
@@ -110,6 +121,12 @@ in {
         ];
         Restart = "on-failure";
         StartLimitBurst = 5;
+      };
+
+      # Enable and specify VPN namespace to confine service in.
+      systemd.services.sabnzbd.vpnConfinement = mkIf cfg.vpn.enable {
+        enable = true;
+        vpnNamespace = "wg";
       };
 
     };
