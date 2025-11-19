@@ -62,6 +62,7 @@
   ## Gaming
   programs.steam = {
     enable = true;
+    gamescopeSession.enable = true;
     protontricks.enable = true;
   };
   programs.gamemode.enable = true; #request for OS to optimize to gaming
@@ -92,7 +93,10 @@
 
   networking.hostName = "dOS";
   networking.networkmanager.enable = true;
-
+  networking.firewall = rec {
+    allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
+    allowedUDPPortRanges = allowedTCPPortRanges;
+  };
   #enable sound
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
