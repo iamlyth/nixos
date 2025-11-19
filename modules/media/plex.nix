@@ -41,7 +41,7 @@ in{
       dataDir = cfg.dataDir;
       openFirewall = cfg.openFirewall;
       user = "plex";
-      group = "vboxsf";
+      group = "media";
     };
   };
 }
