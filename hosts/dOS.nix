@@ -66,11 +66,7 @@
     protontricks.enable = true;
   };
   programs.gamemode.enable = true; #request for OS to optimize to gaming
-  #programs.mangohud.enable = true;
-  #programs.mangohud.settings = {
-  #  fps_only = 1;
-  #  font_size=12;
-  #};
+
   ## Flatpak
   services.flatpak.enable = true;
 
@@ -81,14 +77,14 @@
   fileSystems."/run/media/lalobied/StorageTanks" = {
     device = "/dev/sda1";
     fsType = "ext4";
-    options = [
-      "defaults"
-      "user"
-      "rw"
-      "noauto"
-      "exec"
-      "relatime"
-    ];
+    #options = [
+    #  "defaults"
+    #  "user"
+    #  "rw"
+    #  "noauto"
+    #  "exec"
+    #  "relatime"
+    #];
   };
 
   networking.hostName = "dOS";
