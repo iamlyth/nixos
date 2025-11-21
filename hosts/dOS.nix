@@ -77,14 +77,14 @@
   fileSystems."/run/media/lalobied/StorageTanks" = {
     device = "/dev/sda1";
     fsType = "ext4";
-    #options = [
-    #  "defaults"
-    #  "user"
-    #  "rw"
-    #  "noauto"
-    #  "exec"
-    #  "relatime"
-    #];
+    options = [
+      "defaults"
+      "user"
+      "rw"
+      "nofail"
+      "exec"
+      "relatime"
+    ];
   };
 
   networking.hostName = "dOS";
