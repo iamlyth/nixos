@@ -1,16 +1,16 @@
 { pkgs, lib, config, ... }:
 with lib; let
-  cfg = config.radarrmodule;
-  defaultPort = 7878;
+  cfg = config.sonarrmodule;
+  defaultPort = 7877;
   media = config.media;
 in{
-  options.radarrmodule = {
+  options.sonarrmodule = {
     enable = mkOption {
       type = types.bool;
       default = false;
       example = true;
       description = ''
-        Whether or not to enable the Radarr service.
+        Whether or not to enable the Sonarr service.
         '';
     };
 
@@ -25,11 +25,11 @@ in{
     
     stateDir = mkOption {
       type = types.path;
-      default = "${media.stateDir}/radarr";
-      defaultText = literalExpression ''"''${media.stateDir}/radarr"'';
-      example = "/nixarr/.state/radarr";
+      default = "${media.stateDir}/sonarr";
+      defaultText = literalExpression ''"''${media.stateDir}/sonarr"'';
+      example = "/data/.state/sonarr";
       description = ''
-        The location of the state directory for the Radarr service.
+        The location of the state directory for the Sonarr service.
       '';
     };
 
@@ -38,26 +38,27 @@ in{
       default = false;
       example = true;
       description = ''
-        Route radarr traffic through the VPN.
+        Route sonarr traffic through the VPN.
       '';
     };
+
 
   };
 
   config = mkIf cfg.enable {
-    services.radarr = {
+    services.sonarr = {
       enable = true;
-      user = "radarr";
+      user = "sonarr";
       group = media.mediavalues.globals.libraryOwner.group;
       openFirewall = cfg.openFirewall;
     };
 
 		# Enable and specify VPN namespace to confine service in.
-		systemd.services.radarr.vpnConfinement = mkIf cfg.vpn.enable {
+		systemd.services.sonarr.vpnConfinement = mkIf cfg.vpn.enable {
 			enable = true;
 			vpnNamespace = "wg";
 		};
-		systemd.services.radarr.serviceConfig = {
+		systemd.services.sonarr.serviceConfig = {
 			Wants = [ "vpnNamespaces-wg.service" ];
 			After = [ "vpnNamespaces-wg.service" ];
 		};

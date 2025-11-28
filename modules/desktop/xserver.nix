@@ -11,19 +11,27 @@ in{
         Whether or not to enable the wayland/gnome service.
         '';
     };
+		nvidia.enable = mkOption {
+			type = types.bool;
+			default = false;
+			example = true;
+			description = ''
+				Whether or not to enable nvidia Drivers
+			'';
+		};
   };
   config = mkIf cfg.enable {
     hardware.graphics = { #renamed from hardware.opengl
       enable = true;
     };
-    hardware.nvidia = {
+    hardware.nvidia = mkIf cfg.nvidia.enable {
       modesetting.enable = true;
       package =
         config.boot.kernelPackages.nvidiaPackages.stable;
         nvidiaSettings = true;
         open = false;
     };
-
+		
     services.xserver = {
       #enable graphical interface
       enable = true;
@@ -35,7 +43,7 @@ in{
         layout = "us";
         variant = "";
       };
-      videoDrivers = ["nvidia"]; #with hardware acceleration
+      videoDrivers = if cfg.nvidia.enable then ["nvidia"] else ["amd"]; #with hardware acceleration
       excludePackages = [pkgs.xterm];
     };
 
