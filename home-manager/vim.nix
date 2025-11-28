@@ -29,8 +29,8 @@
       set numberwidth=5
 
       set autowrite
-      set tabstop=4
-      set shiftwidth=4
+      set tabstop=2
+      set shiftwidth=2
 
       if (&t_Co > 2 || has("gui_running")) && !exists("syntax_on")
         syntax on

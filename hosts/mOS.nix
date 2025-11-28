@@ -1,12 +1,41 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, modulesPath, ... }:
 
 {
   imports =
     [
-      ./mOShardware-configuration.nix
       ../modules/default.nix
+      ../modules/media.nix
+      (modulesPath + "/profiles/qemu-guest.nix")
     ];
 
+  #IMPORT OF hardware-configuration.nix
+    boot.initrd.availableKernelModules = [ "ata_piix" "uhci_hcd" "virtio_pci"
+"virtio_scsi" "sd_mod" "sr_mod"];
+    boot.initrd.kernelModules = ["nfs" ];
+		boot.initrd.supportedFilesystems =["nfs"];
+    #boot.kernelModules = [ ];
+    #boot.extraModulePackages = [ ];
+
+    fileSystems."/" =
+      { device = "/dev/disk/by-uuid/c78b2723-849c-4fe8-9feb-a06f1ca30666";
+        fsType = "ext4";
+      };
+
+    swapDevices =
+      [ { device = "/dev/disk/by-uuid/cfbb275f-19e3-462a-ade4-8bd3d85107a9"; }
+      ];
+
+    # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
+    # (the default) this is the recommended approach. When using systemd-networkd it's
+    # still possible to use this option, but it's recommended to use it in conjunction
+    # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
+    networking.useDHCP = lib.mkDefault true;
+	networking.firewall.allowedTCPPorts = [ 80 443 ];
+    # networking.interfaces.ens18.useDHCP = lib.mkDefault true;
+
+    nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+
+  #END OF IMPORT OF hardware-configuration.nix
   nixpkgs.config.allowUnfree = true; # Plex is unfree
 
   ###SHELL
@@ -23,16 +52,15 @@
     wget
     screen
     nmap
-	traceroute
-	wireguard-tools
+		traceroute
+		wireguard-tools
+		nfs-utils
   ];
-
-  ### VPN
-  #services.mullvad-vpn.enable = true;
 
   ### MEDIA OPTIONS
   media = {
     enable = true;
+		vpn.enable = true;
   };
   users.groups.media = { };
 
@@ -48,8 +76,6 @@
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
 
-  #systemd.network.enable = true;
-
   networking = {
     hostName = "mOS"; # Define your hostname.
     nameservers = ["1.1.1.1" "1.0.0.1"];
@@ -64,18 +90,19 @@
   };
 
   fileSystems."/run/media/media" = {
-    device = "/dev/disk/by-uuid/b65b7775-596b-447e-85de-db2a1c6bbe9e";
-    fsType = "ext4";
+    device = "192.168.5.114:/var/nfs/shared/media";
+		fsType = "nfs";
     options = [
+			#"bind"
       "defaults"
-      "user"
+      #"user"
       "rw"
       "nofail"
       "exec"
       "relatime"
     ];
   };
-  
+
   # Set your time zone.
   time.timeZone = "US/Michigan";
 

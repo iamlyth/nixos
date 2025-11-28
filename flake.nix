@@ -4,13 +4,14 @@
   # Inputs
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
-    vpnconfinement.url = "github:Maroka-chan/VPN-Confinement";
+    vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
+		nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     home-manager = {
       url = "github:nix-community/home-manager/release-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = {self, nixpkgs, vpnconfinement, home-manager, ...
+  outputs = {self, nixpkgs, vpn-confinement, nixos-hardware, home-manager, ...
   }@inputs: {
     nixosConfigurations = {
       mOS = let
@@ -27,7 +28,7 @@
             };
           }
           ./hosts/mOS.nix
-          vpnconfinement.nixosModules.default
+          vpn-confinement.nixosModules.default
         ];
       };
 
@@ -45,6 +46,24 @@
           ./hosts/dOS.nix
         ];
       };
+
+      tOS = let system = "x86_64-linux";
+      in nixpkgs.lib.nixosSystem {
+        modules = [
+					nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
+          home-manager.nixosModules.home-manager {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.lalobied = import ./home-manager/homedesktop.nix;
+            home-manager.extraSpecialArgs = {
+              inherit inputs;
+            };
+          }
+          ./hosts/tOS.nix
+        ];
+      };
+
+	  
     };
   };
 }
