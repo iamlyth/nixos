@@ -7,6 +7,7 @@ in{
     ./media/plex.nix
     ./media/radarr.nix
     ./media/sabnzbd.nix
+		./media/sonarr.nix
   ];
   options.media = {
     enable = mkOption {
@@ -64,6 +65,11 @@ in{
 
     ### RADARR
     radarrmodule = {
+      enable = true;
+    };
+
+    ### SONARR
+    sonarrmodule = {
       enable = true;
     };
 
