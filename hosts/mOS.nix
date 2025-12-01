@@ -9,8 +9,10 @@
     ];
 
   #IMPORT OF hardware-configuration.nix
-    boot.initrd.availableKernelModules = [ "ata_piix" "uhci_hcd" "virtio_pci" "virtio_scsi" "sd_mod" "sr_mod" ];
-    #boot.initrd.kernelModules = [ ];
+    boot.initrd.availableKernelModules = [ "ata_piix" "uhci_hcd" "virtio_pci"
+"virtio_scsi" "sd_mod" "sr_mod"];
+    boot.initrd.kernelModules = ["nfs" ];
+		boot.initrd.supportedFilesystems =["nfs"];
     #boot.kernelModules = [ ];
     #boot.extraModulePackages = [ ];
 
@@ -28,6 +30,7 @@
     # still possible to use this option, but it's recommended to use it in conjunction
     # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
     networking.useDHCP = lib.mkDefault true;
+	networking.firewall.allowedTCPPorts = [ 80 443 ];
     # networking.interfaces.ens18.useDHCP = lib.mkDefault true;
 
     nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
@@ -49,8 +52,9 @@
     wget
     screen
     nmap
-	traceroute
-	wireguard-tools
+		traceroute
+		wireguard-tools
+		nfs-utils
   ];
 
   ### MEDIA OPTIONS
@@ -86,7 +90,7 @@
 	  };
   };
 
-  fileSystems."/run/media/media" = {
+  fileSystems."/run/media/oldmedia" = {
     device = "/dev/disk/by-uuid/b65b7775-596b-447e-85de-db2a1c6bbe9e";
     fsType = "ext4";
     options = [
@@ -98,6 +102,34 @@
       "relatime"
     ];
   };
+
+  fileSystems."/run/media/media" = {
+    device = "192.168.5.114:/var/nfs/shared/media";
+		fsType = "nfs";
+    options = [
+			#"bind"
+      "defaults"
+      #"user"
+      "rw"
+      "nofail"
+      "exec"
+      "relatime"
+    ];
+  };
+	#fileSystems."/run/media/media" = {
+	#	device = "//192.168.5.114/media";
+	#	fsType = "cifs";
+	#	options = [ 
+	#		"defaults"
+	#		"user"
+	#		"rw"
+	#		"nofail"
+	#		"username=lalobied" 
+	#		"password=hoProc-senfi4-webvas" 
+	#		"x-systemd.automount" 
+	#		#"noauto" 
+	#	];
+	#};
 
   # Set your time zone.
   time.timeZone = "US/Michigan";

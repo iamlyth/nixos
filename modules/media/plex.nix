@@ -43,5 +43,11 @@ in{
       user = "plex";
       group = "media";
     };
+	services.caddy = {
+		enable = true;
+	virtualHosts."mos.home".extraConfig = ''
+      respond "Hello, world!"
+    '';	
+  	};
   };
 }
