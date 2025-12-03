@@ -81,16 +81,20 @@ in{
     };
 
     vpnNamespaces.wg = {
-        enable = true;
-        openVPNPorts = [{
-        	port = 6336;
-        	protocol = "both";
-        }];
-        accessibleFrom = [
-            "192.168.0.0/16"
-            "127.0.0.1"
-        ];
-        wireguardConfigFile = "/data/.secret/vpn/wg.conf";
+      enable = true;
+      openVPNPorts = [{
+      	port = 6336;
+        protocol = "both";
+      }];
+      accessibleFrom = [
+        "192.168.0.0/16"
+        "127.0.0.1"
+      ];
+			portMappings = [{
+				from = 6336;
+				to = 6336;
+			}];			
+      wireguardConfigFile = "/data/.secret/vpn/wg.conf";
     };
   };
 }
