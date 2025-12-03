@@ -4,13 +4,13 @@
   # Inputs
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
-    vpnconfinement.url = "github:Maroka-chan/VPN-Confinement";
+    vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     home-manager = {
       url = "github:nix-community/home-manager/release-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = {self, nixpkgs, vpnconfinement, home-manager, ...
+  outputs = {self, nixpkgs, vpn-confinement, home-manager, ...
   }@inputs: {
     nixosConfigurations = {
       mOS = let
@@ -27,7 +27,7 @@
             };
           }
           ./hosts/mOS.nix
-          vpnconfinement.nixosModules.default
+          vpn-confinement.nixosModules.default
         ];
       };
 

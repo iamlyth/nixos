@@ -124,17 +124,17 @@ in {
       };
 
       # Enable and specify VPN namespace to confine service in.
-      systemd.services.sabnzbd.vpnConfinement = mkIf cfg.vpn.enable {
-        enable = true;
-        vpnNamespace = "wg";
-      };
+			systemd.services.sabnzbd.vpnConfinement = {
+  			enable = true;
+  			vpnNamespace = "wg";
+			};
+
 
 	  	services.nginx = mkIf cfg.vpn.enable {
 	    	enable = true;
 				recommendedTlsSettings = true;
 				recommendedOptimisation = true;
 				recommendedGzipSettings = true;
-				#virtualHosts."127.0.0.1:${builtins.toString cfg.guiPort}" = {
 				virtualHosts."sabnzbd" = {
 					listen = [{
 						addr = "0.0.0.0";
@@ -143,9 +143,17 @@ in {
 					locations."/" = {
 						recommendedProxySettings = true;
 						proxyWebsockets = true;
-						proxyPass = "http://127.0.0.1:${builtins.toString cfg.guiPort}";
+						proxyPass = "http://192.168.15.1:${builtins.toString cfg.guiPort}";
 					};
 				};
+			};
+			systemd.services.sabnzbd.serviceConfig = {
+  			Wants = [ "vpnNamespaces-wg.service" ];
+  			After = [ "vpnNamespaces-wg.service" ];
+			};
+			systemd.services.nginx.serviceConfig = {
+  			Wants = [ "sabnzbd.service" ];
+  			After = [ "sabnzbd.service" ];
 			};
 		};
 }
