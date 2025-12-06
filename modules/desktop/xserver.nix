@@ -16,13 +16,13 @@ in{
     hardware.graphics = { #renamed from hardware.opengl
       enable = true;
     };
-    hardware.nvidia = {
-      modesetting.enable = true;
-      package =
-        config.boot.kernelPackages.nvidiaPackages.stable;
-        nvidiaSettings = true;
-        open = false;
-    };
+    #hardware.nvidia = {
+    #  modesetting.enable = true;
+    #  package =
+    #    config.boot.kernelPackages.nvidiaPackages.stable;
+    #    nvidiaSettings = true;
+    #    open = false;
+    #};
 
     services.xserver = {
       #enable graphical interface
@@ -35,7 +35,7 @@ in{
         layout = "us";
         variant = "";
       };
-      videoDrivers = ["nvidia"]; #with hardware acceleration
+      videoDrivers = ["amd"]; #with hardware acceleration
       excludePackages = [pkgs.xterm];
     };
 

@@ -124,7 +124,7 @@ in {
       };
 
       # Enable and specify VPN namespace to confine service in.
-			systemd.services.sabnzbd.vpnConfinement = {
+			systemd.services.sabnzbd.vpnConfinement = mkIf cfg.vpn.enable {
   			enable = true;
   			vpnNamespace = "wg";
 			};

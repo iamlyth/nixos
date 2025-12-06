@@ -19,6 +19,16 @@ in{
         '';
     };
 
+	
+    vpn.enable = mkOption {
+      type = types.bool;
+      default = false;
+      example = true;
+      description = ''
+        Whether or not to enable vpn
+        '';
+    };
+
     mediaUsers = mkOption {
       type = with types; listOf str;
       default = [];
@@ -80,7 +90,7 @@ in{
       vpn.enable = true;
     };
 
-    vpnNamespaces.wg = {
+    vpnNamespaces.wg = mkIf cfg.vpn.enable {
       enable = true;
       openVPNPorts = [{
       	port = 6336;
