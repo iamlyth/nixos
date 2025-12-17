@@ -23,8 +23,10 @@
     unzip
     wget
     nmap
+		sbctl #for making secure boot keys
     pciutils
     usbutils
+		nfs-utils	
 
     #desktop applications
     librewolf
@@ -72,8 +74,13 @@
 	services.fwupd.enable = true;
 
 	# Bootloader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+	boot.loader.systemd-boot.enable = lib.mkForce false;
+	boot.lanzaboote = {
+    enable = true;
+    pkiBundle = "/var/lib/sbctl";
+  };
+	#boot.loader.systemd-boot.enable = true;
+	#boot.loader.efi.canTouchEfiVariables = true;
 
   networking = {
     networkmanager.enable = true;
@@ -82,8 +89,8 @@
       allowedUDPPortRanges = allowedTCPPortRanges;
     };
     hostName = "tOS"; # Define your hostname.
-    nameservers = ["1.1.1.1" "1.0.0.1"];
-    interfaces.ens18.ipv4.addresses = [{
+    nameservers = ["192.168.5.111"];
+    interfaces.enp191s0.ipv4.addresses = [{
       address = "192.168.5.117";
       prefixLength = 16;
     }];
