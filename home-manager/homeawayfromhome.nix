@@ -2,7 +2,7 @@
 {
   home.stateVersion = "25.11";
   imports = [
-    ./zsh.nix
+    ./zshlite.nix
     ./vim.nix
   ];
 }
