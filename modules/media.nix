@@ -4,10 +4,10 @@ with lib; let
   defaultMediaDir = "/media/";
 in{
   imports = [
-    ./media/plex.nix
-    ./media/radarr.nix
-    ./media/sabnzbd.nix
-		./media/sonarr.nix
+    ./repo/plex.nix
+    ./repo/radarr.nix
+    ./repo/sabnzbd.nix
+		./repo/sonarr.nix
   ];
   options.media = {
     enable = mkOption {

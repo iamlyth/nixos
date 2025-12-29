@@ -4,7 +4,6 @@
   imports =
     [
       ../modules/default.nix
-      ../modules/media.nix
       (modulesPath + "/profiles/qemu-guest.nix")
     ];
 

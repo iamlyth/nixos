@@ -7,7 +7,8 @@
 		gnomeExtensions.system-monitor
 		gnomeExtensions.night-theme-switcher
 		gnomeExtensions.forge
-		gnomeExtensions.appindicator
+		gnomeExtensions.appindicator #for system tray (discord/steam)
+		gnomeExtensions.display-configuration-switcher
   ];
   dconf = {
 		enable = true;
@@ -20,6 +21,7 @@
 				night-theme-switcher.extensionUuid
 				forge.extensionUuid
 				appindicator.extensionUuid
+				display-configuration-switcher.extensionUuid
 			];
 		};
 	};

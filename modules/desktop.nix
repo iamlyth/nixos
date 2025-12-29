@@ -3,9 +3,9 @@ with lib; let
   cfg = config.desktop;
 in{
   imports = [
-    ./desktop/xserver.nix
-    ./desktop/sway.nix
-		./desktop/vpn.nix
+    ./repo/xserver.nix
+    ./repo/sway.nix
+		./repo/vpn.nix
   ];
   options.desktop = {
     enable = mkOption {
