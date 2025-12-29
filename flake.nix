@@ -9,12 +9,17 @@
     lanzaboote.url = "github:nix-community/lanzaboote/v0.4.3";
     darwin.url = "github:lnl7/nix-darwin/nix-darwin-25.11";
     darwin.inputs.nixpkgs.follows = "nixpkgs"; 
-    home-manager = {
+    nixos-generators = {
+  		url = "github:nix-community/nixos-generators";
+ 			inputs.nixpkgs.follows = "nixpkgs";
+		};
+		home-manager = {
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = {self, nixpkgs, vpn-confinement, nixos-hardware, lanzaboote, home-manager, ...
+  outputs = {self, nixpkgs, vpn-confinement, nixos-hardware, lanzaboote,
+home-manager, nixos-generators,  ...
   }@inputs: {
     nixosConfigurations = {
       mOS = let system = "x86_64-linux";
@@ -79,6 +84,20 @@
           ./hosts/cOS.nix
         ];
       };
+			#immich = nixpkgs.lib.nixosSystem {
+		#		system = "x86_64-linux";
+    #    modules = [
+    #      home-manager.nixosModules.home-manager {
+    #        home-manager.useGlobalPkgs = true;
+    #        home-manager.useUserPackages = true;
+    #        home-manager.users.lalobied = import ./home-manager/home.nix;
+    #        home-manager.extraSpecialArgs = {
+    #          inherit inputs;
+    #        };
+    #      }
+    #    #  ./hosts/cOS.nix
+    #    ];
+	#		};
     };
     darwinConfigurations."lythbook3" = inputs.darwin.lib.darwinSystem {
         system = "x86_64-darwin";
@@ -97,5 +116,23 @@
 	  			./hosts/aOS.nix
         ];
     }; 
+		packages.x86_64-linux = {
+			immich = nixos-generators.nixosGenerate {
+				system = "x86_64-linux";
+				modules = [
+          home-manager.darwinModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.lalobied = import ./home-manager/homeawayfromhome.nix;
+            home-manager.extraSpecialArgs = {
+              inherit inputs;
+            };
+					}
+					./containers/immich.nix
+				];
+				format = "lxc";
+			};
+		};
   };
 }
