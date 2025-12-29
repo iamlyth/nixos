@@ -1,8 +1,0 @@
-{...}:
-{
-  home.stateVersion = "25.11";
-  imports = [
-    ./zsh.nix
-    ./vim.nix
-  ];
-}

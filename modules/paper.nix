@@ -21,7 +21,20 @@ in{
     };
   };
   config = mkIf cfg.enable {
-    users.users.paper = {
+		services.postgresql = {
+			enable = true;
+			ensureDatabases = [ "paperless" ];
+			authentication = pkgs.lib.mkOverride 10 ''
+				#...
+				#type	database	DBuser	origin-address	auth-method
+				local	all				all			trust
+				# ipv4
+				host	all				all			127.0.0.1/32		trust
+				# ipv6
+				host	all				all			::1/128					trust	
+			'';
+  	};	
+		users.users.paper = {
   		isSystemUser = true;
   		group = "vault";
   		extraGroups = [ "vault" ];
