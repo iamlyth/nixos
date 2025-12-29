@@ -17,7 +17,7 @@ in{
 			enable = true;
   		port = 2283;
 			host = "0.0.0.0";
-			mediaLocation = "/run/media/familyvault/immich/";
+			mediaLocation = "/mnt/familyvault/immich/";
 			openFirewall = true;	
 		};	
   };
