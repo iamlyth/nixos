@@ -28,7 +28,7 @@ home-manager, nixos-generators,  ...
           home-manager.nixosModules.home-manager {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/home.nix;
+            home-manager.users.lalobied = import ./home-manager/server-home.nix;
             home-manager.extraSpecialArgs = {
               inherit inputs;
             };
@@ -44,7 +44,7 @@ home-manager, nixos-generators,  ...
           home-manager.nixosModules.home-manager {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/homedesktop.nix;
+            home-manager.users.lalobied = import ./home-manager/desktop-home.nix;
             home-manager.extraSpecialArgs = {
               inherit inputs;
             };
@@ -61,7 +61,7 @@ home-manager, nixos-generators,  ...
           home-manager.nixosModules.home-manager {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/homedesktop.nix;
+            home-manager.users.lalobied = import ./home-manager/desktop-home.nix;
             home-manager.extraSpecialArgs = {
               inherit inputs;
             };
@@ -75,7 +75,7 @@ home-manager, nixos-generators,  ...
           home-manager.nixosModules.home-manager {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/home.nix;
+            home-manager.users.lalobied = import ./home-manager/server-home.nix;
             home-manager.extraSpecialArgs = {
               inherit inputs;
             };
@@ -91,7 +91,7 @@ home-manager, nixos-generators,  ...
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/homeawayfromhome.nix;
+            home-manager.users.lalobied = import ./home-manager/portable-home.nix;
             home-manager.extraSpecialArgs = {
               inherit inputs;
             };
@@ -109,7 +109,7 @@ home-manager, nixos-generators,  ...
 					{
 						home-manager.useGlobalPkgs = true;
 						home-manager.useUserPackages = true;
-						home-manager.users.lalobied = import ./home-manager/lite.nix;
+						home-manager.users.lalobied = import ./home-manager/server-home.nix;
 						home-manager.extraSpecialArgs = {
 							inherit inputs;
 						};
