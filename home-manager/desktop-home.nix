@@ -1,9 +1,9 @@
 {config, pkgs, ...}:
 {
   imports = [
-		./modules/zsh.nix
-		./modules/vim.nix
-		./modules/gnome.nix
+		./repo/zsh.nix
+		./repo/vim.nix 
+		./repo/gnome.nix
   ];
 
 	zshmodule = {

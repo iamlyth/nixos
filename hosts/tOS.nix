@@ -2,7 +2,6 @@
 {
   imports =
     [
-      ../modules/desktop.nix
 	  	../modules/default.nix
       (modulesPath + "/installer/scan/not-detected.nix")
     ];

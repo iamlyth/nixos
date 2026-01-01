@@ -4,7 +4,6 @@
   imports =
     [
       ../modules/default.nix
-      ../modules/cloud.nix
       (modulesPath + "/profiles/qemu-guest.nix")
     ];
 	## IMPORT OF HARDWARE CONFIGURATION

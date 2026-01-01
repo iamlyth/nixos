@@ -2,9 +2,9 @@
 {
   home.stateVersion = "25.11";
   imports = [
-    ./modules/zsh.nix
-    ./modules/vim.nix
-    ./modules/nvim.nix
+    ./repo/zsh.nix
+    ./repo/vim.nix
+    ./repo/nvim.nix
   ];
 
 	zshmodule = {
