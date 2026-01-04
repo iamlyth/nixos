@@ -13,8 +13,21 @@ in{
 		};
 	};
 	config = mkIf cfg.enable {
-		programs.neovim = {
+		programs.nixvim = {
 			enable = true;
+			#plugins.lualine.enable = true;
+			plugins = {
+				lualine.enable = true;
+				nvim-tree.enable = true;
+			};
+			opts = {
+				number = true;
+				numberwidth = 5;
+				ruler = true;
+				autowrite = true;
+				shiftwidth = 2;
+				tabstop = 2;
+			};
 		};
 	};
 }

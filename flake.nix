@@ -13,6 +13,10 @@
   		url = "github:nix-community/nixos-generators";
  			inputs.nixpkgs.follows = "nixpkgs";
 		};
+		nixvim = {
+			url = "github:nix-community/nixvim/nixos-25.11";
+			inputs.nixpkgs.follows = "nixpkgs";
+		};		
 		home-manager = {
 			url = "github:nix-community/home-manager/release-25.11";
 			inputs.nixpkgs.follows = "nixpkgs";
@@ -91,7 +95,12 @@ home-manager, nixos-generators,  ...
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/portable-home.nix;
+            home-manager.users.lalobied = {
+							imports = [
+								./home-manager/portable-home.nix
+								inputs.nixvim.homeManagerModules.nixvim
+							];
+						};
             home-manager.extraSpecialArgs = {
               inherit inputs;
             };
