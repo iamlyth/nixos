@@ -23,6 +23,10 @@
 			url = "github:nix-community/home-manager/release-25.11";
 			inputs.nixpkgs.follows = "nixpkgs";
 		};
+		home-manager-unstable = {
+			url = "github:nix-community/home-manager/master";
+			inputs.nixpkgs.follows = "nixpkgs";
+		};
   };
 
   outputs = {self, nixpkgs, nixos-hardware, home-manager, nixos-generators,  ...
@@ -51,7 +55,7 @@
         modules = [
 					nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
 					inputs.lanzaboote.nixosModules.lanzaboote
-          home-manager.nixosModules.home-manager {
+          inputs.home-manager-unstable.nixosModules.home-manager {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.lalobied = {
