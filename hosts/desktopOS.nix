@@ -78,7 +78,7 @@
     mangohud        #not using this at the moment
 		protonup-qt #for selecting proton version in steam
 		gnome-tweaks		#for fixing my fonts
-    
+
 		#develop applications
     libgcc          #C/Cpp compilers
     bc
