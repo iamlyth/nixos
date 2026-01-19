@@ -6,6 +6,28 @@
 		../modules/ssh.nix
 		(modulesPath + "/virtualisation/proxmox-lxc.nix")
 	];
+### BEING HARDWARE CONF IMPORT
+
+  boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" ];
+  boot.initrd.kernelModules = [ ];
+  boot.kernelModules = [ "kvm-intel" ];
+  boot.extraModulePackages = [ ];
+
+  fileSystems."/" =
+    { device = "/dev/mapper/pve-vm--106--disk--0";
+      fsType = "ext4";
+    };
+
+  fileSystems."/mnt/familyvault" =
+    { device = "//192.168.5.114/familyvault";
+      fsType = "cifs";
+    };
+
+  swapDevices = [ ];
+
+  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+
+### END HARDWARE CONF IMPORT
 		#PATH=$PATH:/run/current-system/sw/bin/
 		#zsh
 
@@ -28,7 +50,9 @@
 		environment.systemPackages = with pkgs;  [
 			git
 			cifs-utils
+			eza
 		];
+		networking.firewall.allowedTCPPorts = [28981];
 		papermodule = {
 			enable = true;
 		};
