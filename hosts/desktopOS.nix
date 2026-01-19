@@ -61,8 +61,10 @@
     nmap
 		sbctl 					#for making secure boot keys
 		nfs-utils 			#for mounting NFS drives
+		cifs-utils
 		eza							#ls replacement
 		fzf							#needed for zsh auto suggestion
+		tochd						#compressing PSX/PS2 games to a single file. No duplicate entries.
 
     #desktop applications
     librewolf
@@ -147,15 +149,33 @@
     device = "192.168.5.114:/var/nfs/shared/gamestore";
 		fsType = "nfs";
     options = [
-			#"bind"
       "defaults"
-      #"user"
       "rw"
       "nofail"
       "exec"
       "relatime"
     ];
   };
+	
+  fileSystems."/home/lalobied/Cloud" = {
+    device = "//192.168.5.114/Personal-Drive";
+		fsType = "cifs";
+		options = [
+			"credentials=/etc/nixos/.secrets/smbcred"
+			"x-systemd.automount"
+			"noauto"
+			"x-systemd.idle-timeout=600"
+			"x-systemd.mount-timeout=15"
+			"uid=1000"
+			"gid=100"
+			"rw"
+			"file_mode=0757"
+			"dir_mode=0757"
+ 			"x-systemd.requires=network-online.target"
+			"x-systemd.after=network-online.target" 
+			"_netdev"
+		];
+	};
 
   #enable sound
   services.pulseaudio.enable = false;
