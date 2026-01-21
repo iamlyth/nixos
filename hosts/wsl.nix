@@ -15,10 +15,15 @@
 
 	environment.systemPackages = with pkgs; [
 		git
+		tmux
 		eza
 		fzf #needed for zsh auto suggestion
 	];
+
+	#timezone
+  time.timeZone = "US/Michigan";
+
+	#where was I and what am I made of?	
 	nixpkgs.hostPlatform = "x86_64-linux";
 	system.stateVersion = "25.11";
-
 }

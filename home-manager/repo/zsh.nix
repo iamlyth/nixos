@@ -41,20 +41,26 @@ in{
 			history.ignoreSpace = true;
 			oh-my-zsh.enable = true;
 			oh-my-zsh.theme = "robbyrussell";
-			oh-my-zsh.plugins = [
-				"git"
-				"history"
-				"colored-man-pages"
-				"history-substring-search"
-				"zsh-interactive-cd"
-				"direnv"
-				"emoji"
-				"eza"
-				"fzf" #needed for autosuggestion
+			oh-my-zsh.plugins = mkMerge [
+				(mkIf (cfg.lite == false) [
+					"git"
+					"history"
+					"colored-man-pages"
+					"history-substring-search"
+					"zsh-interactive-cd"
+					"direnv"
+					"emoji"
+					"eza"
+					"fzf" #needed for autosuggestion
+				])
+				(mkIf (cfg.lite == true) [
+					"git"
+					"history"
+					"colored-man-pages"
+				])
 			];
 
 			shellAliases = mkIf (cfg.lite == false) {
-				ls = "eza";
 				ll = "eza --long --git -h";
 				pingt = "ping -c 5 google.com";
 				gitlog = "git log --graph --abbrev-commit --decorate
