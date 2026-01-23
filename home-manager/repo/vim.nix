@@ -15,8 +15,6 @@
       indentLine
       sensible  #sensible vimrc settings
       vim-surround
-      vimwiki #for notetaking
-      coc-nvim
     ];
     settings = { ignorecase = true; };
     defaultEditor = true;
