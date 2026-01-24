@@ -65,6 +65,7 @@
 		eza							#ls replacement
 		fzf							#needed for zsh auto suggestion
 		tochd						#compressing PSX/PS2 games to a single file. No duplicate entries.
+		rusty-psn				#updating ps3 games
 
     #desktop applications
     librewolf
