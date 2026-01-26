@@ -9,6 +9,8 @@
 		gnomeExtensions.appindicator #for system tray (discord/steam)
 		gnomeExtensions.display-configuration-switcher
 		gnomeExtensions.vitals
+		#gnomeExtensions.quick-settings-tweaker 	#currently broken in gnome 49
+		#gnomeExtensions.user-themes							#for later
   ];
   dconf = {
 		enable = true;
@@ -22,6 +24,8 @@
 				appindicator.extensionUuid
 				display-configuration-switcher.extensionUuid
 				vitals.extensionUuid
+				#quick-settings-tweaker.extensionUuid
+				#user-themes.extensionUuid
 			];
 		};
 	};

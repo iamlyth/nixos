@@ -101,20 +101,6 @@
       "relatime"
     ];
   };
-	#fileSystems."/run/media/media" = {
-	#	device = "//192.168.5.114/media";
-	#	fsType = "cifs";
-	#	options = [ 
-	#		"defaults"
-	#		"user"
-	#		"rw"
-	#		"nofail"
-	#		"username=lalobied" 
-	#		"password=hoProc-senfi4-webvas" 
-	#		"x-systemd.automount" 
-	#		#"noauto" 
-	#	];
-	#};
 
   # Set your time zone.
   time.timeZone = "US/Michigan";
