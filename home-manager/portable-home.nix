@@ -8,7 +8,7 @@
 
 	zshmodule = {
 		enable = true;
-		lite = true;
+		lite = false;
 	};
 
 	nvimmodule = {
