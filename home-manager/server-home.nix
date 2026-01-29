@@ -8,6 +8,6 @@
 
 	zshmodule = {
 		enable = true;
-		lite = false;
+		lite = true;
 	};
 }
