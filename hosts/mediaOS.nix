@@ -54,6 +54,7 @@
 		traceroute
 		wireguard-tools
 		nfs-utils
+		pciutils						#making sure pci-e devices are passed through from host
   ];
 
   ### MEDIA OPTIONS
