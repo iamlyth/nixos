@@ -112,6 +112,20 @@
   };
   programs.gamemode.enable = true; #request for OS to optimize to gaming
 
+	services.avahi = {
+		enable = true;
+		nssmdns4 = true;
+		openFirewall = true;
+	};
+
+	services.printing = {
+		enable = true;
+		drivers = with pkgs; [
+			cups-filters
+			cups-browsed
+		];
+	};
+
   ## Flatpak
   services.flatpak.enable = true;
 
