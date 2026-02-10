@@ -2,7 +2,7 @@
 {
   imports =
     [
-#      ./desktophardware-configuration.nix
+      ../modules/desktop.nix
       ../modules/default.nix
       (modulesPath + "/installer/scan/not-detected.nix")
     ];
@@ -74,6 +74,7 @@
     mumble          #game chat
     (mumble.override { pulseSupport = true; }) #to add audio to mumble
     zed-editor      #for software development
+	  filezilla
     mangohud        #not using this at the moment
 
     #develop applications
@@ -86,6 +87,7 @@
   ### DESKTOP OPTIONS
   desktop = {
     enable = true;
+		nvidia.enable = true;
   };
 
   ### SSH
