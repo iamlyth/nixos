@@ -4,6 +4,7 @@ with lib; let
 in{
   imports = [
     ./desktop/xserver.nix
+    ./desktop/sway.nix
   ];
   options.desktop = {
     enable = mkOption {
@@ -20,5 +21,6 @@ in{
     xservermodule = {
       enable = true;
     };
+    swaymodule.enable = false;
   };
 }
