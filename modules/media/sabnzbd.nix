@@ -40,8 +40,6 @@ in {
       default = false;
       example = true;
       description = ''
-        **Required options:** [`nixarr.vpn.enable`](#nixarr.vpn.enable)
-
         Route SABnzbd traffic through the VPN.
       '';
     };
@@ -77,6 +75,14 @@ in {
 
         chmod 600 ${ini-file-target}
         chown sabnzbd:media ${ini-file-target}
+      '';
+    };
+    fix-user-permissions-script = pkgs.writeShellApplication {
+      name = "sabnzbd-fix-user-permissions";
+      runtimeInputs = with pkgs; [util-linux];
+      text = ''
+          chmod -R 777 ${cfg.stateDir};
+          echo "chmod -R 777 ${cfg.stateDir};";
       '';
     };
 
@@ -117,42 +123,22 @@ in {
       systemd.services.sabnzbd.serviceConfig = {
         ExecStartPre = lib.mkBefore [
           ("+" + fix-config-permissions-script + "/bin/sabnzbd-fix-config-permissions")
-          #(apply-user-configs-script + "/bin/sabnzbd-set-user-values")
+          ("+" + fix-user-permissions-script + "/bin/sabnzbd-fix-user-permissions")
+					#(apply-user-configs-script + "/bin/sabnzbd-set-user-values")
         ];
         Restart = "on-failure";
         StartLimitBurst = 5;
       };
 
       # Enable and specify VPN namespace to confine service in.
-      systemd.services.sabnzbd.vpnConfinement = mkIf cfg.vpn.enable {
-        enable = true;
-        vpnNamespace = "wg";
-      };
+			systemd.services.sabnzbd.vpnConfinement = mkIf cfg.vpn.enable {
+  			enable = true;
+  			vpnNamespace = "wg";
+			};
 
-      vpnNamespaces.wg = mkIf cfg.vpn.enable {
-        portMappings = [
-          {
-            from = defaultPort;
-            to = defaultPort;
-          }
-        ];
-      };
-	  services.nginx = mkIf cfg.vpn.enable {
-	    enable = true;
-		recommendedTlsSettings = true;
-		recommendedOptimisation = true;
-		recommendedGzipSettings = true;
-		virtualHosts."127.0.0.1:${builtins.toString cfg.guiPort}" = {
-		  listen = [{
-		    addr = "0.0.0.0";
-		    port = cfg.guiPort;
-		  }];
-		  locations."/" = {
-		    recommendedProxySettings = true;
-			proxyWebsockets = true;
-			proxyPass = "http://192.168.15.1:${builtins.toString cfg.guiPort}";
-		  };
+			systemd.services.sabnzbd.serviceConfig = {
+  			Wants = [ "vpnNamespaces-wg.service" ];
+  			After = [ "vpnNamespaces-wg.service" ];
+			};
 		};
-	  };
-    };
 }

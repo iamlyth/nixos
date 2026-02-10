@@ -7,6 +7,7 @@ in{
     ./media/plex.nix
     ./media/radarr.nix
     ./media/sabnzbd.nix
+		./media/sonarr.nix
   ];
   options.media = {
     enable = mkOption {
@@ -15,6 +16,15 @@ in{
       example = true;
       description = ''
         Whether or not to enable the all media service.
+        '';
+    };
+	
+    vpn.enable = mkOption {
+      type = types.bool;
+      default = false;
+      example = true;
+      description = ''
+        Whether or not to enable vpn
         '';
     };
 
@@ -65,26 +75,99 @@ in{
     ### RADARR
     radarrmodule = {
       enable = true;
+      vpn.enable = cfg.vpn.enable;
+    };
+
+    ### SONARR
+    sonarrmodule = {
+      enable = true;
+      vpn.enable = cfg.vpn.enable;
     };
 
     ### SABNZBD
     sabnzbdmodule = {
       enable = true;
       openFirewall = true;
-      vpn.enable = true;
+      vpn.enable = cfg.vpn.enable;
     };
 
-    vpnNamespaces.wg = {
-        enable = true;
-        openVPNPorts = [{
-        	port = 6336;
-        	protocol = "both";
-        }];
-        accessibleFrom = [
-            "192.168.0.0/16"
-            "127.0.0.1"
-        ];
-        wireguardConfigFile = "/data/.secret/vpn/wg.conf";
+    vpnNamespaces.wg = mkIf cfg.vpn.enable {
+      enable = true;
+      openVPNPorts = [
+			{
+      	port = 6336;
+        protocol = "both";
+      }
+			{
+      	port = 8989;
+        protocol = "both";
+      }
+			{
+      	port = 7878;
+        protocol = "both";
+      }];
+      accessibleFrom = [
+        "192.168.0.0/16"
+        "127.0.0.1"
+      ];
+			portMappings = [
+			{
+				from = 6336;
+				to = 6336;
+			}
+			{
+				from = 8989;
+				to = 8989;
+			}
+			{
+				from = 7878;
+				to = 7878;
+			}];			
+      wireguardConfigFile = "/data/.secret/vpn/wg.conf";
     };
+
+		services.nginx = mkIf cfg.vpn.enable {
+			enable = true;
+			recommendedTlsSettings = true;
+			recommendedOptimisation = true;
+			recommendedGzipSettings = true;
+			virtualHosts."sabnzbd" = {
+				listen = [{
+					addr = "0.0.0.0";
+					port = 6336;
+				}];
+				locations."/" = {
+					recommendedProxySettings = true;
+					proxyWebsockets = true;
+					proxyPass = "http://192.168.15.1:6336";
+				};
+			};
+			virtualHosts."radarr" = {
+				listen = [{
+					addr = "0.0.0.0";
+					port = 7878;
+				}];
+				locations."/" = {
+					recommendedProxySettings = true;
+					proxyWebsockets = true;
+					proxyPass = "http://192.168.15.1:7878";
+				};
+			};
+			virtualHosts."sonarr" = {
+				listen = [{
+					addr = "0.0.0.0";
+					port = 8989;
+				}];
+				locations."/" = {
+					recommendedProxySettings = true;
+					proxyWebsockets = true;
+					proxyPass = "http://192.168.15.1:8989";
+				};
+			};
+		};
+		systemd.services.nginx.serviceConfig = {
+			Wants = [ "sabnzbd.service" "radarr.service" ];
+			After = [ "sabnzbd.service" "radarr.service" ];
+		};
   };
 }
