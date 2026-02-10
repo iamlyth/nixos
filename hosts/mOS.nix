@@ -3,7 +3,7 @@
 {
   imports =
     [
-      ./hardware-configuration.nix
+      ./mOShardware-configuration.nix
       ../modules/default.nix
     ];
 
@@ -23,13 +23,18 @@
     wget
     screen
     nmap
+	traceroute
+	wireguard-tools
   ];
 
-  ### MEDIA OPTIONS
+  ### VPN
+  #services.mullvad-vpn.enable = true;
 
+  ### MEDIA OPTIONS
   media = {
     enable = true;
   };
+  users.groups.media = { };
 
   ### SSH
   sshmodule = {
@@ -38,11 +43,39 @@
   };
 
   # Use the systemd-boot EFI boot loader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  #boot.loader.systemd-boot.enable = true;
+  #boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.grub.enable = true;
+  boot.loader.grub.device = "/dev/sda";
 
-  networking.hostName = "mOS"; # Define your hostname.
+  #systemd.network.enable = true;
 
+  networking = {
+    hostName = "mOS"; # Define your hostname.
+    nameservers = ["1.1.1.1" "1.0.0.1"];
+    interfaces.ens18.ipv4.addresses = [{
+      address = "192.168.5.106";
+      prefixLength = 16;
+    }];
+    defaultGateway = {
+      address = "192.168.4.1";
+	    interface = "ens18";
+	  };
+  };
+
+  fileSystems."/run/media/media" = {
+    device = "/dev/disk/by-uuid/b65b7775-596b-447e-85de-db2a1c6bbe9e";
+    fsType = "ext4";
+    options = [
+      "defaults"
+      "user"
+      "rw"
+      "nofail"
+      "exec"
+      "relatime"
+    ];
+  };
+  
   # Set your time zone.
   time.timeZone = "US/Michigan";
 
@@ -50,7 +83,7 @@
   users.users.lalobied = {
     isNormalUser = true;
     home = "/home/lalobied";
-    extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "media" ]; # Enable ‘sudo’ for the user.
   };
 
   system.stateVersion = "25.05";

@@ -14,7 +14,7 @@ in{
       default = false;
       example = true;
       description = ''
-        Whether or not to enable the Radarr service.
+        Whether or not to enable the all media service.
         '';
     };
 
@@ -29,7 +29,7 @@ in{
 
     mediaDir = mkOption {
       type = types.path;
-      default = "/media/";
+      default = "/run/media/media";
       example = "/data/media";
       description = ''
         where all the good stuff lives
@@ -54,7 +54,7 @@ in{
 
   config = mkIf cfg.enable {
     media.mediavalues.globals = {
-      libraryOwner.group = "vboxsf";
+      libraryOwner.group = "media";
     };
 
     ### PLEX
@@ -71,6 +71,20 @@ in{
     sabnzbdmodule = {
       enable = true;
       openFirewall = true;
+      vpn.enable = true;
+    };
+
+    vpnNamespaces.wg = {
+        enable = true;
+        openVPNPorts = [{
+        	port = 6336;
+        	protocol = "both";
+        }];
+        accessibleFrom = [
+            "192.168.0.0/16"
+            "127.0.0.1"
+        ];
+        wireguardConfigFile = "/data/.secret/vpn/wg.conf";
     };
   };
 }

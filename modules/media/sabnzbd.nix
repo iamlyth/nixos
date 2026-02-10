@@ -35,6 +35,17 @@ in {
       description = "Open firewall for SABnzbd";
     };
 
+    vpn.enable = mkOption {
+      type = types.bool;
+      default = false;
+      example = true;
+      description = ''
+        **Required options:** [`nixarr.vpn.enable`](#nixarr.vpn.enable)
+
+        Route SABnzbd traffic through the VPN.
+      '';
+    };
+
   };
 
   config = let
@@ -65,7 +76,7 @@ in {
         fi
 
         chmod 600 ${ini-file-target}
-        chown sabnzbd:vboxsf ${ini-file-target}
+        chown sabnzbd:media ${ini-file-target}
       '';
     };
 
@@ -90,14 +101,14 @@ in {
         "d '${cfg.stateDir}/usenet/lidarr'      0775 sabnzbd ${media.mediavalues.globals.libraryOwner.group} - -"
         "d '${cfg.stateDir}/usenet/radarr'      0775 sabnzbd ${media.mediavalues.globals.libraryOwner.group} - -"
         "d '${cfg.stateDir}/usenet/sonarr'      0775 sabnzbd ${media.mediavalues.globals.libraryOwner.group} - -"
-        "d '${cfg.stateDir}/usenet/readarr'     0775 sabnzbd ${media.mediavalues.globals.libraryOwner.group} - -" 
+        "d '${cfg.stateDir}/usenet/readarr'     0775 sabnzbd ${media.mediavalues.globals.libraryOwner.group} - -"
       ];
 
       services.sabnzbd = {
         enable = true;
         package = cfg.package;
         user = "sabnzbd";
-        group = "vboxsf";
+        group = "media";
         configFile = "${cfg.stateDir}/sabnzbd.ini";
       };
 
@@ -112,5 +123,36 @@ in {
         StartLimitBurst = 5;
       };
 
+      # Enable and specify VPN namespace to confine service in.
+      systemd.services.sabnzbd.vpnConfinement = mkIf cfg.vpn.enable {
+        enable = true;
+        vpnNamespace = "wg";
+      };
+
+      vpnNamespaces.wg = mkIf cfg.vpn.enable {
+        portMappings = [
+          {
+            from = defaultPort;
+            to = defaultPort;
+          }
+        ];
+      };
+	  services.nginx = mkIf cfg.vpn.enable {
+	    enable = true;
+		recommendedTlsSettings = true;
+		recommendedOptimisation = true;
+		recommendedGzipSettings = true;
+		virtualHosts."127.0.0.1:${builtins.toString cfg.guiPort}" = {
+		  listen = [{
+		    addr = "0.0.0.0";
+		    port = cfg.guiPort;
+		  }];
+		  locations."/" = {
+		    recommendedProxySettings = true;
+			proxyWebsockets = true;
+			proxyPass = "http://192.168.15.1:${builtins.toString cfg.guiPort}";
+		  };
+		};
+	  };
     };
 }
