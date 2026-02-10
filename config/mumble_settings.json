@@ -1,0 +1,365 @@
+{
+    "audio": {
+        "echo_cancel_mode": "Disabled",
+        "input_system": "PipeWire",
+        "output_system": "PipeWire",
+        "transmit_mode": "PTT",
+        "vad_max": 0.7292397618293762,
+        "vad_min": 0.6563005447387695
+    },
+    "certificate": "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",
+    "last_connection": {
+        "server_name": "bitblender"
+    },
+    "messages": {
+        "traits": {
+            "0": 1,
+            "1": 45,
+            "10": 1,
+            "11": 45,
+            "12": 1,
+            "13": 45,
+            "14": 45,
+            "15": 1,
+            "16": 45,
+            "17": 45,
+            "18": 45,
+            "19": 45,
+            "2": 5,
+            "20": 45,
+            "21": 45,
+            "22": 45,
+            "23": 1,
+            "24": 45,
+            "25": 45,
+            "26": 45,
+            "27": 45,
+            "28": 45,
+            "29": 45,
+            "3": 1,
+            "30": 45,
+            "31": 1,
+            "4": 45,
+            "5": 45,
+            "6": 1,
+            "7": 1,
+            "8": 45,
+            "9": 45
+        }
+    },
+    "misc": {
+        "audio_wizard_has_been_shown": true,
+        "database_location": "/home/lalobied/.local/share/Mumble/Mumble/mumble.sqlite"
+    },
+    "mumble_has_quit_normally": true,
+    "plugins": {
+        "0ab37cf2dd685cad13ade88cb16e9f3a68e0a18b": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libamongus.so",
+            "positional_data_enabled": true
+        },
+        "0fb6545389ff6adfb9046695188e86e11aa11775": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libdys.so",
+            "positional_data_enabled": true
+        },
+        "13c8649a9547cc7d4f3940843f0e99b3fc323238": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libcod5.so",
+            "positional_data_enabled": true
+        },
+        "1905362894fe3c04bc900a74972c308bd41e687d": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libbf3.so",
+            "positional_data_enabled": true
+        },
+        "19918485d3443838ca3b721b00f334f43067c67b": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libcod2.so",
+            "positional_data_enabled": true
+        },
+        "23a899a013d01beadedeae9035dc916755d0e3ec": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libffxiv.so",
+            "positional_data_enabled": true
+        },
+        "2482d5b3625c37d7d0d02db59201751f35e3892c": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libbreach.so",
+            "positional_data_enabled": true
+        },
+        "371ff80325f4a5a624d9c9537a4ca7334332cc39": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libwolfet.so",
+            "positional_data_enabled": true
+        },
+        "3a5f4b552aec61785261cf9bfda22727d0cadbec": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libbf1.so",
+            "positional_data_enabled": true
+        },
+        "4412b729e086b7489d15a441d7128cb2ed2d8182": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libwow_x64.so",
+            "positional_data_enabled": true
+        },
+        "4a8abc55cc99be55bbb23f81953b8724832fd2e2": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libinsurgency.so",
+            "positional_data_enabled": true
+        },
+        "5243056cb4ebb1c5551d2b25f31f715f2a651e1f": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libetqw.so",
+            "positional_data_enabled": true
+        },
+        "530d8ba1f4d2e8178ef03066981b14a32d98a6f0": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libarma2.so",
+            "positional_data_enabled": true
+        },
+        "5831fd312e7eb45ed6b15932ed3855c4ffe0e303": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libcod4.so",
+            "positional_data_enabled": true
+        },
+        "66554db6409036f00ec4b7d9f50d59be601ad877": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libcodmw2.so",
+            "positional_data_enabled": true
+        },
+        "688ac6a97dc300fb821bd168aae7cd201a50b883": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libblacklight.so",
+            "positional_data_enabled": true
+        },
+        "6f4b48ccb199e49820c87508316e3c29ba712726": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/liblink.so",
+            "positional_data_enabled": true
+        },
+        "734318ea1ff515931807206f215cfd180915fe86": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libbfbc2.so",
+            "positional_data_enabled": true
+        },
+        "7a5a4db0e69b0fa461a85a57466dd133eca754bf": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libse.so",
+            "positional_data_enabled": true
+        },
+        "84f467df030d57995ad4af7f679b68fb2f0339e0": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libcs.so",
+            "positional_data_enabled": true
+        },
+        "850309b42b8965d24f27d022d3b23457dcdeb73f": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libbfheroes.so",
+            "positional_data_enabled": true
+        },
+        "89d4cc1d80626d122bef938eeda715565c862b97": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libbf1942.so",
+            "positional_data_enabled": true
+        },
+        "9076487e646a4d9ebac4f31325e9926a05588949": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libbf2142.so",
+            "positional_data_enabled": true
+        },
+        "9600850f1f9b607ba0f793eb928e4f87bd5f9fbd": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libwow.so",
+            "positional_data_enabled": true
+        },
+        "9e660b56040fd9171240d2b52d26995699df0f2a": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "manual.builtin",
+            "positional_data_enabled": true
+        },
+        "a04be710765ca5672c5ae4ef864b3cb8d7541719": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libgtaiv.so",
+            "positional_data_enabled": true
+        },
+        "a311e3213760a922f30516819488b5e8ac509802": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libut99.so",
+            "positional_data_enabled": true
+        },
+        "a467e3424a80642528802aa8274df72b1a27e015": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libcodmw2so.so",
+            "positional_data_enabled": true
+        },
+        "a5977bd0dab2de9a5a102c1b87fc68444840c8b1": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libsr.so",
+            "positional_data_enabled": true
+        },
+        "a5eb14c1e42f1a2e51cdbf3cee6fc407be9e05b0": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libbf2.so",
+            "positional_data_enabled": true
+        },
+        "a7bad2143f526d642eb08baff49817f8c74de676": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libaoc.so",
+            "positional_data_enabled": true
+        },
+        "ae41bc69bfc5b7d1cbae5db76d68527983fd3d87": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libgw.so",
+            "positional_data_enabled": true
+        },
+        "b30036484856558e1ef96ad123008d2458db2fc8": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libut3.so",
+            "positional_data_enabled": true
+        },
+        "b56d206011a3c819c75aafcc79b8d91cbdff0d2b": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libborderlands.so",
+            "positional_data_enabled": true
+        },
+        "bd10c30a20b6e0f8aa1bd020d8034940e6264fe6": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/librl.so",
+            "positional_data_enabled": true
+        },
+        "c0c24d21d3188bab6f30d60137541219b4b739ef": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libffxiv_x64.so",
+            "positional_data_enabled": true
+        },
+        "c35f0d4293f860a191c9b17aac53e6cbc8eb06ae": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libgtav.so",
+            "positional_data_enabled": true
+        },
+        "c3d80746e62606f94fe5fe3a8ed514e954e562e5": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libql.so",
+            "positional_data_enabled": true
+        },
+        "cb84e69eafc5bb94da6d10c507ad25b76bff35c1": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libgtasa.so",
+            "positional_data_enabled": true
+        },
+        "d1e37b35a608fa1ee3b7cfae5bd180924c2deea1": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libbf4.so",
+            "positional_data_enabled": true
+        },
+        "d51ffce21d237ea1de7708619c9ab729a2a3eba9": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/liblol.so",
+            "positional_data_enabled": true
+        },
+        "d5522c9abffe00542281203a22425fa8af37b10a": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/liblotro.so",
+            "positional_data_enabled": true
+        },
+        "db6ac2fc318ff4fa4ae79352a024d4441b59c094": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libjc2.so",
+            "positional_data_enabled": true
+        },
+        "ec2cd0c776d1de7512b8bc5bea687b5b1152b1ed": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libbf4_x86.so",
+            "positional_data_enabled": true
+        },
+        "f546fb8322b03b267ac89075583592639045af20": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libgmod.so",
+            "positional_data_enabled": true
+        },
+        "fe79d8a41f57bc8ae87c0c802c80661504af6079": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libut2004.so",
+            "positional_data_enabled": true
+        },
+        "ffc044f58f98df9b555f08d55486ae3c6b7903f6": {
+            "enabled": false,
+            "keyboard_monitoring_allowed": false,
+            "path": "/nix/store/bgpa0b54qiwj3zwbcyw80k1hbhm5imzs-mumble-1.5.857/lib/mumble/plugins/libborderlands2.so",
+            "positional_data_enabled": true
+        }
+    },
+    "settings_version": 1,
+    "shortcuts": {
+        "defined": [
+            {
+                "buttons": [
+                    "AAAAAgAAAAEf"
+                ],
+                "data": "AAAAAAE=",
+                "index": 1,
+                "suppress": false
+            }
+        ],
+        "enable_global_shortcuts": true
+    },
+    "ui": {
+        "config_geometry": "AdnQywADAAAAAAeAAAAAAAAADRkAAAOnAAAHgAAAAAAAAA0ZAAADpwAAAAEAAAAAB4AAAAeAAAAAAAAADRkAAAOn",
+        "connect_dialog_geometry": "AdnQywADAAAAAAeAAAAAAAAADvsAAADsAAAAAAAAAAAAAAI9AAABbQAAAAECAAAAB4AAAAeAAAAAAAAADvsAAADs",
+        "connect_dialog_header_state": "AAAA/wAAAAAAAAABAAAAAAAAAAEBAAAAAAAAAAAAAAAAAAAAAAAAB2QAAAADAQEAAAAAAAABAAAAAgAAAGT/////AAAAgQAAAAAAAAADAAAGqwAAAAEAAAABAAAAWAAAAAEAAAADAAAAYQAAAAEAAAADAAAD6AAAAABk",
+        "quit_behavior": "AlwaysQuit",
+        "send_usage_statistics": false,
+        "window_geometry": "AdnQywADAAAAAAeAAAAAAAAADvsAAAQFAAAHgAAAAAAAAA77AAABRQAAAAECAAAAB4AAAAeAAAAAAAAADvsAAAQF",
+        "window_state": "AAAA/wAFAEv9AAAAAgAAAAAAAAEAAAADyPwCAAAAAvsAAAAMAHEAZAB3AEwAbwBnAQAAAD4AAAOrAAAAegD////7AAAADgBxAGQAdwBDAGgAYQB0AQAAA+0AAAAZAAAAGQAAABkAAAACAAAAAAAAAAD8AQAAAAH7AAAAJABxAGQAdwBNAGkAbgBpAG0AYQBsAFYAaQBlAHcATgBvAHQAZQAAAAAA/////wAAAFcA////AAAGeAAAA8gAAAAEAAAABAAAAAgAAAAI/AAAAAEAAAACAAAAAQAAABoAcQB0AEkAYwBvAG4AVABvAG8AbABiAGEAcgEAAAAA/////wAAAAAAAAAA"
+    }
+    "shortcut": {
+      "linux\\evdev\\enable": true,
+    },
+}
