@@ -1,5 +1,4 @@
 { config, lib, pkgs, ... }:
-
 {
   imports =
     [
@@ -7,7 +6,14 @@
       ../modules/default.nix
     ];
 
-  #nixpkgs.config.allowUnfree = true;
+  ##USB Wifi Configuration
+  boot.extraModulePackages = with config.boot.kernelPackages; [
+    rtl8812au
+  ];
+  boot.initrd.kernelModules = [ "8812au" ];
+
+  nixpkgs.config.allowUnfree = true; #allow proprietary packages
+  nixpkgs.config.nvidia.acceptLicense = true; #accept nvidia EULA
 
   ###SHELL
   programs.zsh.enable = true;
@@ -21,9 +27,31 @@
     zip
     unzip
     wget
-    screen
     nmap
+    pciutils
+    usbutils
+
+    #desktop applications
+    librewolf
+    evolution
+    gparted
+    discord-ptb
+    spotify
+    mumble
+    (mumble.override { pulseSupport = true; }) #to add audio to mumble
+    zed-editor
+    mangohud
+
+    #develop applications
+    libgcc
+    bc
+    linuxHeaders
   ];
+
+  ### DESKTOP OPTIONS
+  desktop = {
+    enable = true;
+  };
 
   ### SSH
   sshmodule = {
@@ -31,31 +59,39 @@
     port = [55];
   };
 
-  # Use the systemd-boot EFI boot loader.
+  ## Gaming
+  programs.steam = {
+    enable = true;
+    protontricks.enable = true;
+  };
+  programs.gamemode.enable = true; #request for OS to optimize to gaming
+  #programs.mangohud.enable = true;
+  #programs.mangohud.settings = {
+  #  fps_only = 1;
+  #  font_size=12;
+  #};
+  ## Flatpak
+  services.flatpak.enable = true;
+
+  # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-
-  #bootloader
-  # boot.loader.grub.enable = true;
-  # boot.loader.grub.device = "/dev/sda";
-  # boot.loader.grub.useOSProber = true;
+  fileSystems."/run/media/lalobied/StorageTanks" = {
+    device = "/dev/sda1";
+    fsType = "ext4";
+    options = [
+      "defaults"
+      "user"
+      "rw"
+      "noauto"
+      "exec"
+      "relatime"
+    ];
+  };
 
   networking.hostName = "dOS";
   networking.networkmanager.enable = true;
-
-  #enable X11
-  services.xserver.enable = true;
-
-  #enable GNOME
-  services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
-
-  #keymap in X11
-  services.xserver.xkb = {
-	layout = "us";
-	variant = "";
-  };
 
   #enable sound
   services.pulseaudio.enable = false;
@@ -63,7 +99,7 @@
   services.pipewire = {
 	enable = true;
 	alsa.enable = true;
-	alsa.supportt32bit = true;
+	alsa.support32Bit = true;
 	pulse.enable = true;
   };
 

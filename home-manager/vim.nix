@@ -1,10 +1,22 @@
 {pkgs, inputs, config, ... }:
 {
+  home.packages  = [
+    pkgs.nodejs
+    pkgs.yarn
+    pkgs.coc-clangd
+    pkgs.coc-pyright
+  ];
+
   programs.vim = {
     enable = true;
-    plugins = with pkgs.vimPlugins; [ 
-      vim-airline 
+    packageConfigurable = pkgs.vim;
+    plugins = with pkgs.vimPlugins; [
+      vim-airline
       indentLine
+      sensible  #sensible vimrc settings
+      vim-surround
+      vimwiki #for notetaking
+      coc-nvim
     ];
     settings = { ignorecase = true; };
     defaultEditor = true;
@@ -28,6 +40,12 @@
       set textwidth=80
       set colorcolumn=+1
       hi ColorColumn ctermbg=220 guibg=#262626
+
+      "for vimwiki
+      set nocompatible
+      filetype plugin on
+      let g:vimwiki_list = [{ 'syntax': 'markdown',
+                      \ 'ext': 'md'}]
 
       "Quicker window movement
       nnoremap <C-j> <C-w>j
