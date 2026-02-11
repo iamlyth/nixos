@@ -23,6 +23,7 @@ in{
 				lualine.enable = true;
 				nvim-tree.enable = true;
 				web-devicons.enable = true; #explict for nvim-tree
+				telescope.enable = true;
 				lsp = {
 					enable = true;
 					servers = {
@@ -47,6 +48,7 @@ in{
 				tabstop = 2;
 			};
 			keymaps = [
+				#Nvim Tree
 				{
 					mode = "n";
         	key = "<C-f>";
@@ -81,7 +83,18 @@ in{
 					key = "<C-l>";
 					action = "<C-w>l";
 					options.desc = "Move to window right";
-			 } 
+			 	}
+
+				#telescope
+				{
+					mode = "n";
+					key = "<leader>ff";
+					action = "<cmd>lua require('telescope.builtin').find_files()<CR>";
+					options = {
+							desc = "Find files";
+							silent = true;
+					};
+				}
 			];
 		};
 	};
