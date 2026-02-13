@@ -18,6 +18,7 @@
 		tmux
 		eza
 		fzf #needed for zsh auto suggestion
+		ripgrep #needed for telescope live grep
 	];
 
 	#timezone
