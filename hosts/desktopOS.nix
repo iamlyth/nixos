@@ -1,4 +1,4 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{ config, lib, pkgs, stablenix, modulesPath, ... }:
 {
   imports =
     [
@@ -39,9 +39,6 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
-
-
-
 	### HARDWARE CONFIG ENDS HERE
 
   nixpkgs.config.allowUnfree = true; #allow proprietary packages
@@ -52,7 +49,16 @@
 
   ###OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = with pkgs; 
+	let
+		libbluray = stablenix.libbluray.override {
+			withAACS = true;
+			withBDplus = true;
+			withJava = true;
+		};
+		myvlc = stablenix.vlc.override { inherit libbluray; };
+	in
+	[
     git
     curl
     zip
@@ -78,9 +84,11 @@
     zed-editor      #for software development
 	  filezilla
     mangohud        #not using this at the moment
-		protonup-qt #for selecting proton version in steam
+		protonup-qt 		#for selecting proton version in steam
 		gnome-tweaks		#for fixing my fonts
 		dnsutils				#DNS diagnosing
+		makemkv					#shredding
+		myvlc
 
 		#develop applications
     libgcc          #C/Cpp compilers

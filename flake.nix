@@ -29,8 +29,8 @@
 		};
   };
 
-  outputs = {self, nixpkgs, nixos-hardware, home-manager, nixos-generators,  ...
-  }@inputs: {
+  outputs = {self, nixpkgs, nixos-hardware, home-manager, nixos-generators,  ... }@inputs: 
+	{
 		nixosConfigurations = {
 			### Define mediaOS	
 			mediaOS = let system = "x86_64-linux";
@@ -52,7 +52,13 @@
 			### Define desktopOS
       desktopOS = let system = "x86_64-linux";
       in inputs.nixpkgs-unstable.lib.nixosSystem {
-        modules = [
+        specialArgs = {
+					inherit inputs;
+					stablenix = import nixpkgs {
+						inherit system;
+					};
+				};
+				modules = [
 					nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
 					inputs.lanzaboote.nixosModules.lanzaboote
           inputs.home-manager-unstable.nixosModules.home-manager {
