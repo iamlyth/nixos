@@ -24,6 +24,27 @@ in{
 				nvim-tree.enable = true;
 				web-devicons.enable = true; #explict for nvim-tree
 				telescope.enable = true;
+				mini-map = {
+					enable = true;
+					settings = {
+						#integrations = lib.nixvim.mkRaw "nil";
+
+						symbols = {
+							#encode = lib.nixvim.mkRaw "nil";
+							scroll_line = "█";
+							scroll_view = "┃";
+						};
+
+						window = {
+							focusable = true;
+							side = "right";
+							show_integration_count = true;
+							width = 10;
+							winblend = 25;
+							zindex = 15;
+						};
+					};
+				};
 				lsp = {
 					enable = true;
 					servers = {
@@ -39,6 +60,14 @@ in{
 					};
 				};
 			};
+			extraConfigLua = ''
+				vim.api.nvim_create_autocmd("UiEnter", {
+					once = true,
+					callback = function()
+						MiniMap.open()
+					end,
+				})
+			'';
 			opts = {
 				number = true;
 				numberwidth = 5;
@@ -94,6 +123,43 @@ in{
 							desc = "Find files";
 							silent = true;
 					};
+				}
+				{
+					mode = "n";
+					key = "<leader>fg";
+					action = "<cmd>lua require('telescope.builtin').live_grep()<CR>";
+					options = {
+							desc = "Find grep";
+							silent = true;
+					};
+				}
+				#minimap
+				{
+					mode = "n";
+					key = "<leader>mo";
+					action = "<cmd>lua MiniMap.open()<CR>";
+					options = {
+							desc = "Open minimap";
+							silent = true;
+					};
+				}
+				{
+					mode = "n";
+					key = "<leader>mc";
+					action = "<cmd>lua MiniMap.close()<CR>";
+					options = {
+							desc = "Close minimap";
+							silent = true;
+					};
+				}
+				{
+					mode = "n";
+        	key = "<C-m>";
+        	action = "<cmd>lua MiniMap.toggle_focus()<CR>";
+        	options = {
+          	silent = true;
+          	desc = "Toggle minimap focus";
+        	};
 				}
 			];
 		};
