@@ -6,6 +6,9 @@
 	];
 	wsl.enable = true;
 	wsl.defaultUser = "lalobied";
+	wsl.wslConf = {
+		automount.enabled = lib.mkForce true;
+	};
 
 	nix.settings.experimental-features = ["nix-command" "flakes"];
 
@@ -18,6 +21,7 @@
 		tmux
 		eza
 		fzf #needed for zsh auto suggestion
+		ripgrep
 	];
 
 	#timezone
