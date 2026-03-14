@@ -72,9 +72,11 @@
 		fzf							#needed for zsh auto suggestion
 		tochd						#compressing PSX/PS2 games to a single file. No duplicate entries.
 		rusty-psn				#updating ps3 games
+		traceroute
 
     #desktop applications
     librewolf
+		vivaldi
     evolution
     gparted
 		darktable				#photo editing	
@@ -114,9 +116,7 @@
   programs.steam = {
     enable = true;
     gamescopeSession.enable = true;
-		#extraCompatPackages = with pkgs; [
-  	#	proton-ge-bin
-		#];
+		remotePlay.openFirewall = true;
   };
   programs.gamemode.enable = true; #request for OS to optimize to gaming
 
