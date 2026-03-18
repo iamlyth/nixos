@@ -75,6 +75,32 @@
           ./hosts/desktopOS.nix
         ];
       };
+
+			### Define laptopOS
+      laptopOS = let system = "x86_64-linux";
+      in inputs.nixpkgs-unstable.lib.nixosSystem {
+        specialArgs = {
+					inherit inputs;
+					stablenix = import nixpkgs {
+						inherit system;
+					};
+				};
+				modules = [
+					nixos-hardware.nixosModules.framework-12-13th-gen-intel
+          inputs.home-manager-unstable.nixosModules.home-manager {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.lalobied = {
+							imports = [
+								./home-manager/desktop-home.nix
+								inputs.nixvim.homeManagerModules.nixvim
+							];
+						};
+						home-manager.extraSpecialArgs = { inherit inputs; };
+          }
+          ./hosts/laptopOS.nix
+        ];
+      };
 		
 			### Define NixOS-WSL
 			wsl = let system = "x86_64-linux";
