@@ -9,8 +9,6 @@
 		vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
 		nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 		lanzaboote.url = "github:nix-community/lanzaboote/v0.4.3";
-		darwin.url = "github:lnl7/nix-darwin/nix-darwin-25.11";
-		darwin.inputs.nixpkgs.follows = "nixpkgs";
 		nixos-generators = {
   		url = "github:nix-community/nixos-generators";
  			inputs.nixpkgs.follows = "nixpkgs";
@@ -154,24 +152,6 @@
           ./containers/photoLXC.nix
         ];
       };
-    };
-    darwinConfigurations."lythbook3" = inputs.darwin.lib.darwinSystem {
-        system = "x86_64-darwin";
-        modules = [
-          home-manager.darwinModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = {
-							imports = [
-								./home-manager/portable-home.nix
-								inputs.nixvim.homeManagerModules.nixvim
-							];
-						};
-            home-manager.extraSpecialArgs = { inherit inputs; };
-          }
-	  			./hosts/macbookOS.nix
-        ];
     };
 		
 		#LXC Container Template
