@@ -21,7 +21,16 @@ in{
 			default = false;
 			example = true;
 			description = ''
-				Whether or not to enable nvidia Drivers
+				whether or not to enable nvidia drivers
+			'';
+		};
+
+		intel.enable = mkOption {
+			type = types.bool;
+			default = false;
+			example = true;
+			description = ''
+				whether or not to enable intel drivers
 			'';
 		};
 		
@@ -39,6 +48,7 @@ in{
     xservermodule = {
       enable = true;
 			nvidia.enable = cfg.nvidia.enable;
+			intel.enable = cfg.intel.enable;
     };
     swaymodule.enable = false;
 		vpnmodule.enable = cfg.vpn.enable;

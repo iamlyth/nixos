@@ -87,12 +87,13 @@
 				};
 				modules = [
 					nixos-hardware.nixosModules.framework-12-13th-gen-intel
+					inputs.lanzaboote.nixosModules.lanzaboote
           inputs.home-manager-unstable.nixosModules.home-manager {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.lalobied = {
 							imports = [
-								./home-manager/desktop-home.nix
+								./home-manager/laptop-home.nix
 								inputs.nixvim.homeManagerModules.nixvim
 							];
 						};

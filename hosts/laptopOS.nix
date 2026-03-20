@@ -3,10 +3,38 @@
   imports =
     [
 	  	../modules/desktop.nix
-			../modules/ssh.nix
+(modulesPath + "/installer/scan/not-detected.nix")
     ];
 
 	### HARDWARE CONFIG STARTS HERE
+
+boot.initrd.availableKernelModules = [ "xhci_pci" "nvme"];
+  boot.initrd.kernelModules = [ ];
+  boot.kernelModules = [ "kvm-intel" ];
+  boot.extraModulePackages = [ ];
+
+  fileSystems."/" =
+    { device = "/dev/mapper/luks-37c6e84c-b4f6-4b9a-905a-26035ae731b2";
+      fsType = "ext4";
+    };
+
+  boot.initrd.luks.devices."luks-37c6e84c-b4f6-4b9a-905a-26035ae731b2".device = "/dev/disk/by-uuid/37c6e84c-b4f6-4b9a-905a-26035ae731b2";
+	boot.initrd.luks.devices."luks-3a743a5b-b266-4110-8476-2beb38ce31c9".device = "/dev/disk/by-uuid/3a743a5b-b266-4110-8476-2beb38ce31c9";
+
+  fileSystems."/boot" =
+    { device = "/dev/disk/by-uuid/6BDA-A389";
+      fsType = "vfat";
+      options = [ "fmask=0077" "dmask=0077" ];
+    };
+
+  swapDevices =
+    [ { device = "/dev/mapper/luks-3a743a5b-b266-4110-8476-2beb38ce31c9"; }
+    ];
+
+  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+
+
 	### HARDWARE CONFIG ENDS HERE
 
   nixpkgs.config.allowUnfree = true; #allow proprietary packages
@@ -40,7 +68,10 @@
     mangohud        #not using this at the moment
 		gnome-tweaks		#for fixing my fonts
 		dnsutils				#DNS diagnosing
-
+		
+		#framework 12 specific
+		sbctl						#for debugging and troubleshooting secureboot
+		tpm2-tss				#for using the tpm2 chip with systemd-cryptenroll
   ];
 
   ### DESKTOP OPTIONS
@@ -48,12 +79,7 @@
     enable = true;
 		vpn.enable = true;
 		nvidia.enable = false;
-  };
-
-  ### SSH
-  sshmodule = {
-    enable = true;
-    port = [55];
+		intel.enable = true;
   };
 
 	services.avahi = {
@@ -77,13 +103,14 @@
 	services.fwupd.enable = true;
 
 	# Bootloader.
-	#boot.loader.systemd-boot.enable = lib.mkForce false;
-	#boot.lanzaboote = {
-  #  enable = true;
-  #  pkiBundle = "/var/lib/sbctl";
-  #};
-	boot.loader.systemd-boot.enable = true;
-	boot.loader.efi.canTouchEfiVariables = true;
+	boot.loader.systemd-boot.enable = lib.mkForce false;
+	boot.initrd.systemd.enable = true;
+	boot.lanzaboote = {
+    enable = true;
+    pkiBundle = "/var/lib/sbctl";
+  };
+	#boot.loader.systemd-boot.enable = true;
+	#boot.loader.efi.canTouchEfiVariables = true;
 
   networking = {
     networkmanager.enable = true;
@@ -91,15 +118,15 @@
       allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
       allowedUDPPortRanges = allowedTCPPortRanges;
     };
-    hostName = "desktop"; # Define your hostname.
+    hostName = "laptop"; # Define your hostname.
     nameservers = ["192.168.5.111"];
-    interfaces.enp191s0.ipv4.addresses = [{
-      address = "192.168.5.117";
+    interfaces.wlp0s20f3.ipv4.addresses = [{
+      address = "192.168.4.24";
       prefixLength = 16;
     }];
     defaultGateway = {
       address = "192.168.4.1";
-	    interface = "enp191s0";
+	    interface = "wlp0s20f3";
 	  };
   };
 

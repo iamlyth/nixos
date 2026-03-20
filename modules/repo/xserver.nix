@@ -16,7 +16,16 @@ in{
 			default = false;
 			example = true;
 			description = ''
-				Whether or not to enable nvidia Drivers
+				whether or not to enable nvidia drivers
+			'';
+		};
+
+		intel.enable = mkOption {
+			type = types.bool;
+			default = false;
+			example = true;
+			description = ''
+				whether or not to enable intel drivers
 			'';
 		};
   };
@@ -43,7 +52,9 @@ in{
         layout = "us";
         variant = "";
       };
-      videoDrivers = if cfg.nvidia.enable then ["nvidia"] else ["amd"]; #with hardware acceleration
+      videoDrivers = if cfg.nvidia.enable then ["nvidia"] 
+				else if cfg.intel.enable then ["intel"]
+				else ["amd"]; #with hardware acceleration
       excludePackages = [pkgs.xterm];
     };
 
