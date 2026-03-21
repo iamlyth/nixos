@@ -65,6 +65,7 @@
     gparted
 		darktable				#photo editing	
 	  filezilla				#maybe replaced by remmina
+		protonup-qt 		#for selecting proton version in steam
 		plex-desktop
 		gnome-tweaks		#for fixing my fonts
 		dnsutils				#DNS diagnosing
@@ -109,6 +110,14 @@
 
   ## fwupd Firmware updater
 	services.fwupd.enable = true;
+
+  ## gaming
+  programs.steam = {
+    enable = true;
+    gamescopeSession.enable = true;
+		remotePlay.openFirewall = true;
+  };
+  programs.gamemode.enable = true; #request for os to optimize to gaming
 
 	# Bootloader
 	boot.loader.systemd-boot.enable = lib.mkForce false;

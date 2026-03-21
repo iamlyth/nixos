@@ -112,13 +112,13 @@
     port = [55];
   };
 
-  ## Gaming
+  ## gaming
   programs.steam = {
     enable = true;
-    gamescopeSession.enable = true;
-		remotePlay.openFirewall = true;
+    gamescopesession.enable = true;
+		remoteplay.openfirewall = true;
   };
-  programs.gamemode.enable = true; #request for OS to optimize to gaming
+  programs.gamemode.enable = true; #request for os to optimize to gaming
 
 	services.avahi = {
 		enable = true;
