@@ -3,12 +3,12 @@
   imports =
     [
 	  	../modules/desktop.nix
-(modulesPath + "/installer/scan/not-detected.nix")
+			(modulesPath + "/installer/scan/not-detected.nix")
     ];
 
 	### HARDWARE CONFIG STARTS HERE
 
-boot.initrd.availableKernelModules = [ "xhci_pci" "nvme"];
+	boot.initrd.availableKernelModules = [ "xhci_pci" "nvme"];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
@@ -64,8 +64,8 @@ boot.initrd.availableKernelModules = [ "xhci_pci" "nvme"];
     evolution
     gparted
 		darktable				#photo editing	
-	  filezilla
-    mangohud        #not using this at the moment
+	  filezilla				#maybe replaced by remmina
+		plex-desktop
 		gnome-tweaks		#for fixing my fonts
 		dnsutils				#DNS diagnosing
 		
@@ -83,6 +83,13 @@ boot.initrd.availableKernelModules = [ "xhci_pci" "nvme"];
 		rdp.enable = true;
   };
 
+	#Tailscale
+	services.tailscale = {
+		enable = true;
+		useRoutingFeatures = "client";
+	};
+
+	#for DNS
 	services.avahi = {
 		enable = true;
 		nssmdns4 = true;
@@ -103,7 +110,7 @@ boot.initrd.availableKernelModules = [ "xhci_pci" "nvme"];
   ## fwupd Firmware updater
 	services.fwupd.enable = true;
 
-	# Bootloader.
+	# Bootloader
 	boot.loader.systemd-boot.enable = lib.mkForce false;
 	boot.initrd.systemd.enable = true;
 	boot.lanzaboote = {
@@ -116,19 +123,12 @@ boot.initrd.availableKernelModules = [ "xhci_pci" "nvme"];
   networking = {
     networkmanager.enable = true;
     firewall = rec {
+			enable = true;
       allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
       allowedUDPPortRanges = allowedTCPPortRanges;
+			trustedInterfaces = ["tailscale0"];
     };
     hostName = "laptop"; # Define your hostname.
-    nameservers = ["192.168.5.111"];
-    interfaces.wlp0s20f3.ipv4.addresses = [{
-      address = "192.168.4.24";
-      prefixLength = 16;
-    }];
-    defaultGateway = {
-      address = "192.168.4.1";
-	    interface = "wlp0s20f3";
-	  };
   };
 
   #fileSystems."/home/lalobied/Cloud" = {
