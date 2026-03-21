@@ -54,7 +54,7 @@ in{
       };
       videoDrivers = if cfg.nvidia.enable then ["nvidia"] 
 				else if cfg.intel.enable then ["intel"]
-				else ["amd"]; #with hardware acceleration
+				else []; #with hardware acceleration
       excludePackages = [pkgs.xterm];
     };
 

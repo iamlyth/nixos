@@ -1,13 +1,12 @@
 { config, lib, pkgs, stablenix, modulesPath, ... }:
 {
-  imports =
-    [
-	  	../modules/desktop.nix
-			../modules/ssh.nix
-      (modulesPath + "/installer/scan/not-detected.nix")
-    ];
+  imports = [
+		../modules/desktop.nix
+		../modules/ssh.nix
+		(modulesPath + "/installer/scan/not-detected.nix")
+	];
 
-### HARDWARE CONFIG STARTS HERE
+	### HARDWARE CONFIG STARTS HERE
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "thunderbolt" "usbhid" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
@@ -104,6 +103,7 @@
     enable = true;
 		vpn.enable = true;
 		nvidia.enable = false;
+		intel.enable = false;
   };
 
   ### SSH
@@ -220,5 +220,5 @@
     extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
   };
 
-  system.stateVersion = "25.10";
+  system.stateVersion = "25.11";
 }
