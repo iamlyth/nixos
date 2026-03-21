@@ -6,6 +6,7 @@ in{
     ./repo/xserver.nix
     ./repo/sway.nix
 		./repo/vpn.nix
+		./repo/rdp.nix
   ];
   options.desktop = {
     enable = mkOption {
@@ -42,6 +43,14 @@ in{
 				Whether or not to enable Mullvad VPN
 			'';
 		};
+		rdp.enable = mkOption {
+			type = types.bool;
+			default = false;
+			example = true;
+			description = ''
+				Whether or not to enable remote desktop
+			'';
+		};
   };
 
   config = mkIf cfg.enable {
@@ -52,5 +61,6 @@ in{
     };
     swaymodule.enable = false;
 		vpnmodule.enable = cfg.vpn.enable;
+		rdpmodule.enable = cfg.rdp.enable;
   };
 }

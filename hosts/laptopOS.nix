@@ -80,6 +80,7 @@ boot.initrd.availableKernelModules = [ "xhci_pci" "nvme"];
 		vpn.enable = true;
 		nvidia.enable = false;
 		intel.enable = true;
+		rdp.enable = true;
   };
 
 	services.avahi = {
