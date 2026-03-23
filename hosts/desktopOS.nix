@@ -104,6 +104,7 @@
 		vpn.enable = true;
 		nvidia.enable = false;
 		intel.enable = false;
+		rdp.enable = true;
   };
 
   ### SSH
@@ -115,8 +116,8 @@
   ## gaming
   programs.steam = {
     enable = true;
-    gamescopesession.enable = true;
-		remoteplay.openfirewall = true;
+    gamescopeSession.enable = true;
+		remotePlay.openFirewall = true;
   };
   programs.gamemode.enable = true; #request for os to optimize to gaming
 
@@ -219,6 +220,12 @@
     home = "/home/lalobied";
     extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
   };
+
+	## Disable system from sleeping
+	systemd.targets.sleep.enable = false;
+  systemd.targets.suspend.enable = false;
+  systemd.targets.hibernate.enable = false;
+  systemd.targets.hybrid-sleep.enable = false;
 
   system.stateVersion = "25.11";
 }

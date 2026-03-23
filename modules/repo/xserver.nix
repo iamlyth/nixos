@@ -52,9 +52,9 @@ in{
         layout = "us";
         variant = "";
       };
-      videoDrivers = if cfg.nvidia.enable then ["nvidia"] 
+      videoDrivers = if cfg.nvidia.enable then ["nvidia"]
 				else if cfg.intel.enable then ["intel"]
-				else []; #with hardware acceleration
+				else lib.mkDefault [];
       excludePackages = [pkgs.xterm];
     };
 
@@ -70,21 +70,6 @@ in{
       gnome-music #music app
       simple-scan #scanner
     ]);
-
-		# Enable the GNOME RDP components
-		services.gnome.gnome-remote-desktop.enable = true;
-
-		# Ensure the service starts automatically at boot so the settings panel appears
-		systemd.services.gnome-remote-desktop = {
-			wantedBy = [ "graphical.target" ];
-		};
-
-		# Open the default RDP port (3389)
-		networking.firewall.allowedTCPPorts = [ 3389 ];
-
-		# Disable autologin to avoid session conflicts
-		services.displayManager.autoLogin.enable = false;
-		services.getty.autologinUser = null;
 
   };
 }
