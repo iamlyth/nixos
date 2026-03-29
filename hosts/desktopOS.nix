@@ -90,6 +90,7 @@
 		dnsutils				#DNS diagnosing
 		makemkv					#shredding
 		myvlc
+		gnome-sound-recorder
 
 		#develop applications
     libgcc          #C/Cpp compilers
