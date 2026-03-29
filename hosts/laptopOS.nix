@@ -81,7 +81,7 @@
 		vpn.enable = true;
 		nvidia.enable = false;
 		intel.enable = true;
-		rdp.enable = true;
+		rdp.enable = false;
   };
 
 	#Tailscale
