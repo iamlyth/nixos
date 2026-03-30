@@ -1,4 +1,9 @@
 {config, pkgs, lib, ...}:
+let
+  gruvbox-gtk = pkgs.gruvbox-gtk-theme.override {
+    iconVariants = [ "Dark" "Light" ];
+  };
+in
 {
   imports = [
 		./repo/zsh.nix
@@ -24,6 +29,10 @@
       name = "Gruvbox-Light";
       package = pkgs.gruvbox-gtk-theme;
     };
+		iconTheme = {
+    	name = "Gruvbox-Dark";
+    	package = gruvbox-gtk;
+  	};
   };
 
   dconf.settings = {
