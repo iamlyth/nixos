@@ -15,7 +15,7 @@ in{
 	config = mkIf cfg.enable {
 		programs.nixvim = {
 			enable = true;
-			colorschemes.tokyonight.enable = true;
+			colorschemes.gruvbox.enable = true;
 			viAlias = true;
 			vimAlias = true;
 			globals.mapleader = ",";
