@@ -9,7 +9,7 @@
 	### HARDWARE CONFIG STARTS HERE
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "thunderbolt" "usbhid" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-amd" ];
+  boot.kernelModules = [ "kvm-amd" "sg" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
@@ -90,6 +90,7 @@
 		gnome-tweaks		#for fixing my fonts
 		dnsutils				#DNS diagnosing
 		makemkv					#shredding
+		mkvtoolnix			#unshredding?
 		myvlc
 		gnome-sound-recorder
 
