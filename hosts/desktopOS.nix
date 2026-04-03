@@ -72,6 +72,7 @@
 		tochd						#compressing PSX/PS2 games to a single file. No duplicate entries.
 		rusty-psn				#updating ps3 games
 		traceroute
+		fastfetch
 
     #desktop applications
     librewolf

@@ -58,6 +58,7 @@
 		cifs-utils
 		eza							#ls replacement
 		fzf							#needed for zsh auto suggestion
+		fastfetch
 
     #desktop applications
     librewolf
