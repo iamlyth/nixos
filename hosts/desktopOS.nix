@@ -9,7 +9,7 @@
 	### HARDWARE CONFIG STARTS HERE
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "thunderbolt" "usbhid" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-amd" "sg" ];
+  boot.kernelModules = [ "kvm-amd" "sg" "sr_mod" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
@@ -219,7 +219,7 @@
   users.users.lalobied = {
     isNormalUser = true;
     home = "/home/lalobied";
-    extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "cdrom" "disk" ]; # Enable ‘sudo’ for the user.
   };
 
 	## Disable system from sleeping
