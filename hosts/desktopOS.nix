@@ -77,7 +77,7 @@
     #desktop applications
     librewolf
 		vivaldi
-    evolution
+    geary
     gparted
 		darktable				#photo editing	
     discord-ptb

@@ -62,7 +62,7 @@
 
     #desktop applications
     librewolf
-    evolution
+		geary
     gparted
 		darktable				#photo editing	
 	  filezilla				#maybe replaced by remmina
