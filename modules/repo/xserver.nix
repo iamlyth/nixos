@@ -59,14 +59,10 @@ in{
     };
 
     environment.gnome.excludePackages = (with pkgs; [
-      snapshot #Camera
-      gnome-calendar #calendar
-      gnome-contacts #contacts
       epiphany #browser
       gnome-text-editor #text editor
       gnome-tour #tour app
       xterm #xterminal emulator
-      geary #gnome email
       gnome-music #music app
       simple-scan #scanner
     ]);

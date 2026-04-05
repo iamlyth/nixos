@@ -9,7 +9,7 @@
 	### HARDWARE CONFIG STARTS HERE
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "thunderbolt" "usbhid" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-amd" ];
+  boot.kernelModules = [ "kvm-amd" "sg" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
@@ -64,36 +64,36 @@
     unzip
     wget
     nmap
-		sbctl 					#for making secure boot keys
-		nfs-utils 			#for mounting NFS drives
-		cifs-utils
-		eza							#ls replacement
-		fzf							#needed for zsh auto suggestion
-		tochd						#compressing PSX/PS2 games to a single file. No duplicate entries.
-		rusty-psn				#updating ps3 games
-		traceroute
-		fastfetch
+    sbctl 					#for making secure boot keys
+    nfs-utils 			#for mounting NFS drives
+    cifs-utils
+    eza							#ls replacement
+    fzf							#needed for zsh auto suggestion
+    tochd						#compressing PSX/PS2 games to a single file. No duplicate entries.
+    rusty-psn				#updating ps3 games
+    traceroute
+    fastfetch
 
     #desktop applications
     librewolf
-		vivaldi
-    evolution
+    vivaldi
+    geary
     gparted
-		darktable				#photo editing	
+    darktable				#photo editing	
     discord-ptb
     mumble          #game chat
     (mumble.override { pulseSupport = true; }) #to add audio to mumble
     zed-editor      #for software development
-	  filezilla
+    filezilla
     mangohud        #not using this at the moment
-		protonup-qt 		#for selecting proton version in steam
-		gnome-tweaks		#for fixing my fonts
-		dnsutils				#DNS diagnosing
-		makemkv					#shredding
-		myvlc
-		gnome-sound-recorder
+    protonup-qt 		#for selecting proton version in steam
+    gnome-tweaks		#for fixing my fonts
+    dnsutils				#DNS diagnosing
+    makemkv					#shredding
+    myvlc
+    gnome-sound-recorder
 
-		#develop applications
+    #develop applications
     libgcc          #C/Cpp compilers
     bc
     linuxHeaders    #Don't need this anymore

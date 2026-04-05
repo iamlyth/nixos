@@ -53,27 +53,27 @@
     unzip
     wget
     nmap
-		sbctl 					#for making secure boot keys
-		nfs-utils 			#for mounting NFS drives
-		cifs-utils
-		eza							#ls replacement
-		fzf							#needed for zsh auto suggestion
-		fastfetch
+	sbctl 					#for making secure boot keys
+    nfs-utils 			#for mounting NFS drives
+    cifs-utils
+    eza							#ls replacement
+    fzf							#needed for zsh auto suggestion
+    fastfetch
 
     #desktop applications
     librewolf
-    evolution
+    geary
     gparted
-		darktable				#photo editing	
-	  filezilla				#maybe replaced by remmina
-		protonup-qt 		#for selecting proton version in steam
-		plex-desktop
-		gnome-tweaks		#for fixing my fonts
-		dnsutils				#DNS diagnosing
-		
-		#framework 12 specific
-		sbctl						#for debugging and troubleshooting secureboot
-		tpm2-tss				#for using the tpm2 chip with systemd-cryptenroll
+    darktable				#photo editing	
+	filezilla				#maybe replaced by remmina
+    protonup-qt 		#for selecting proton version in steam
+    plex-desktop
+    gnome-tweaks		#for fixing my fonts
+    dnsutils				#DNS diagnosing
+    
+    #framework 12 specific
+    sbctl						#for debugging and troubleshooting secureboot
+    tpm2-tss				#for using the tpm2 chip with systemd-cryptenroll
   ];
 
   ### DESKTOP OPTIONS

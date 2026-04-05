@@ -9,6 +9,7 @@
 		gnomeExtensions.appindicator #for system tray (discord/steam)
 		gnomeExtensions.display-configuration-switcher
 		gnomeExtensions.vitals
+		gnomeExtensions.caffeine
   ];
   dconf = {
 		enable = true;
@@ -22,6 +23,7 @@
 				appindicator.extensionUuid
 				display-configuration-switcher.extensionUuid
 				vitals.extensionUuid
+				caffeine.extensionUuid
 			];
 		};
 	};
