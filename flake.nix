@@ -9,6 +9,7 @@
 		vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
 		nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 		lanzaboote.url = "github:nix-community/lanzaboote/v0.4.3";
+		nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
 		nixos-generators = {
   		url = "github:nix-community/nixos-generators";
  			inputs.nixpkgs.follows = "nixpkgs";
@@ -27,7 +28,7 @@
 		};
   };
 
-  outputs = {self, nixpkgs, nixos-hardware, home-manager, nixos-generators,  ... }@inputs: 
+  outputs = {self, nixpkgs, nixos-hardware, home-manager, nixos-generators, ... }@inputs: 
 	{
 		nixosConfigurations = {
 			### Define mediaOS	
@@ -58,6 +59,7 @@
 				};
 				modules = [
 					nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
+					{ nixpkgs.overlays = [ inputs.nix-cachyos-kernel.overlays.default ]; }
 					inputs.lanzaboote.nixosModules.lanzaboote
           inputs.home-manager-unstable.nixosModules.home-manager {
             home-manager.useGlobalPkgs = true;

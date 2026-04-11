@@ -7,8 +7,10 @@
 	];
 
 	### HARDWARE CONFIG STARTS HERE
+
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "thunderbolt" "usbhid" ];
   boot.initrd.kernelModules = [ ];
+  boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest;
   boot.kernelModules = [ "kvm-amd" "sg" ];
   boot.extraModulePackages = [ ];
 
