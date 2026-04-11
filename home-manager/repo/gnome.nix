@@ -10,6 +10,7 @@
 		gnomeExtensions.display-configuration-switcher
 		gnomeExtensions.vitals
 		gnomeExtensions.caffeine
+		gnomeExtensions.text-clock
   ];
   dconf = {
 		enable = true;
@@ -24,6 +25,7 @@
 				display-configuration-switcher.extensionUuid
 				vitals.extensionUuid
 				caffeine.extensionUuid
+				text-clock.extensionUuid
 			];
 		};
 	};
