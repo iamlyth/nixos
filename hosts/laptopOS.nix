@@ -12,6 +12,23 @@
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
+ 	boot.plymouth = {
+		enable = true;
+		theme = "rings";
+		themePackages = with pkgs; [
+			(adi1090x-plymouth-themes.override {
+				selected_themes = [ "rings" ];
+			})
+		];
+	};
+
+	boot.consoleLogLevel = 3;
+	boot.initrd.verbose = false;
+	boot.kernelParams = [
+		"quiet"
+		"udev.log_level=3"
+		"systemd.show_status=auto"
+	];
 
   fileSystems."/" =
     { device = "/dev/mapper/luks-37c6e84c-b4f6-4b9a-905a-26035ae731b2";
