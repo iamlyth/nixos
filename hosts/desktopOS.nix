@@ -3,6 +3,7 @@
   imports = [
 		../modules/desktop.nix
 		../modules/ssh.nix
+		../modules/ai.nix
 		(modulesPath + "/installer/scan/not-detected.nix")
 	];
 
@@ -47,6 +48,9 @@
   ###SHELL
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
+
+	###AI
+	aimodule.enable = true;
 
   ###OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];
