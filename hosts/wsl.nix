@@ -12,6 +12,9 @@
 
 	nix.settings.experimental-features = ["nix-command" "flakes"];
 
+
+  nixpkgs.config.allowUnfree = true; #allow proprietary packages
+
 	### SHELL
 	programs.zsh.enable = true;
 	users.defaultUserShell = pkgs.zsh;
@@ -22,6 +25,7 @@
 		eza
 		fzf #needed for zsh auto suggestion
 		ripgrep
+		claude-code
 	];
 
 	#timezone
