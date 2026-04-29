@@ -4,6 +4,7 @@
   imports = [
     ./repo/zsh.nix
     ./repo/nvim.nix
+		./repo/claude.nix
   ];
 
 	zshmodule = {
@@ -12,6 +13,10 @@
 	};
 
 	nvimmodule = {
+		enable = true;
+	};
+	
+	claudemodule = {
 		enable = true;
 	};
 }

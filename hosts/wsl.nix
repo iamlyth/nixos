@@ -25,7 +25,6 @@
 		eza
 		fzf #needed for zsh auto suggestion
 		ripgrep
-		claude-code
 	];
 
 	#timezone
