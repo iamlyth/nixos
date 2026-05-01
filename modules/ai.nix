@@ -18,6 +18,7 @@ in{
 			enable = true;
 			package = pkgs.ollama-rocm;
 			loadModels = [ "gemma4:26b" ];
+			host = "0.0.0.0";
 			environmentVariables = {
     		HSA_OVERRIDE_GFX_VERSION = "11.0.0";
   		};
@@ -28,7 +29,7 @@ in{
 				TimeoutIdleSec = "5min"; #stop if idle
   		};
 		};
-		networking.firewall.allowedTCPPorts = [ 8080 ];
+		networking.firewall.allowedTCPPorts = [ 8080 11434 ];
 		services.open-webui = {
 			enable = true;
 			port = 8080;
