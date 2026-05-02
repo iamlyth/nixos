@@ -49,6 +49,7 @@ in
 				name = "Gruvbox-Plus-Dark";
 				package =  gruvbox-plus-icons;
 			};
+			gtk4.theme = null;
 		};
 
 		dconf.settings = {

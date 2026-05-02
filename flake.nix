@@ -76,7 +76,7 @@
             home-manager.users.lalobied = {
 							imports = [
 								./home-manager/desktop-home.nix
-								inputs.nixvim.homeManagerModules.nixvim
+								inputs.nixvim.homeModules.nixvim
 							];
 						};
 						home-manager.extraSpecialArgs = { inherit inputs; };
@@ -103,7 +103,7 @@
             home-manager.users.lalobied = {
 							imports = [
 								./home-manager/laptop-home.nix
-								inputs.nixvim.homeManagerModules.nixvim
+								inputs.nixvim.homeModules.nixvim
 							];
 						};
 						home-manager.extraSpecialArgs = { inherit inputs; };
@@ -123,7 +123,7 @@
             home-manager.users.lalobied = {
 							imports = [
 								./home-manager/portable-home.nix
-								inputs.nixvim.homeManagerModules.nixvim
+								inputs.nixvim.homeModules.nixvim
 							];
 						};
             home-manager.extraSpecialArgs = { inherit inputs; };

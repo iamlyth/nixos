@@ -41,12 +41,12 @@ in{
         open = false;
     };
 		
+    services.displayManager.gdm.enable = true;
+    services.desktopManager.gnome.enable = true;
+
     services.xserver = {
       #enable graphical interface
       enable = true;
-      #enable GNOME
-      displayManager.gdm.enable = true;
-      desktopManager.gnome.enable = true;
       #keymap in X11
       xkb = {
         layout = "us";
