@@ -59,17 +59,12 @@
 				};
 				modules = [
 					nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
-					{ nixpkgs.overlays = [ 
-						inputs.nix-cachyos-kernel.overlays.default 
-						(final: prev: {
-							ollama-rocm = prev.ollama-rocm.overrideAttrs (old: rec {
-								version = "0.21.0";
-								src = prev.fetchFromGitHub {
-									owner = "ollama";
-									repo = "ollama";
-									rev = "v${version}";
-									hash = "sha256-DtrYopNtndQXq9Xjriw5Bqell9A8RHPOvgDF8BlKtdU=";
-								};
+					{ nixpkgs.overlays = [
+						inputs.nix-cachyos-kernel.overlays.default
+						# Skipping tests while upstream sorts it out, revert once
+						# Hydra consistently builds openldap green.
+						(_: prev: {
+							openldap = prev.openldap.overrideAttrs (_: {
 								doCheck = false;
 							});
 						})

@@ -45,6 +45,11 @@
 
   nixpkgs.config.allowUnfree = true; #allow proprietary packages
 
+	## TEMPORARY FIXES
+	nixpkgs.config.permittedInsecurePackages = [
+  	"openssl-1.1.1w"
+	]; # This is only until discord removes its dependencies
+
   ###SHELL
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
