@@ -5,6 +5,7 @@
     ./repo/zsh.nix
     ./repo/nvim.nix
 		./repo/claude.nix
+		./repo/tmux.nix
   ];
 
 	zshmodule = {
@@ -17,6 +18,10 @@
 	};
 	
 	claudemodule = {
+		enable = true;
+	};
+
+	tmuxmodule = {
 		enable = true;
 	};
 }

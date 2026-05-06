@@ -21,7 +21,6 @@
 
 	environment.systemPackages = with pkgs; [
 		git
-		tmux
 		eza
 		fzf #needed for zsh auto suggestion
 		ripgrep
