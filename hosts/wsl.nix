@@ -24,7 +24,11 @@
 		eza
 		fzf #needed for zsh auto suggestion
 		ripgrep
+		uv
 	];
+
+	## fix for nix-ld
+	programs.nix-ld.enable = true;
 
 	#timezone
   time.timeZone = "US/Michigan";
