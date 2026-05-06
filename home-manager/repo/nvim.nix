@@ -75,6 +75,9 @@ in{
 				autowrite = true;
 				shiftwidth = 2;
 				tabstop = 2;
+				wrap = true;
+				linebreak = true;
+				textwidth = 0;
 			};
 			keymaps = [
 				#Nvim Tree
