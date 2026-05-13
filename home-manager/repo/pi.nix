@@ -13,7 +13,7 @@ let
         api = "openai-completions";
         apiKey = "ollama";
         models = [
-          { id = "gemma4:26b"; }
+          { id = "qwen3.6:27b"; }
         ];
       };
     };
