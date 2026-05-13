@@ -6,6 +6,7 @@
 		./repo/gnome.nix
 		./repo/lutris.nix
 		./repo/gruvbox.nix
+		./repo/pi.nix
   ];
 	nvimmodule = {
 		enable = true;
@@ -19,6 +20,10 @@
 	};
 
 	gruvboxmodule = {
+		enable = true;
+	};
+
+	pimodule = {
 		enable = true;
 	};
 

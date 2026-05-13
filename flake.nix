@@ -10,6 +10,7 @@
 		nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 		lanzaboote.url = "github:nix-community/lanzaboote/v0.4.3";
 		nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
+		jaildotnix.url = "sourcehut:~alexdavid/jail.nix";
 		nixos-generators = {
   		url = "github:nix-community/nixos-generators";
  			inputs.nixpkgs.follows = "nixpkgs";

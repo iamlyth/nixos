@@ -85,6 +85,7 @@
     traceroute
     fastfetch
 		tmux
+		ripgrep
 
     #desktop applications
     librewolf
