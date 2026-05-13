@@ -84,6 +84,7 @@
     rusty-psn				#updating ps3 games
     traceroute
     fastfetch
+		tmux
 
     #desktop applications
     librewolf
