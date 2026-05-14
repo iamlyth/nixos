@@ -25,6 +25,8 @@
 		fzf #needed for zsh auto suggestion
 		ripgrep
 		uv
+		pandoc
+		poppler-utils
 	];
 
 	## fix for nix-ld
