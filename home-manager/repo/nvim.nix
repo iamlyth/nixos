@@ -74,6 +74,7 @@ in{
 				ruler = true;
 				autowrite = true;
 				shiftwidth = 2;
+				expandtab = true;
 				tabstop = 2;
 				wrap = true;
 				linebreak = true;
