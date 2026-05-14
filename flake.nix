@@ -32,7 +32,7 @@
   outputs = {self, nixpkgs, nixos-hardware, home-manager, nixos-generators, ... }@inputs: 
   {
     nixosConfigurations = {
-      ### Define mediaOS  
+      # Define mediaOS  
       mediaOS = let system = "x86_64-linux";
       in nixpkgs.lib.nixosSystem {
         modules = [
@@ -49,7 +49,7 @@
         ];
       };
 
-      ### Define desktopOS
+      # Define desktopOS
       desktopOS = let system = "x86_64-linux";
       in inputs.nixpkgs-unstable.lib.nixosSystem {
         specialArgs = {
@@ -86,7 +86,7 @@
         ];
       };
 
-      ### Define laptopOS
+      # Define laptopOS
       laptopOS = let system = "x86_64-linux";
       in inputs.nixpkgs-unstable.lib.nixosSystem {
         specialArgs = {
@@ -113,7 +113,7 @@
         ];
       };
     
-      ### Define NixOS-WSL
+      # Define NixOS-WSL
       wsl = let system = "x86_64-linux";
       in nixpkgs.lib.nixosSystem {
         modules = [
@@ -133,7 +133,7 @@
         ];
       };
 
-      ### Define paperLXC  
+      # Define paperLXC  
       paperLXC = let system = "x86_64-linux";
       in nixpkgs.lib.nixosSystem {
         modules = [
@@ -149,7 +149,7 @@
         ];
       };
 
-      ### Define photoLXC  
+      # Define photoLXC  
       photoLXC = let system = "x86_64-linux";
       in nixpkgs.lib.nixosSystem {
         modules = [
@@ -166,7 +166,7 @@
       };
     };
     
-    #LXC Container Template
+    # LXC Container Template
     packages.x86_64-linux = {
       lxctemplate = nixos-generators.nixosGenerate {
         system = "x86_64-linux";

@@ -1,7 +1,7 @@
 {pkgs, lib, inputs, config, ... }:
 with lib; let
   cfg = config.tmuxmodule;
-in{
+in {
   options.tmuxmodule = {
     enable = mkOption {
       type = types.bool;

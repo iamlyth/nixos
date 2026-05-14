@@ -1,7 +1,7 @@
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.rdpmodule;
-in{
+in {
   options.rdpmodule = {
     enable = mkOption {
       type = types.bool;

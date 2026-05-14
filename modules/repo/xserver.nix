@@ -1,7 +1,7 @@
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.xservermodule;
-in{
+in {
   options.xservermodule = {
     enable = mkOption {
       type = types.bool;
@@ -30,7 +30,7 @@ in{
     };
   };
   config = mkIf cfg.enable {
-    hardware.graphics = { #renamed from hardware.opengl
+      hardware.graphics = { #  renamed from hardware.opengl
       enable = true;
     };
     hardware.nvidia = mkIf cfg.nvidia.enable {
@@ -45,9 +45,9 @@ in{
     services.desktopManager.gnome.enable = true;
 
     services.xserver = {
-      #enable graphical interface
+      # enable graphical interface
       enable = true;
-      #keymap in X11
+      # keymap in X11
       xkb = {
         layout = "us";
         variant = "";
@@ -59,12 +59,12 @@ in{
     };
 
     environment.gnome.excludePackages = (with pkgs; [
-      epiphany #browser
-      gnome-text-editor #text editor
-      gnome-tour #tour app
-      xterm #xterminal emulator
-      gnome-music #music app
-      simple-scan #scanner
+    epiphany          #  browser
+    gnome-text-editor #  text editor
+    gnome-tour        #  tour app
+    xterm             #  xterminal emulator
+    gnome-music       #  music app
+    simple-scan       #  scanner
     ]);
 
   };

@@ -1,7 +1,7 @@
 {pkgs, lib, inputs, config, ... }:
 with lib; let
   cfg = config.vimmodule;
-in{
+in {
   options.vimmodule = {
     enable = mkOption {
       type = types.bool;
@@ -26,7 +26,7 @@ in{
       plugins = with pkgs.vimPlugins; [
         vim-airline
         indentLine
-        sensible  #sensible vimrc settings
+        sensible  #  sensible vimrc settings
         vim-surround
       ];
       settings = { ignorecase = true; };

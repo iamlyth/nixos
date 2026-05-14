@@ -1,7 +1,7 @@
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.papermodule;
-in{
+in {
   options.papermodule = {
     enable = mkOption {
       type = types.bool;
@@ -31,8 +31,8 @@ in{
       enable = true;
       port=28981;
       address = "0.0.0.0";
-      #consumptionDirIsPublic = false;
-      #consumptionDir = "/Users/printer/inbox";
+      # consumptionDirIsPublic = false;
+      # consumptionDir = "/Users/printer/inbox";
       database.createLocally = true;
       mediaDir = "/mnt/familyvault/";
       user = "paperless";

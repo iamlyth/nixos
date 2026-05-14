@@ -1,7 +1,7 @@
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.immichmodule;
-in{
+in {
   options.immichmodule = {
     enable = mkOption {
       type = types.bool;

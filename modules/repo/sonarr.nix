@@ -3,7 +3,7 @@ with lib; let
   cfg = config.sonarrmodule;
   defaultPort = 7877;
   media = config.media;
-in{
+in {
   options.sonarrmodule = {
     enable = mkOption {
       type = types.bool;

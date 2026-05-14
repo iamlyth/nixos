@@ -1,4 +1,4 @@
-{ config, lib, pkgs, modulesPath, ... }:
+ { config, lib, pkgs, modulesPath, ... }:
 
 {
   imports =
@@ -7,13 +7,13 @@
       (modulesPath + "/profiles/qemu-guest.nix")
     ];
 
-  #IMPORT OF hardware-configuration.nix
+    # IMPORT OF hardware-configuration.nix
     boot.initrd.availableKernelModules = [ "ata_piix" "uhci_hcd" "virtio_pci"
 "virtio_scsi" "sd_mod" "sr_mod"];
     boot.initrd.kernelModules = ["nfs" ];
     boot.initrd.supportedFilesystems =["nfs"];
-    #boot.kernelModules = [ ];
-    #boot.extraModulePackages = [ ];
+    # boot.kernelModules = [ ];
+    # boot.extraModulePackages = [ ];
 
     fileSystems."/" =
       { device = "/dev/disk/by-uuid/c78b2723-849c-4fe8-9feb-a06f1ca30666";
@@ -34,14 +34,14 @@
 
     nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
-  #END OF IMPORT OF hardware-configuration.nix
-  nixpkgs.config.allowUnfree = true; # Plex is unfree
+  # END OF IMPORT OF hardware-configuration.nix
+  nixpkgs.config.allowUnfree = true; #  Plex is unfree
 
-  ###SHELL
+  # # # SHELL
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
 
-  ###OS TOOLS
+  # # #OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];
   environment.systemPackages = with pkgs; [
     git
@@ -54,30 +54,30 @@
     traceroute
     wireguard-tools
     nfs-utils
-    pciutils            #making sure pci-e devices are passed through from host
+  pciutils            #  making sure pci-e devices are passed through from host
   ];
 
-  ### MEDIA OPTIONS
+  # MEDIA OPTIONS
   media = {
     enable = true;
     vpn.enable = true;
   };
   users.groups.media = { };
 
-  ### SSH
+  # SSH
   sshmodule = {
     enable = true;
     port = [55];
   };
 
   # Use the systemd-boot EFI boot loader.
-  #boot.loader.systemd-boot.enable = true;
-  #boot.loader.efi.canTouchEfiVariables = true;
+  # boot.loader.systemd-boot.enable = true;
+  # boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
 
   networking = {
-    hostName = "mOS"; # Define your hostname.
+    hostName = "mOS"; #  Define your hostname.
     nameservers = ["1.1.1.1" "1.0.0.1"];
     interfaces.ens18.ipv4.addresses = [{
       address = "192.168.5.106";
@@ -93,9 +93,9 @@
     device = "192.168.5.114:/var/nfs/shared/media";
     fsType = "nfs";
     options = [
-      #"bind"
+      # "bind"
       "defaults"
-      #"user"
+      # "user"
       "rw"
       "nofail"
       "exec"
@@ -110,7 +110,7 @@
   users.users.lalobied = {
     isNormalUser = true;
     home = "/home/lalobied";
-    extraGroups = [ "wheel" "media" ]; # Enable ‘sudo’ for the user.
+  extraGroups = [ "wheel" "media" ]; #  Enable ‘sudo’ for the user.
   };
 
   system.stateVersion = "25.05";

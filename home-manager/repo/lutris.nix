@@ -1,7 +1,7 @@
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.lutrismodule;
-in{
+in {
   options.lutrismodule = {
     enable = mkOption {
       type = types.bool;

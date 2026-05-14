@@ -1,7 +1,7 @@
 {pkgs, lib, config, ...}:
 with lib; let
   cfg = config.desktop;
-in{
+in {
   imports = [
     ./repo/xserver.nix
     ./repo/sway.nix

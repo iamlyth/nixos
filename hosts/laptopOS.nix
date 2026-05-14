@@ -1,4 +1,4 @@
-{ config, lib, pkgs, stablenix, modulesPath, ... }:
+ { config, lib, pkgs, stablenix, modulesPath, ... }:
 {
   imports =
     [
@@ -6,7 +6,7 @@
       (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  ### HARDWARE CONFIG STARTS HERE
+  # HARDWARE CONFIG STARTS HERE
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "nvme"];
   boot.initrd.kernelModules = [ ];
@@ -52,15 +52,15 @@
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
 
-  ### HARDWARE CONFIG ENDS HERE
+  # HARDWARE CONFIG ENDS HERE
 
-  nixpkgs.config.allowUnfree = true; #allow proprietary packages
+  nixpkgs.config.allowUnfree = true; #  allow proprietary packages
 
-  ###SHELL
+  # # # SHELL
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
 
-  ###OS TOOLS
+  # # #OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];
   environment.systemPackages = with pkgs; 
   [
@@ -70,30 +70,30 @@
     unzip
     wget
     nmap
-  sbctl           #for making secure boot keys
-    nfs-utils       #for mounting NFS drives
+    sbctl             #  for making secure boot keys
+    nfs-utils       #  for mounting NFS drives
     cifs-utils
-    eza              #ls replacement
-    fzf              #needed for zsh auto suggestion
+    eza              #  ls replacement
+    fzf              #  needed for zsh auto suggestion
     fastfetch
 
-    #desktop applications
+    # desktop applications
     librewolf
     geary
     gparted
-    darktable        #photo editing  
-  filezilla        #maybe replaced by remmina
-    protonup-qt     #for selecting proton version in steam
+    darktable        #  photo editing  
+    filezilla          #  maybe replaced by remmina
+    protonup-qt      #  for selecting proton version in steam
     plex-desktop
-    gnome-tweaks    #for fixing my fonts
-    dnsutils        #DNS diagnosing
+    gnome-tweaks    #  for fixing my fonts
+    dnsutils        #  DNS diagnosing
     
-    #framework 12 specific
-    sbctl            #for debugging and troubleshooting secureboot
-    tpm2-tss        #for using the tpm2 chip with systemd-cryptenroll
+  # framework 12 specific
+  sbctl            #  for debugging and troubleshooting secureboot
+  tpm2-tss         #  for using the tpm2 chip with systemd-cryptenroll
   ];
 
-  ### DESKTOP OPTIONS
+  # DESKTOP OPTIONS
   desktop = {
     enable = true;
     vpn.enable = true;
@@ -102,13 +102,13 @@
     rdp.enable = false;
   };
 
-  #Tailscale
+  # Tailscale
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "client";
   };
 
-  #for DNS
+  # for DNS
   services.avahi = {
     enable = true;
     nssmdns4 = true;
@@ -123,19 +123,19 @@
     ];
   };
 
-  ## Flatpak
+  # Flatpak
   services.flatpak.enable = true;
 
-  ## fwupd Firmware updater
+  # fwupd Firmware updater
   services.fwupd.enable = true;
 
-  ## gaming
+  # gaming
   programs.steam = {
     enable = true;
     gamescopeSession.enable = true;
     remotePlay.openFirewall = true;
   };
-  programs.gamemode.enable = true; #request for os to optimize to gaming
+  programs.gamemode.enable = true; #  request for os to optimize to gaming
 
   # Bootloader
   boot.loader.systemd-boot.enable = lib.mkForce false;
@@ -144,8 +144,8 @@
     enable = true;
     pkiBundle = "/var/lib/sbctl";
   };
-  #boot.loader.systemd-boot.enable = true;
-  #boot.loader.efi.canTouchEfiVariables = true;
+  # boot.loader.systemd-boot.enable = true;
+  # boot.loader.efi.canTouchEfiVariables = true;
 
   networking = {
     networkmanager.enable = true;
@@ -155,10 +155,10 @@
       allowedUDPPortRanges = allowedTCPPortRanges;
       trustedInterfaces = ["tailscale0"];
     };
-    hostName = "laptop"; # Define your hostname.
+  hostName = "laptop"; #  Define your hostname.
   };
 
-  #fileSystems."/home/lalobied/Cloud" = {
+  # fileSystems."/home/lalobied/Cloud" = {
   #  device = "//192.168.5.114/Personal-Drive";
   #  fsType = "cifs";
   #  options = [
@@ -172,13 +172,13 @@
   #    "rw"
   #    "file_mode=0757"
   #    "dir_mode=0757"
-   #    "x-systemd.requires=network-online.target"
+  #    "x-systemd.requires=network-online.target"
   #    "x-systemd.after=network-online.target" 
   #    "_netdev"
   #  ];
-  #};
+  # };
 
-  #enable sound
+  # enable sound
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -195,7 +195,7 @@
   users.users.lalobied = {
     isNormalUser = true;
     home = "/home/lalobied";
-    extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
+  extraGroups = [ "wheel" ]; #  Enable ‘sudo’ for the user.
   };
 
   system.stateVersion = "25.11";

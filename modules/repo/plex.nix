@@ -2,7 +2,7 @@
 with lib; let
   cfg = config.plexmodule;
   defaultPort = 32400;
-in{
+in {
   options.plexmodule = {
     enable = mkOption {
       type = types.bool;

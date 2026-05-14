@@ -2,7 +2,7 @@
 with lib; let
   cfg = config.media;
   defaultMediaDir = "/media/";
-in{
+in {
   imports = [
     ./repo/plex.nix
     ./repo/radarr.nix
@@ -67,24 +67,24 @@ in{
       libraryOwner.group = "media";
     };
 
-    ### PLEX
+    # PLEX
     plexmodule = {
       enable = true;
     };
 
-    ### RADARR
+    # RADARR
     radarrmodule = {
       enable = true;
       vpn.enable = cfg.vpn.enable;
     };
 
-    ### SONARR
+    # SONARR
     sonarrmodule = {
       enable = true;
       vpn.enable = cfg.vpn.enable;
     };
 
-    ### SABNZBD
+    # SABNZBD
     sabnzbdmodule = {
       enable = true;
       openFirewall = true;

@@ -1,4 +1,4 @@
-{config, pkgs, lib, ...}:
+ { config, pkgs, lib, ...}:
 with lib; let
   cfg = config.gruvboxmodule;
   gruvbox-gtk = pkgs.gruvbox-gtk-theme.override {
@@ -62,10 +62,10 @@ in
         use-system-font = false;
         terminal-padding = 6;
         palette = [
-          "#fbf1c7" "#9d0006" "#79740e" "#b57614"
-          "#076678" "#8f3f71" "#427b58" "#7c6f64"
-          "#928374" "#cc241d" "#98971a" "#d79921"
-          "#458588" "#b16286" "#689d6a" "#3c3836"
+        "#fbf1c7" "#9d0006" "#79740e" "#b57614"
+        "#076678" "#8f3f71" "#427b58" "#7c6f64"
+        "#928374" "#cc241d" "#98971a" "#d79921"
+        "#458588" "#b16286" "#689d6a" "#3c3836"
         ];
       };
       "org/gnome/shell/extensions/nightthemeswitcher/color-scheme" = {

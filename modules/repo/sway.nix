@@ -1,7 +1,7 @@
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.swaymodule;
-in{
+in {
   options.swaymodule = {
     enable = mkOption {
       type = types.bool;
@@ -21,11 +21,11 @@ in{
     services.gnome.gnome-keyring.enable = true;
 
     environment.systemPackages = with pkgs; [
-      grim #for screenshots
-      slurp #screenshops
-      wl-clipboard # wl-copy and wl-paste for copy/paste from stdin / stdout
-      mako # notification system developed by swaywm maintainer
+    grim         #  for screenshots
+    slurp        #  screenshops
+    wl-clipboard #  wl-copy and wl-paste for copy/paste from stdin / stdout
+    mako         #  notification system developed by swaywm maintainer
     ];
-    security.polkit.enable = true; #sway stuff
+  security.polkit.enable = true; #  sway stuff
   };
 }

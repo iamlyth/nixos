@@ -1,4 +1,4 @@
-{config, pkgs, ...}:
+ { config, pkgs, ...}:
 {
   home.packages = with pkgs; [
     # Ensure the extension packages themselves are present
@@ -6,7 +6,7 @@
     gnomeExtensions.gsconnect
     gnomeExtensions.night-theme-switcher
     gnomeExtensions.forge
-    gnomeExtensions.appindicator #for system tray (discord/steam)
+    gnomeExtensions.appindicator #  for system tray (discord/steam)
     gnomeExtensions.display-configuration-switcher
     gnomeExtensions.vitals
     gnomeExtensions.caffeine

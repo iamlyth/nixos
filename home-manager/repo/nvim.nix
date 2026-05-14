@@ -1,7 +1,7 @@
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.nvimmodule;
-in{
+in {
   options.nvimmodule = {
     enable = mkOption {
       type = types.bool;
@@ -22,15 +22,15 @@ in{
       plugins = {
         lualine.enable = true;
         nvim-tree.enable = true;
-        web-devicons.enable = true; #explict for nvim-tree
+        web-devicons.enable = true; #  explict for nvim-tree
         telescope.enable = true;
         mini-map = {
           enable = true;
           settings = {
-            #integrations = lib.nixvim.mkRaw "nil";
+            # integrations = lib.nixvim.mkRaw "nil";
 
             symbols = {
-              #encode = lib.nixvim.mkRaw "nil";
+              # encode = lib.nixvim.mkRaw "nil";
               scroll_line = "█";
               scroll_view = "┃";
             };
@@ -81,7 +81,7 @@ in{
         textwidth = 0;
       };
       keymaps = [
-        #Nvim Tree
+        # Nvim Tree
         {
           mode = "n";
           key = "<C-f>";
@@ -92,7 +92,7 @@ in{
           };
         }
 
-        #Window management
+        # Window management
         {
           mode = "n";
           key = "<C-j>";
@@ -118,7 +118,7 @@ in{
           options.desc = "Move to window right";
          }
 
-        #telescope
+        # telescope
         {
           mode = "n";
           key = "<leader>ff";
@@ -137,7 +137,7 @@ in{
               silent = true;
           };
         }
-        #minimap
+        # minimap
         {
           mode = "n";
           key = "<leader>mo";

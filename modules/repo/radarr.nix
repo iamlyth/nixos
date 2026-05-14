@@ -3,7 +3,7 @@ with lib; let
   cfg = config.radarrmodule;
   defaultPort = 7878;
   media = config.media;
-in{
+in {
   options.radarrmodule = {
     enable = mkOption {
       type = types.bool;

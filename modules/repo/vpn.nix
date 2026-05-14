@@ -1,7 +1,7 @@
 {pkgs, lib, config, ...}:
 with lib; let
   cfg = config.vpnmodule;
-in{
+in {
   options.vpnmodule = {
     enable = mkOption {
       type = types.bool;

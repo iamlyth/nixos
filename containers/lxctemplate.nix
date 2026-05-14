@@ -1,12 +1,12 @@
-#containers/lxctemplate.nix
+# containers/lxctemplate.nix
 { modulesPath, config, lib, pkgs, ... }:
 {
   imports = [
     ../modules/ssh.nix
     (modulesPath + "/virtualisation/proxmox-lxc.nix")
   ];
-    #PATH=$PATH:/run/current-system/sw/bin/
-    #zsh
+    # PATH=$PATH:/run/current-system/sw/bin/
+    # zsh
 
     boot.isContainer = true;
 
@@ -16,7 +16,7 @@
       "sys-fs-fuse-connections.mount"
     ];
      
-    ### SHELL
+    # SHELL
     programs.zsh.enable = true;
     users.defaultUserShell = pkgs.zsh;
 

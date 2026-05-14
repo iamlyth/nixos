@@ -1,4 +1,4 @@
-{ config, lib, pkgs, stablenix, modulesPath, ... }:
+ { config, lib, pkgs, stablenix, modulesPath, ... }:
 {
   imports = [
     ../modules/desktop.nix
@@ -7,7 +7,7 @@
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
-  ### HARDWARE CONFIG STARTS HERE
+  # HARDWARE CONFIG STARTS HERE
 
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "thunderbolt" "usbhid" ];
   boot.initrd.kernelModules = [ ];
@@ -41,23 +41,23 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
-  ### HARDWARE CONFIG ENDS HERE
+  # HARDWARE CONFIG ENDS HERE
 
-  nixpkgs.config.allowUnfree = true; #allow proprietary packages
+  nixpkgs.config.allowUnfree = true; #  allow proprietary packages
 
-  ## TEMPORARY FIXES
+  # TEMPORARY FIXES
   nixpkgs.config.permittedInsecurePackages = [
     "openssl-1.1.1w"
-  ]; # This is only until discord removes its dependencies
+  ]; #  This is only until discord removes its dependencies
 
-  ###SHELL
+  # # # SHELL
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
 
-  ###AI
+  # # # AI
   aimodule.enable = true;
 
-  ###OS TOOLS
+  # # #OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];
   environment.systemPackages = with pkgs; 
   let
@@ -75,45 +75,45 @@
     unzip
     wget
     nmap
-    sbctl           #for making secure boot keys
-    nfs-utils       #for mounting NFS drives
+    sbctl           #  for making secure boot keys
+    nfs-utils       #  for mounting NFS drives
     cifs-utils
-    eza              #ls replacement
-    fzf              #needed for zsh auto suggestion
-    tochd            #compressing PSX/PS2 games to a single file. No duplicate entries.
-    rusty-psn        #updating ps3 games
+    eza              #  ls replacement
+    fzf              #  needed for zsh auto suggestion
+    tochd            #  compressing PSX/PS2 games to a single file. No duplicate entries.
+    rusty-psn        #  updating ps3 games
     traceroute
     fastfetch
     tmux
     ripgrep
 
-    #desktop applications
+    # desktop applications
     librewolf
     vivaldi
     geary
     gparted
-    darktable        #photo editing  
+    darktable        #  photo editing  
     discord-ptb
-    mumble          #game chat
-    (mumble.override { pulseSupport = true; }) #to add audio to mumble
-    zed-editor      #for software development
+    mumble                                     #  game chat
+    (mumble.override { pulseSupport = true; }) #  to add audio to mumble
+    zed-editor                                 #  for software development
     filezilla
-    mangohud        #not using this at the moment
-    protonup-qt     #for selecting proton version in steam
-    gnome-tweaks    #for fixing my fonts
-    dnsutils        #DNS diagnosing
-    makemkv          #shredding
-    myvlc
+    mangohud         #  not using this at the moment
+    protonup-qt      #  for selecting proton version in steam
+    gnome-tweaks     #  for fixing my fonts
+    dnsutils         #  DNS diagnosing
+    makemkv          #  shredding
+    # myvlc
     gnome-sound-recorder
 
-    #develop applications
-    libgcc          #C/Cpp compilers
+    # develop applications
+    libgcc          #  C/Cpp compilers
     bc
-    linuxHeaders    #Don't need this anymore
-    godot           #game development
+  linuxHeaders    #  Don't need this anymore
+  godot           #  game development
   ];
 
-  ### DESKTOP OPTIONS
+  # DESKTOP OPTIONS
   desktop = {
     enable = true;
     vpn.enable = true;
@@ -122,19 +122,19 @@
     rdp.enable = true;
   };
 
-  ### SSH
+  # SSH
   sshmodule = {
     enable = true;
     port = [55];
   };
 
-  ## gaming
+  # gaming
   programs.steam = {
     enable = true;
     gamescopeSession.enable = true;
     remotePlay.openFirewall = true;
   };
-  programs.gamemode.enable = true; #request for os to optimize to gaming
+  programs.gamemode.enable = true; #  request for os to optimize to gaming
 
   services.avahi = {
     enable = true;
@@ -150,10 +150,10 @@
     ];
   };
 
-  ## Flatpak
+  # Flatpak
   services.flatpak.enable = true;
 
-  ## fwupd Firmware updater
+  # fwupd Firmware updater
   services.fwupd.enable = true;
 
   # Bootloader.
@@ -162,8 +162,8 @@
     enable = true;
     pkiBundle = "/var/lib/sbctl";
   };
-  #boot.loader.systemd-boot.enable = true;
-  #boot.loader.efi.canTouchEfiVariables = true;
+  # boot.loader.systemd-boot.enable = true;
+  # boot.loader.efi.canTouchEfiVariables = true;
 
   networking = {
     networkmanager.enable = true;
@@ -171,7 +171,7 @@
       allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
       allowedUDPPortRanges = allowedTCPPortRanges;
     };
-    hostName = "desktop"; # Define your hostname.
+    hostName = "desktop"; #  Define your hostname.
     nameservers = ["192.168.5.111"];
     interfaces.enp191s0.ipv4.addresses = [{
       address = "192.168.5.117";
@@ -216,7 +216,7 @@
     ];
   };
 
-  #enable sound
+  # enable sound
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -233,10 +233,10 @@
   users.users.lalobied = {
     isNormalUser = true;
     home = "/home/lalobied";
-    extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
+  extraGroups = [ "wheel" ]; #  Enable ‘sudo’ for the user.
   };
 
-  ## Disable system from sleeping
+  # Disable system from sleeping
   systemd.targets.sleep.enable = false;
   systemd.targets.suspend.enable = false;
   systemd.targets.hibernate.enable = false;

@@ -1,7 +1,7 @@
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.aimodule;
-in{
+in {
   options.aimodule = {
     enable = mkOption {
       type = types.bool;
@@ -26,7 +26,7 @@ in{
     systemd.services.ollama = {
       wantedBy = lib.mkForce [];
       serviceConfig = {
-        TimeoutIdleSec = "5min"; #stop if idle
+      TimeoutIdleSec = "5min"; #  stop if idle
       };
     };
     networking.firewall.allowedTCPPorts = [ 8080 11434 ];

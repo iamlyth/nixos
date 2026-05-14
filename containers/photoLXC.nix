@@ -1,4 +1,4 @@
-#containers/photoOS.nix
+# containers/photoOS.nix
 { modulesPath, config, lib, pkgs, ... }:
 {
   imports = [
@@ -6,7 +6,7 @@
     ../modules/ssh.nix
     (modulesPath + "/virtualisation/proxmox-lxc.nix")
   ];
-## Begin hardware import
+  # Begin hardware import
 
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" ];
@@ -27,10 +27,10 @@
   swapDevices = [ ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-## End hardware import
+    # End hardware import
 
-    #PATH=$PATH:/run/current-system/sw/bin/
-    #zsh
+    # PATH=$PATH:/run/current-system/sw/bin/
+    # zsh
 
 
     boot.isContainer = true;
@@ -41,7 +41,7 @@
       "sys-fs-fuse-connections.mount"
     ];
      
-    ### SHELL
+    # SHELL
     programs.zsh.enable = true;
     users.defaultUserShell = pkgs.zsh;
 

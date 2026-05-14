@@ -1,7 +1,7 @@
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.zshmodule;
-in{
+in {
   options.zshmodule = {
     enable = mkOption {
       type = types.bool;
@@ -51,7 +51,7 @@ in{
           "direnv"
           "emoji"
           "eza"
-          "fzf" #needed for autosuggestion
+        "fzf" #  needed for autosuggestion
         ])
         (mkIf (cfg.lite == true) [
           "git"

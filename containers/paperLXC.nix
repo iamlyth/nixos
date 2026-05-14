@@ -1,4 +1,4 @@
-#containers/photoOS.nix
+# containers/photoOS.nix
 { modulesPath, config, lib, pkgs, ... }:
 let
   ftpDir = "/var/ftp";
@@ -10,7 +10,7 @@ in
     ../modules/ssh.nix
     (modulesPath + "/virtualisation/proxmox-lxc.nix")
   ];
-### BEING HARDWARE CONF IMPORT
+  # BEING HARDWARE CONF IMPORT
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" ];
   boot.initrd.kernelModules = [ ];
@@ -31,9 +31,9 @@ in
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
-### END HARDWARE CONF IMPORT
-    #PATH=$PATH:/run/current-system/sw/bin/
-    #zsh
+    # END HARDWARE CONF IMPORT
+    # PATH=$PATH:/run/current-system/sw/bin/
+    # zsh
 
 
     boot.isContainer = true;
@@ -44,7 +44,7 @@ in
       "sys-fs-fuse-connections.mount"
     ];
      
-    ### SHELL
+    # SHELL
     programs.zsh.enable = true;
     users.defaultUserShell = pkgs.zsh;
 
@@ -57,8 +57,8 @@ in
       openssl
     ];
     networking.firewall.allowedTCPPorts = [
-      28981  #paperless
-      21    #ftp
+    28981  #  paperless
+    21     #  ftp
     ];
     networking.firewall.allowedTCPPortRanges = [
       { from = 51000; to = 51999; }
@@ -100,9 +100,9 @@ in
     };
 
     users.users.printer = {
-      isNormalUser = true;                # Create a normal user
-      home = "/Users/printer";            # Home directory for FTP uploads
-      shell = pkgs.bash;                  # Default shell
+      isNormalUser = true;                #  Create a normal user
+      home = "/Users/printer";            #  Home directory for FTP uploads
+      shell = pkgs.bash;                  #  Default shell
       extraGroups = ["vault"];
     };
     

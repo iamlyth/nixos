@@ -2,7 +2,7 @@
 with lib; let
   cfg = config.sshmodule;
   defaultPort = 7878;
-in{
+in {
   options.sshmodule = {
     enable = mkOption {
       type = types.bool;
