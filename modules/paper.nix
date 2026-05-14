@@ -21,25 +21,25 @@ in{
     };
   };
   config = mkIf cfg.enable {
-		users.users.paper = {
-  		isSystemUser = true;
-  		group = "vault";
-  		extraGroups = [ "vault" ];
-  		shell = pkgs.shadow;
+    users.users.paper = {
+      isSystemUser = true;
+      group = "vault";
+      extraGroups = [ "vault" ];
+      shell = pkgs.shadow;
     };
-  	services.paperless = {
-  		enable = true;
-  		port=28981;
-  		address = "0.0.0.0";
-  		#consumptionDirIsPublic = false;
-			#consumptionDir = "/Users/printer/inbox";
-			database.createLocally = true;
-			mediaDir = "/mnt/familyvault/";
-  		user = "paperless";
-  		settings = {
-  			PAPERLESS_URL = "https://paper.tatchi.org";
-  		};
-  	};
-		users.groups.vault = {gid = 1005;};
+    services.paperless = {
+      enable = true;
+      port=28981;
+      address = "0.0.0.0";
+      #consumptionDirIsPublic = false;
+      #consumptionDir = "/Users/printer/inbox";
+      database.createLocally = true;
+      mediaDir = "/mnt/familyvault/";
+      user = "paperless";
+      settings = {
+        PAPERLESS_URL = "https://paper.tatchi.org";
+      };
+    };
+    users.groups.vault = {gid = 1005;};
   };
 }

@@ -11,23 +11,23 @@ in{
         Whether or not to enable the wayland/gnome service.
         '';
     };
-		nvidia.enable = mkOption {
-			type = types.bool;
-			default = false;
-			example = true;
-			description = ''
-				whether or not to enable nvidia drivers
-			'';
-		};
+    nvidia.enable = mkOption {
+      type = types.bool;
+      default = false;
+      example = true;
+      description = ''
+        whether or not to enable nvidia drivers
+      '';
+    };
 
-		intel.enable = mkOption {
-			type = types.bool;
-			default = false;
-			example = true;
-			description = ''
-				whether or not to enable intel drivers
-			'';
-		};
+    intel.enable = mkOption {
+      type = types.bool;
+      default = false;
+      example = true;
+      description = ''
+        whether or not to enable intel drivers
+      '';
+    };
   };
   config = mkIf cfg.enable {
     hardware.graphics = { #renamed from hardware.opengl
@@ -40,7 +40,7 @@ in{
         nvidiaSettings = true;
         open = false;
     };
-		
+    
     services.displayManager.gdm.enable = true;
     services.desktopManager.gnome.enable = true;
 
@@ -53,8 +53,8 @@ in{
         variant = "";
       };
       videoDrivers = if cfg.nvidia.enable then ["nvidia"]
-				else if cfg.intel.enable then ["intel"]
-				else lib.mkDefault [];
+        else if cfg.intel.enable then ["intel"]
+        else lib.mkDefault [];
       excludePackages = [pkgs.xterm];
     };
 

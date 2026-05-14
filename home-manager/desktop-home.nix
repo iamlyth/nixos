@@ -1,31 +1,31 @@
 {config, pkgs, lib, ...}:
 {
   imports = [
-		./repo/zsh.nix
-		./repo/nvim.nix
-		./repo/gnome.nix
-		./repo/lutris.nix
-		./repo/gruvbox.nix
-		./repo/pi.nix
+    ./repo/zsh.nix
+    ./repo/nvim.nix
+    ./repo/gnome.nix
+    ./repo/lutris.nix
+    ./repo/gruvbox.nix
+    ./repo/pi.nix
   ];
-	nvimmodule = {
-		enable = true;
-	};
-	zshmodule = {
-		enable = true;
-		lite = false;
-	};
-	lutrismodule = {
-		enable = true;
-	};
+  nvimmodule = {
+    enable = true;
+  };
+  zshmodule = {
+    enable = true;
+    lite = false;
+  };
+  lutrismodule = {
+    enable = true;
+  };
 
-	gruvboxmodule = {
-		enable = true;
-	};
+  gruvboxmodule = {
+    enable = true;
+  };
 
-	pimodule = {
-		enable = true;
-	};
+  pimodule = {
+    enable = true;
+  };
 
   home.stateVersion = "25.05";
 }

@@ -124,21 +124,21 @@ in {
         ExecStartPre = lib.mkBefore [
           ("+" + fix-config-permissions-script + "/bin/sabnzbd-fix-config-permissions")
           ("+" + fix-user-permissions-script + "/bin/sabnzbd-fix-user-permissions")
-					#(apply-user-configs-script + "/bin/sabnzbd-set-user-values")
+          #(apply-user-configs-script + "/bin/sabnzbd-set-user-values")
         ];
         Restart = "on-failure";
         StartLimitBurst = 5;
       };
 
       # Enable and specify VPN namespace to confine service in.
-			systemd.services.sabnzbd.vpnConfinement = mkIf cfg.vpn.enable {
-  			enable = true;
-  			vpnNamespace = "wg";
-			};
+      systemd.services.sabnzbd.vpnConfinement = mkIf cfg.vpn.enable {
+        enable = true;
+        vpnNamespace = "wg";
+      };
 
-			systemd.services.sabnzbd.serviceConfig = {
-  			Wants = [ "vpnNamespaces-wg.service" ];
-  			After = [ "vpnNamespaces-wg.service" ];
-			};
-		};
+      systemd.services.sabnzbd.serviceConfig = {
+        Wants = [ "vpnNamespaces-wg.service" ];
+        After = [ "vpnNamespaces-wg.service" ];
+      };
+    };
 }

@@ -53,14 +53,14 @@ in{
       openFirewall = cfg.openFirewall;
     };
 
-		# Enable and specify VPN namespace to confine service in.
-		systemd.services.sonarr.vpnConfinement = mkIf cfg.vpn.enable {
-			enable = true;
-			vpnNamespace = "wg";
-		};
-		systemd.services.sonarr.serviceConfig = {
-			Wants = [ "vpnNamespaces-wg.service" ];
-			After = [ "vpnNamespaces-wg.service" ];
-		};
+    # Enable and specify VPN namespace to confine service in.
+    systemd.services.sonarr.vpnConfinement = mkIf cfg.vpn.enable {
+      enable = true;
+      vpnNamespace = "wg";
+    };
+    systemd.services.sonarr.serviceConfig = {
+      Wants = [ "vpnNamespaces-wg.service" ];
+      After = [ "vpnNamespaces-wg.service" ];
+    };
   }; 
 }

@@ -6,8 +6,8 @@
     ./repo/vim.nix
   ];
 
-	zshmodule = {
-		enable = true;
-		lite = true;
-	};
+  zshmodule = {
+    enable = true;
+    lite = true;
+  };
 }

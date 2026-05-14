@@ -1,47 +1,47 @@
 #containers/lxctemplate.nix
 { modulesPath, config, lib, pkgs, ... }:
 {
-	imports = [
-		../modules/ssh.nix
-		(modulesPath + "/virtualisation/proxmox-lxc.nix")
-	];
-		#PATH=$PATH:/run/current-system/sw/bin/
-		#zsh
+  imports = [
+    ../modules/ssh.nix
+    (modulesPath + "/virtualisation/proxmox-lxc.nix")
+  ];
+    #PATH=$PATH:/run/current-system/sw/bin/
+    #zsh
 
-		boot.isContainer = true;
+    boot.isContainer = true;
 
-		systemd.suppressedSystemUnits = [
-			"dev-mqueue.mount"
-			"sys-kernel-debug.mount"
-			"sys-fs-fuse-connections.mount"
-		];
-   	
-		### SHELL
-		programs.zsh.enable = true;
-		users.defaultUserShell = pkgs.zsh;
+    systemd.suppressedSystemUnits = [
+      "dev-mqueue.mount"
+      "sys-kernel-debug.mount"
+      "sys-fs-fuse-connections.mount"
+    ];
+     
+    ### SHELL
+    programs.zsh.enable = true;
+    users.defaultUserShell = pkgs.zsh;
 
-		# List packages installed in system profile. To search by name, run:
+    # List packages installed in system profile. To search by name, run:
     # $ nix-env -qaP | grep wget
-  	nix.settings.experimental-features = ["nix-command" "flakes"];
-		environment.systemPackages = with pkgs;  [
-			git
-			vim
-			cifs-utils
-		];
+    nix.settings.experimental-features = ["nix-command" "flakes"];
+    environment.systemPackages = with pkgs;  [
+      git
+      vim
+      cifs-utils
+    ];
 
-		sshmodule = {
-			enable = true;
-			port = [55];
-		};
-		
-		time.timeZone = "US/Michigan";
+    sshmodule = {
+      enable = true;
+      port = [55];
+    };
+    
+    time.timeZone = "US/Michigan";
 
-		nix.settings.trusted-users = ["lalobied"];
+    nix.settings.trusted-users = ["lalobied"];
     users.users.lalobied = {
         isNormalUser = true;
-				home = "/Users/lalobied";
-				extraGroups = ["wheel"];
+        home = "/Users/lalobied";
+        extraGroups = ["wheel"];
     };
 
-		system.stateVersion = "25.11";
+    system.stateVersion = "25.11";
 }

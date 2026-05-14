@@ -11,7 +11,7 @@
     boot.initrd.availableKernelModules = [ "ata_piix" "uhci_hcd" "virtio_pci"
 "virtio_scsi" "sd_mod" "sr_mod"];
     boot.initrd.kernelModules = ["nfs" ];
-		boot.initrd.supportedFilesystems =["nfs"];
+    boot.initrd.supportedFilesystems =["nfs"];
     #boot.kernelModules = [ ];
     #boot.extraModulePackages = [ ];
 
@@ -29,7 +29,7 @@
     # still possible to use this option, but it's recommended to use it in conjunction
     # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
     networking.useDHCP = lib.mkDefault true;
-	networking.firewall.allowedTCPPorts = [ 80 443 ];
+  networking.firewall.allowedTCPPorts = [ 80 443 ];
     # networking.interfaces.ens18.useDHCP = lib.mkDefault true;
 
     nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
@@ -51,16 +51,16 @@
     wget
     screen
     nmap
-		traceroute
-		wireguard-tools
-		nfs-utils
-		pciutils						#making sure pci-e devices are passed through from host
+    traceroute
+    wireguard-tools
+    nfs-utils
+    pciutils            #making sure pci-e devices are passed through from host
   ];
 
   ### MEDIA OPTIONS
   media = {
     enable = true;
-		vpn.enable = true;
+    vpn.enable = true;
   };
   users.groups.media = { };
 
@@ -85,15 +85,15 @@
     }];
     defaultGateway = {
       address = "192.168.4.1";
-	    interface = "ens18";
-	  };
+      interface = "ens18";
+    };
   };
 
   fileSystems."/run/media/media" = {
     device = "192.168.5.114:/var/nfs/shared/media";
-		fsType = "nfs";
+    fsType = "nfs";
     options = [
-			#"bind"
+      #"bind"
       "defaults"
       #"user"
       "rw"

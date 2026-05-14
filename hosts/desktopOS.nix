@@ -1,13 +1,13 @@
 { config, lib, pkgs, stablenix, modulesPath, ... }:
 {
   imports = [
-		../modules/desktop.nix
-		../modules/ssh.nix
-		../modules/ai.nix
-		(modulesPath + "/installer/scan/not-detected.nix")
-	];
+    ../modules/desktop.nix
+    ../modules/ssh.nix
+    ../modules/ai.nix
+    (modulesPath + "/installer/scan/not-detected.nix")
+  ];
 
-	### HARDWARE CONFIG STARTS HERE
+  ### HARDWARE CONFIG STARTS HERE
 
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "thunderbolt" "usbhid" ];
   boot.initrd.kernelModules = [ ];
@@ -41,68 +41,68 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
-	### HARDWARE CONFIG ENDS HERE
+  ### HARDWARE CONFIG ENDS HERE
 
   nixpkgs.config.allowUnfree = true; #allow proprietary packages
 
-	## TEMPORARY FIXES
-	nixpkgs.config.permittedInsecurePackages = [
-  	"openssl-1.1.1w"
-	]; # This is only until discord removes its dependencies
+  ## TEMPORARY FIXES
+  nixpkgs.config.permittedInsecurePackages = [
+    "openssl-1.1.1w"
+  ]; # This is only until discord removes its dependencies
 
   ###SHELL
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
 
-	###AI
-	aimodule.enable = true;
+  ###AI
+  aimodule.enable = true;
 
   ###OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];
   environment.systemPackages = with pkgs; 
-	let
-		libbluray = stablenix.libbluray.override {
-			withAACS = true;
-			withBDplus = true;
-			withJava = true;
-		};
-		myvlc = stablenix.vlc.override { inherit libbluray; };
-	in
-	[
+  let
+    libbluray = stablenix.libbluray.override {
+      withAACS = true;
+      withBDplus = true;
+      withJava = true;
+    };
+    myvlc = stablenix.vlc.override { inherit libbluray; };
+  in
+  [
     git
     curl
     zip
     unzip
     wget
     nmap
-    sbctl 					#for making secure boot keys
-    nfs-utils 			#for mounting NFS drives
+    sbctl           #for making secure boot keys
+    nfs-utils       #for mounting NFS drives
     cifs-utils
-    eza							#ls replacement
-    fzf							#needed for zsh auto suggestion
-    tochd						#compressing PSX/PS2 games to a single file. No duplicate entries.
-    rusty-psn				#updating ps3 games
+    eza              #ls replacement
+    fzf              #needed for zsh auto suggestion
+    tochd            #compressing PSX/PS2 games to a single file. No duplicate entries.
+    rusty-psn        #updating ps3 games
     traceroute
     fastfetch
-		tmux
-		ripgrep
+    tmux
+    ripgrep
 
     #desktop applications
     librewolf
     vivaldi
     geary
     gparted
-    darktable				#photo editing	
+    darktable        #photo editing  
     discord-ptb
     mumble          #game chat
     (mumble.override { pulseSupport = true; }) #to add audio to mumble
     zed-editor      #for software development
     filezilla
     mangohud        #not using this at the moment
-    protonup-qt 		#for selecting proton version in steam
-    gnome-tweaks		#for fixing my fonts
-    dnsutils				#DNS diagnosing
-    makemkv					#shredding
+    protonup-qt     #for selecting proton version in steam
+    gnome-tweaks    #for fixing my fonts
+    dnsutils        #DNS diagnosing
+    makemkv          #shredding
     myvlc
     gnome-sound-recorder
 
@@ -116,10 +116,10 @@
   ### DESKTOP OPTIONS
   desktop = {
     enable = true;
-		vpn.enable = true;
-		nvidia.enable = false;
-		intel.enable = false;
-		rdp.enable = true;
+    vpn.enable = true;
+    nvidia.enable = false;
+    intel.enable = false;
+    rdp.enable = true;
   };
 
   ### SSH
@@ -132,38 +132,38 @@
   programs.steam = {
     enable = true;
     gamescopeSession.enable = true;
-		remotePlay.openFirewall = true;
+    remotePlay.openFirewall = true;
   };
   programs.gamemode.enable = true; #request for os to optimize to gaming
 
-	services.avahi = {
-		enable = true;
-		nssmdns4 = true;
-		openFirewall = true;
-	};
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
+  };
 
-	services.printing = {
-		enable = true;
-		drivers = with pkgs; [
-			cups-filters
-			cups-browsed
-		];
-	};
+  services.printing = {
+    enable = true;
+    drivers = with pkgs; [
+      cups-filters
+      cups-browsed
+    ];
+  };
 
   ## Flatpak
   services.flatpak.enable = true;
 
   ## fwupd Firmware updater
-	services.fwupd.enable = true;
+  services.fwupd.enable = true;
 
-	# Bootloader.
-	boot.loader.systemd-boot.enable = lib.mkForce false;
-	boot.lanzaboote = {
+  # Bootloader.
+  boot.loader.systemd-boot.enable = lib.mkForce false;
+  boot.lanzaboote = {
     enable = true;
     pkiBundle = "/var/lib/sbctl";
   };
-	#boot.loader.systemd-boot.enable = true;
-	#boot.loader.efi.canTouchEfiVariables = true;
+  #boot.loader.systemd-boot.enable = true;
+  #boot.loader.efi.canTouchEfiVariables = true;
 
   networking = {
     networkmanager.enable = true;
@@ -179,14 +179,14 @@
     }];
     defaultGateway = {
       address = "192.168.4.1";
-	    interface = "enp191s0";
-	  };
+      interface = "enp191s0";
+    };
   };
 
 
   fileSystems."/run/media/gamestore" = {
     device = "192.168.5.114:/var/nfs/shared/gamestore";
-		fsType = "nfs";
+    fsType = "nfs";
     options = [
       "defaults"
       "rw"
@@ -195,35 +195,35 @@
       "relatime"
     ];
   };
-	
+  
   fileSystems."/home/lalobied/Cloud" = {
     device = "//192.168.5.114/Personal-Drive";
-		fsType = "cifs";
-		options = [
-			"credentials=/etc/nixos/.secrets/smbcred"
-			"x-systemd.automount"
-			"noauto"
-			"x-systemd.idle-timeout=600"
-			"x-systemd.mount-timeout=15"
-			"uid=1000"
-			"gid=100"
-			"rw"
-			"file_mode=0757"
-			"dir_mode=0757"
- 			"x-systemd.requires=network-online.target"
-			"x-systemd.after=network-online.target" 
-			"_netdev"
-		];
-	};
+    fsType = "cifs";
+    options = [
+      "credentials=/etc/nixos/.secrets/smbcred"
+      "x-systemd.automount"
+      "noauto"
+      "x-systemd.idle-timeout=600"
+      "x-systemd.mount-timeout=15"
+      "uid=1000"
+      "gid=100"
+      "rw"
+      "file_mode=0757"
+      "dir_mode=0757"
+       "x-systemd.requires=network-online.target"
+      "x-systemd.after=network-online.target" 
+      "_netdev"
+    ];
+  };
 
   #enable sound
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
-	enable = true;
-	alsa.enable = true;
-	alsa.support32Bit = true;
-	pulse.enable = true;
+  enable = true;
+  alsa.enable = true;
+  alsa.support32Bit = true;
+  pulse.enable = true;
   };
 
   # Set your time zone.
@@ -236,8 +236,8 @@
     extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
   };
 
-	## Disable system from sleeping
-	systemd.targets.sleep.enable = false;
+  ## Disable system from sleeping
+  systemd.targets.sleep.enable = false;
   systemd.targets.suspend.enable = false;
   systemd.targets.hibernate.enable = false;
   systemd.targets.hybrid-sleep.enable = false;

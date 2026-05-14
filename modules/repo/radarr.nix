@@ -52,14 +52,14 @@ in{
       openFirewall = cfg.openFirewall;
     };
 
-		# Enable and specify VPN namespace to confine service in.
-		systemd.services.radarr.vpnConfinement = mkIf cfg.vpn.enable {
-			enable = true;
-			vpnNamespace = "wg";
-		};
-		systemd.services.radarr.serviceConfig = {
-			Wants = [ "vpnNamespaces-wg.service" ];
-			After = [ "vpnNamespaces-wg.service" ];
-		};
+    # Enable and specify VPN namespace to confine service in.
+    systemd.services.radarr.vpnConfinement = mkIf cfg.vpn.enable {
+      enable = true;
+      vpnNamespace = "wg";
+    };
+    systemd.services.radarr.serviceConfig = {
+      Wants = [ "vpnNamespaces-wg.service" ];
+      After = [ "vpnNamespaces-wg.service" ];
+    };
   }; 
 }
