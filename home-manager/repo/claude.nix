@@ -1,6 +1,12 @@
 { pkgs, lib, config, ... }:
 with lib; let
 	cfg = config.claudemodule;
+	claudePluginsOfficial = pkgs.fetchFromGitHub {
+		owner = "anthropics";
+		repo = "claude-plugins-official";
+		rev = "0742692199b49af5c6c33cd68ee674fb2e679d50";
+		hash = "sha256-5h7uXbqtuguCw9AMpEFJiKAH7ZmGgJJvm3yyec6+BXE=";
+	};
 in{
 	options.claudemodule = {
 		enable = mkOption {
@@ -13,26 +19,10 @@ in{
 		};
 	};
 	config = mkIf cfg.enable {
-		programs.claude-code = {
-			enable = true;
-			settings = {
-				# Plugin configuration
-				# Register the official Anthropic plugin marketplace
-				extraKnownMarketplaces = {
-					claude-code-plugins = {
-						source = {
-							source = "github";
-							repo = "anthropics/claude-code";
-						};
-					};
-					claude-plugins-official = {
-						source = {
-							source = "github";
-							repo = "anthropics/claude-plugins-official";
-						};
-					};
-				};
-			};
+		programs.claude-code.enable = true;
+		home.file.".claude/skills/skill-creator" = {
+			source = "${claudePluginsOfficial}/plugins/skill-creator/skills/skill-creator";
+			recursive = true;
 		};
 	};
 }
