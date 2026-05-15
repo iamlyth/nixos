@@ -14,21 +14,16 @@ This repository contains a complete, declarative NixOS configuration suite manag
 ### 1. Enable Flakes
 By default, NixOS does not have Flakes enabled. You must first add the following to your `/etc/nixos/configuration.nix`:
 
-```nix
-nix.settings.experimental-features = [ "nix-command" "flakes" ];
-```
-
-Apply this change by running:
 ```bash
-sudo nixos-rebuild switch
+nix shell nixpkgs#git --extra-experimental-features "nix-command flakes"
 ```
 
 ### 2. Clone this Repository
 Clone this repo to your desired location (e.g., `~/nixos-config`):
 
 ```bash
-git clone <your-repo-url> ~/nixos-config
-cd ~/nixos-config
+git clone https://github.com/iamlyth/nixos.git
+cd ~/nixos
 ```
 
 ### 3. Apply the Flake Configuration
@@ -38,9 +33,6 @@ Once in the directory, you can switch your system to one of the predefined host 
 sudo nixos-rebuild switch --flake .#<hostname>
 ```
 *(Replace `<hostname>` with `desktopOS`, `laptopOS`, `mediaOS`, etc.)*
-
-> [!WARNING]  
-> These configurations are tailored to specific hardware (e.g., Framework Laptops). Ensure you pick the host that matches your hardware, or modify the files in `/hosts` to fit your machine before applying.
 
 ## 🚀 Usage
 
