@@ -7,6 +7,7 @@
     ./repo/lutris.nix
     ./repo/gruvbox.nix
     ./repo/pi.nix
+    ./repo/python.nix
   ];
   nvimmodule = {
     enable = true;
@@ -18,14 +19,14 @@
   lutrismodule = {
     enable = true;
   };
-
   gruvboxmodule = {
     enable = true;
   };
-
   pimodule = {
     enable = true;
   };
-
+  pythonmodule = {
+    enable = true;
+  };
   home.stateVersion = "25.05";
 }
