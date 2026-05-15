@@ -6,6 +6,7 @@
     ./repo/nvim.nix
     ./repo/claude.nix
     ./repo/tmux.nix
+    ./repo/python.nix
   ];
 
   zshmodule = {
@@ -22,6 +23,10 @@
   };
 
   tmuxmodule = {
+    enable = true;
+  };
+
+  pythonmodule = {
     enable = true;
   };
 }
