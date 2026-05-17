@@ -19,7 +19,7 @@
     nixvim = {
       url = "github:nix-community/nixvim/nixos-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
-    };    
+    };
     home-manager = {
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -30,147 +30,80 @@
     };
   };
 
-  outputs = {self, nixpkgs, nixos-hardware, home-manager, nixos-generators, ... }@inputs: 
+  outputs = { self, nixpkgs, nixos-hardware, nixos-generators, ... }@inputs:
+  let
+    system = "x86_64-linux";
+    mkSystem = import ./lib/mkSystem.nix { inherit inputs; };
+    # Stable package set, passed via specialArgs to unstable hosts that
+    # still need an occasional stable package (e.g. VLC with BD+ support).
+    stablenix = import nixpkgs { inherit system; };
+  in
   {
     nixosConfigurations = {
-      # Define mediaOS  
-      mediaOS = let system = "x86_64-linux";
-      in nixpkgs.lib.nixosSystem {
-        modules = [
-          home-manager.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/server-home.nix;
-            home-manager.extraSpecialArgs = {
-              inherit inputs;
-            };
-          }
-          ./hosts/mediaOS.nix
-          inputs.vpn-confinement.nixosModules.default
-        ];
+      mediaOS = mkSystem {
+        hostModule = ./hosts/mediaOS.nix;
+        homeProfile = ./home-manager/server-home.nix;
+        extraModules = [ inputs.vpn-confinement.nixosModules.default ];
       };
 
-      # Define desktopOS
-      desktopOS = let system = "x86_64-linux";
-      in inputs.nixpkgs-unstable.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs;
-          stablenix = import nixpkgs {
-            inherit system;
-          };
-        };
-        modules = [
+      desktopOS = mkSystem {
+        unstable = true;
+        hostModule = ./hosts/desktopOS.nix;
+        homeProfile = ./home-manager/desktop-home.nix;
+        homeExtraModules = [ inputs.nixvim.homeModules.nixvim ];
+        specialArgs = { inherit stablenix; };
+        extraModules = [
           nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
-          { nixpkgs.overlays = [
-            inputs.nix-cachyos-kernel.overlays.default
-            # Skipping tests while upstream sorts it out, revert once
-            # Hydra consistently builds openldap green.
-            (_: prev: {
-              openldap = prev.openldap.overrideAttrs (_: {
-                doCheck = false;
-              });
-            })
-          ]; }
           inputs.lanzaboote.nixosModules.lanzaboote
-          inputs.home-manager-unstable.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = {
-              imports = [
-                ./home-manager/desktop-home.nix
-                inputs.nixvim.homeModules.nixvim
-              ];
-            };
-            home-manager.extraSpecialArgs = { inherit inputs; };
+          {
+            nixpkgs.overlays = [
+              inputs.nix-cachyos-kernel.overlays.default
+              # Skipping tests while upstream sorts it out, revert once
+              # Hydra consistently builds openldap green.
+              (_: prev: {
+                openldap = prev.openldap.overrideAttrs (_: {
+                  doCheck = false;
+                });
+              })
+            ];
           }
-          ./hosts/desktopOS.nix
         ];
       };
 
-      # Define laptopOS
-      laptopOS = let system = "x86_64-linux";
-      in inputs.nixpkgs-unstable.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs;
-          stablenix = import nixpkgs {
-            inherit system;
-          };
-        };
-        modules = [
+      laptopOS = mkSystem {
+        unstable = true;
+        hostModule = ./hosts/laptopOS.nix;
+        homeProfile = ./home-manager/laptop-home.nix;
+        homeExtraModules = [ inputs.nixvim.homeModules.nixvim ];
+        specialArgs = { inherit stablenix; };
+        extraModules = [
           nixos-hardware.nixosModules.framework-12-13th-gen-intel
           inputs.lanzaboote.nixosModules.lanzaboote
-          inputs.home-manager-unstable.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = {
-              imports = [
-                ./home-manager/laptop-home.nix
-                inputs.nixvim.homeModules.nixvim
-              ];
-            };
-            home-manager.extraSpecialArgs = { inherit inputs; };
-          }
-          ./hosts/laptopOS.nix
-        ];
-      };
-    
-      # Define NixOS-WSL
-      wsl = let system = "x86_64-linux";
-      in nixpkgs.lib.nixosSystem {
-        modules = [
-          inputs.nixos-wsl.nixosModules.wsl
-          home-manager.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = {
-              imports = [
-                ./home-manager/portable-home.nix
-                inputs.nixvim.homeModules.nixvim
-              ];
-            };
-            home-manager.extraSpecialArgs = { inherit inputs; };
-          }
-          ./hosts/wsl.nix
         ];
       };
 
-      # Define paperLXC  
-      paperLXC = let system = "x86_64-linux";
-      in nixpkgs.lib.nixosSystem {
-        modules = [
-          home-manager.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/server-home.nix;
-            home-manager.extraSpecialArgs = {
-              inherit inputs;
-            };
-          }
-          ./containers/paperLXC.nix
-        ];
+      wsl = mkSystem {
+        hostModule = ./hosts/wsl.nix;
+        homeProfile = ./home-manager/portable-home.nix;
+        homeExtraModules = [ inputs.nixvim.homeModules.nixvim ];
+        extraModules = [ inputs.nixos-wsl.nixosModules.wsl ];
       };
 
-      # Define photoLXC  
-      photoLXC = let system = "x86_64-linux";
-      in nixpkgs.lib.nixosSystem {
-        modules = [
-          home-manager.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/server-home.nix;
-            home-manager.extraSpecialArgs = {
-              inherit inputs;
-            };
-          }
-          ./containers/photoLXC.nix
-        ];
+      paperLXC = mkSystem {
+        hostModule = ./containers/paperLXC.nix;
+        homeProfile = ./home-manager/server-home.nix;
+      };
+
+      photoLXC = mkSystem {
+        hostModule = ./containers/photoLXC.nix;
+        homeProfile = ./home-manager/server-home.nix;
       };
     };
-    
+
     # LXC Container Template
-    packages.x86_64-linux = {
+    packages.${system} = {
       lxctemplate = nixos-generators.nixosGenerate {
-        system = "x86_64-linux";
+        inherit system;
         modules = [
           ./containers/lxctemplate.nix
         ];
