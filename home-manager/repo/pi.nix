@@ -25,7 +25,8 @@ let
     (jail.combinators.persist-home "pi-coder")
     (jail.combinators.try-readwrite piAgentDir)
     (jail.combinators.set-env "PI_AGENT_DIR" piAgentDir)
-    (jail.combinators.add-pkg-deps (with pkgs; [ git fd bash gnused findutils coreutils gnugrep ripgrep gawk diffutils jq nodejs ]))
+    (jail.combinators.add-pkg-deps (with pkgs; [ git fd bash gnused findutils coreutils gnugrep ripgrep gawk diffutils jq nodejs python313 gcc gnumake sqlite pkg-config bun ]))
+    (jail.combinators.unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
     (jail.combinators.unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
     (jail.combinators.unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
   ];
