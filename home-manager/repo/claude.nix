@@ -16,7 +16,7 @@ with lib; let
   contextMode = pkgs.fetchFromGitHub {
     owner = "mksglu";
     repo = "context-mode";
-    version - "v1.0.137";
+    # version = "v1.0.137";
     rev = "6ba6c9876a4ecba6626fe26e7ac62568cb52eea1";
     hash = "sha256-V66nyd5RfgmI0O3qjqMkMNCecPz8r3X3vZH7dHTYtiY=";
   };
@@ -81,82 +81,113 @@ in {
   config = mkIf cfg.enable {
     programs.claude-code.enable = true;
     home.packages = [ pkgs.nodejs pkgs.bun ];
-    home.file.".claude/settings.json" = {
-      force = true;
-      text = builtins.toJSON {
-        skipAutoPermissionPrompt = true;
-        teammateMode = "tmux";
-        env = {
-          CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
-        };
-        enabledPlugins = { "context-mode" = true; };
-        mcpServers = {
-          "plugin_context-mode_context-mode" = {
-            # Bun runs server.bundle.mjs directly — no start.mjs bootstrapping.
-            # Bun has bun:sqlite built-in, avoiding better-sqlite3 SIGSEGV on Linux.
-            command = "${pkgs.bun}/bin/bun";
-            args = [ "${contextModePkg}/server.bundle.mjs" ];
+
+    # settings.json must be a real writable file (not a nix symlink) so Claude Code
+    # can persist plugin registrations. home.activation copies from the nix store.
+    # The mcpServers key uses the "plugin_<name>_<server>" format that Claude Code's
+    # plugin system generates — required for the MCP server to be started.
+    home.activation.claudeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] (
+      let
+        settings = pkgs.writeText "claude-settings.json" (builtins.toJSON {
+          skipAutoPermissionPrompt = true;
+          teammateMode = "tmux";
+          env = {
+            CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
           };
-        };
-        hooks = {
-          PreToolUse = [
-            {
-              matcher = "";
-              hooks = [
-                {
-                  type = "command";
-                  command = "${pkgs.bun}/bin/bun ${contextMode}/hooks/pretooluse.mjs";
-                }
-              ];
-            }
-          ];
-          PostToolUse = [
-            {
-              matcher = "";
-              hooks = [
-                {
-                  type = "command";
-                  command = "${pkgs.bun}/bin/bun ${contextMode}/hooks/posttooluse.mjs";
-                }
-              ];
-            }
-          ];
-          PreCompact = [
-            {
-              matcher = "";
-              hooks = [
-                {
-                  type = "command";
-                  command = "${pkgs.bun}/bin/bun ${contextMode}/hooks/precompact.mjs";
-                }
-              ];
-            }
-          ];
-          SessionStart = [
-            {
-              matcher = "";
-              hooks = [
-                {
-                  type = "command";
-                  command = "${pkgs.bun}/bin/bun ${contextMode}/hooks/sessionstart.mjs";
-                }
-              ];
-            }
-          ];
-          UserPromptSubmit = [
-            {
-              matcher = "";
-              hooks = [
-                {
-                  type = "command";
-                  command = "${pkgs.bun}/bin/bun ${contextMode}/hooks/userpromptsubmit.mjs";
-                }
-              ];
-            }
-          ];
-        };
-      };
-    };
+          enabledPlugins = { "context-mode" = true; };
+          mcpServers = {
+            "plugin_context-mode_context-mode" = {
+              command = "${pkgs.bun}/bin/bun";
+              args = [ "${contextModePkg}/server.bundle.mjs" ];
+            };
+          };
+          hooks = {
+            PreToolUse = [
+              {
+                matcher = "";
+                hooks = [
+                  {
+                    type = "command";
+                    command = "${pkgs.bun}/bin/bun ${contextModePkg}/hooks/pretooluse.mjs";
+                  }
+                ];
+              }
+            ];
+            PostToolUse = [
+              {
+                matcher = "";
+                hooks = [
+                  {
+                    type = "command";
+                    command = "${pkgs.bun}/bin/bun ${contextModePkg}/hooks/posttooluse.mjs";
+                  }
+                ];
+              }
+            ];
+            PreCompact = [
+              {
+                matcher = "";
+                hooks = [
+                  {
+                    type = "command";
+                    command = "${pkgs.bun}/bin/bun ${contextModePkg}/hooks/precompact.mjs";
+                  }
+                ];
+              }
+            ];
+            SessionStart = [
+              {
+                matcher = "";
+                hooks = [
+                  {
+                    type = "command";
+                    command = "${pkgs.bun}/bin/bun ${contextModePkg}/hooks/sessionstart.mjs";
+                  }
+                ];
+              }
+            ];
+            UserPromptSubmit = [
+              {
+                matcher = "";
+                hooks = [
+                  {
+                    type = "command";
+                    command = "${pkgs.bun}/bin/bun ${contextModePkg}/hooks/userpromptsubmit.mjs";
+                  }
+                ];
+              }
+            ];
+          };
+        });
+      in
+      ''
+        mkdir -p "$HOME/.claude/plugins"
+        $DRY_RUN_CMD cp -f ${settings} "$HOME/.claude/settings.json"
+        $DRY_RUN_CMD chmod 644 "$HOME/.claude/settings.json"
+
+        # Register context-mode in installed_plugins.json (merge, don't overwrite)
+        if [ -z "''${DRY_RUN_CMD:-}" ]; then
+          PLUGINS_FILE="$HOME/.claude/plugins/installed_plugins.json"
+          if [ ! -f "$PLUGINS_FILE" ]; then
+            echo '{"version":2,"plugins":{}}' > "$PLUGINS_FILE"
+          fi
+          ${pkgs.jq}/bin/jq \
+            '."plugins"["context-mode"] = [{"scope":"user","installPath":"${contextModePkg}","version":"${contextModePkg.version}","installedAt":"2026-05-19T14:20:47.000Z","lastUpdated":"2026-05-19T14:20:47.000Z","gitCommitSha":"6ba6c9876a4ecba6626fe26e7ac62568cb52eea1"}]' \
+            "$PLUGINS_FILE" > "$PLUGINS_FILE.tmp" && mv "$PLUGINS_FILE.tmp" "$PLUGINS_FILE"
+
+          # Claude Code reads user mcpServers from ~/.claude.json (via P8()), NOT settings.json.
+          # Hooks use a different path (wz9 -> B2 -> settings.json), which is why hooks work
+          # but MCP doesn't. Merge our server into ~/.claude.json without overwriting other keys.
+          CLAUDE_JSON="$HOME/.claude.json"
+          if [ ! -f "$CLAUDE_JSON" ]; then
+            echo '{}' > "$CLAUDE_JSON"
+          fi
+          ${pkgs.jq}/bin/jq \
+            '.mcpServers["plugin_context-mode_context-mode"] = {"command": "${pkgs.bun}/bin/bun", "args": ["${contextModePkg}/server.bundle.mjs"]}' \
+            "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+        fi
+      ''
+    );
     # ctx-doctor skill resolves CLI as 2 levels up from skills/ctx-doctor (~/.claude)
     home.file.".claude/cli.bundle.mjs" = {
       source = "${contextModePkg}/cli.bundle.mjs";
