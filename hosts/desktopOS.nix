@@ -14,6 +14,7 @@
   boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest;
   boot.kernelModules = [ "kvm-amd" "sg" ];
   boot.extraModulePackages = [ ];
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/a75c9312-aaf8-43d3-a7e7-f292a54e0e87";
