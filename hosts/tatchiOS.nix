@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ../modules/ai.nix 
+    ../modules/ai.nix
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
@@ -47,8 +47,8 @@
   # Configure network connections interactively with nmcli or nmtui.
   networking.networkmanager.enable = true;
   
-  aimodule.enable = true;
-  aimodule.openwebui = false;
+  ai.enable = true;
+  ai.acceleration = "jetson-cuda";
   
   # Set your time zone.
   # time.timeZone = "Europe/Amsterdam";

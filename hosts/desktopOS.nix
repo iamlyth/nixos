@@ -51,7 +51,12 @@
   users.defaultUserShell = pkgs.zsh;
 
   # # # AI
-  aimodule.enable = true;
+  ai.enable = true;
+  ai.acceleration = "rocm";
+  ai.models = [ "gemma4:26b" ];
+  ai.idleTimeout = "5min";
+  ai.openwebui.enable = true;
+  ai.openwebui.corsOrigin = "https://ai.tatchi.org";
 
   # # #OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];

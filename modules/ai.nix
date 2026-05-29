@@ -1,61 +1,63 @@
-{ pkgs, lib, config, ... }:
+{ lib, config, ... }:
 with lib; let
-  cfg = config.aimodule;
-  jetsonFixRules = pkgs.writeTextFile {
-    name = "99-z-jetson-fix";
-    destination = "/lib/udev/rules.d/99-z-jetson-fix.rules";
-    text = ''
-      KERNEL=="nvhost-sched-gpu", GROUP="video", MODE="0660"
-    '';
-  };
+  cfg = config.ai;
 in {
-  options.aimodule = {
-    enable = mkOption {
-      type = types.bool;
-      default = false;
-      example = true;
-      description = ''
-        Whether or not to enable ai.
-        '';
+  imports = [
+    ./repo/ollama.nix
+    ./repo/openwebui.nix
+  ];
+
+  options.ai = {
+    enable = mkEnableOption "AI services";
+
+    acceleration = mkOption {
+      type = types.enum [ "rocm" "jetson-cuda" ];
+      description = "GPU acceleration backend for ollama.";
     };
 
-    openwebui = mkOption {
-      type = types.bool;
-      default = true;
-      example = true;
-      description = ''
-        Whether or not to enable openwebui
-        '';
+    models = mkOption {
+      type = types.listOf types.str;
+      default = [];
+      description = "Models to preload on startup.";
+    };
+
+    idleTimeout = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      example = "5min";
+      description = "Stop ollama after this idle period. Null disables the timeout.";
+    };
+
+    openwebui = {
+      enable = mkEnableOption "Open WebUI frontend";
+
+      port = mkOption {
+        type = types.port;
+        default = 8080;
+        description = "Port for Open WebUI to listen on.";
+      };
+
+      corsOrigin = mkOption {
+        type = types.str;
+        default = "*";
+        example = "https://ai.example.com";
+        description = "Value for CORS_ALLOW_ORIGIN.";
+      };
     };
   };
 
   config = mkIf cfg.enable {
-    services.ollama = {
-			enable = true;
-			package = pkgs.ollama-cuda;
-			host = "0.0.0.0";
-			environmentVariables = {
-				OLLAMA_KEEP_ALIVE = "-1";
-				LD_LIBRARY_PATH = "${pkgs.ollama-cuda}/lib/ollama:/run/opengl-driver/lib";
-			};
-		};
-		systemd.services.ollama.serviceConfig = {
-			DevicePolicy = lib.mkForce "auto";  # ← clear DevicePolicy=closed from nixpkgs
-			DeviceAllow = lib.mkForce [];       # ← nuke nixpkgs DeviceAllow entries entirely
-			PrivateDevices = lib.mkForce false;
-			SupplementaryGroups = [ "video" ];
-			PrivateUsers = lib.mkForce false;
-			ProtectProc = lib.mkForce "default";
-		};
-		services.udev.packages = [ jetsonFixRules ];
-		services.udev.extraRules = ''
-			SUBSYSTEM=="nvidia-gpu", GROUP="video", MODE="0660"
-			KERNEL=="nvmap", GROUP="video", MODE="0660"
-		'';
+    ollamamodule = {
+      enable = true;
+      acceleration = cfg.acceleration;
+      models = cfg.models;
+      idleTimeout = cfg.idleTimeout;
+    };
 
-		environment.etc."udev/rules.d/99-z-jetson-fix.rules".text = ''
-			KERNEL=="nvhost-sched-gpu", GROUP="video", MODE="0660"
-		'';
-		networking.firewall.allowedTCPPorts = [ 11434 ];
+    openwebuimodule = mkIf cfg.openwebui.enable {
+      enable = true;
+      port = cfg.openwebui.port;
+      corsOrigin = cfg.openwebui.corsOrigin;
+    };
   };
 }
