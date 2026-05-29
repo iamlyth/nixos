@@ -12,6 +12,8 @@
     nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
     pi-nix.url = "github:lukasl-dev/pi.nix";
     jaildotnix.url = "sourcehut:~alexdavid/jail.nix";
+    jetpack.url = "github:anduril/jetpack-nixos/master";
+    jetpack.inputs.nixpkgs.follows = "nixpkgs";
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
        inputs.nixpkgs.follows = "nixpkgs";
@@ -131,6 +133,23 @@
             home-manager.extraSpecialArgs = { inherit inputs; };
           }
           ./hosts/wsl.nix
+        ];
+      };
+     
+      # Define TatchiOS 
+      tatchiOS = let system = "aarch64-linux";
+      in nixpkgs.lib.nixosSystem {
+        modules = [
+          home-manager.nixosModules.home-manager {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.lalobied = import ./home-manager/server-home.nix;
+            home-manager.extraSpecialArgs = {
+              inherit inputs;
+            };
+          }
+	  inputs.jetpack.nixosModules.default
+          ./hosts/tatchiOS.nix
         ];
       };
 

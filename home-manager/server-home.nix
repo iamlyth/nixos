@@ -10,4 +10,9 @@
     enable = true;
     lite = true;
   };
+
+  vimmodule = {
+    enable = true;
+  };
+
 }
