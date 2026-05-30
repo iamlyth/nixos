@@ -14,7 +14,7 @@ in
 
   config = mkIf cfg.enable {
     home.packages = with pkgs; [
-      (python313.withPackages (ps: with ps; [
+      (python312.withPackages (ps: with ps; [
         requests
         numpy
         httpx

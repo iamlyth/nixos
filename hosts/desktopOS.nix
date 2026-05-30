@@ -87,6 +87,7 @@
     fastfetch
     tmux
     ripgrep
+    uv
 
     # desktop applications
     librewolf
