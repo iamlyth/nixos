@@ -66,14 +66,6 @@
   # # #OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];
   environment.systemPackages = with pkgs; 
-  let
-    libbluray = stablenix.libbluray.override {
-      withAACS = true;
-      withBDplus = true;
-      withJava = true;
-    };
-    myvlc = stablenix.vlc.override { inherit libbluray; };
-  in
   [
     git
     curl
@@ -110,9 +102,8 @@
     gnome-tweaks     #  for fixing my fonts
     dnsutils         #  DNS diagnosing
     makemkv          #  shredding
-    # myvlc
     gnome-sound-recorder
-
+    
     # develop applications
     libgcc          #  C/Cpp compilers
     bc

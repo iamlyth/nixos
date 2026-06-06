@@ -8,6 +8,7 @@
     ./repo/gruvbox.nix
     ./repo/pi.nix
     ./repo/python.nix
+    ./repo/ghostty.nix
   ];
   nvimmodule = {
     enable = true;
@@ -26,6 +27,9 @@
     enable = true;
   };
   pythonmodule = {
+    enable = true;
+  };
+  ghosttymodule = {
     enable = true;
   };
   home.stateVersion = "25.05";

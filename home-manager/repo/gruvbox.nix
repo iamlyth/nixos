@@ -36,7 +36,6 @@ in
     home.packages = [
       pkgs.gruvbox-gtk-theme
       gruvbox-plus-icons
-      pkgs.blackbox-terminal
     ];
 
     gtk = {
@@ -53,21 +52,6 @@ in
     };
 
     dconf.settings = {
-      "com/raggesilver/BlackBox" = {
-        font = "Monospace 11";
-        theme-dark = "Gruvbox Dark";
-        theme-light = "Gruvbox Light";
-        background-color = "#fbf1c7";
-        foreground-color = "#3c3836";
-        use-system-font = false;
-        terminal-padding = 6;
-        palette = [
-        "#fbf1c7" "#9d0006" "#79740e" "#b57614"
-        "#076678" "#8f3f71" "#427b58" "#7c6f64"
-        "#928374" "#cc241d" "#98971a" "#d79921"
-        "#458588" "#b16286" "#689d6a" "#3c3836"
-        ];
-      };
       "org/gnome/shell/extensions/nightthemeswitcher/color-scheme" = {
         day = "default";
         night = "prefer-dark";
