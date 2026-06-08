@@ -3,7 +3,7 @@
 
   # Inputs
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
@@ -19,11 +19,11 @@
        inputs.nixpkgs.follows = "nixpkgs";
     };
     nixvim = {
-      url = "github:nix-community/nixvim/nixos-25.11";
+      url = "github:nix-community/nixvim/nixos-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };    
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager-unstable = {
@@ -42,7 +42,10 @@
           home-manager.nixosModules.home-manager {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/server-home.nix;
+            home-manager.users.lalobied = {
+              imports = [ ./home-manager/server-home.nix ];
+              home.stateVersion = "25.05";
+            };
             home-manager.extraSpecialArgs = {
               inherit inputs;
             };
@@ -143,7 +146,10 @@
           home-manager.nixosModules.home-manager {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/server-home.nix;
+            home-manager.users.lalobied = {
+              imports = [ ./home-manager/server-home.nix ];
+              home.stateVersion = "25.11";
+            };
             home-manager.extraSpecialArgs = {
               inherit inputs;
             };
@@ -160,7 +166,10 @@
           home-manager.nixosModules.home-manager {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/server-home.nix;
+            home-manager.users.lalobied = {
+              imports = [ ./home-manager/server-home.nix ];
+              home.stateVersion = "25.11";
+            };
             home-manager.extraSpecialArgs = {
               inherit inputs;
             };
@@ -176,7 +185,10 @@
           home-manager.nixosModules.home-manager {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.lalobied = import ./home-manager/server-home.nix;
+            home-manager.users.lalobied = {
+              imports = [ ./home-manager/server-home.nix ];
+              home.stateVersion = "25.11";
+            };
             home-manager.extraSpecialArgs = {
               inherit inputs;
             };
