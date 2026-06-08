@@ -182,15 +182,22 @@
   };
 
 
-  fileSystems."/run/media/gamestore" = {
-    device = "192.168.5.114:/var/nfs/shared/gamestore";
-    fsType = "nfs";
+    fileSystems."/run/media/gamestore" = {
+    device = "//192.168.5.114/gamestore";
+    fsType = "cifs";
     options = [
-      "defaults"
+      "credentials=/etc/nixos/.secrets/smbcred"
+      "x-systemd.automount"
+      "noauto"
+      "x-systemd.mount-timeout=15"
+      "uid=1000"
+      "gid=100"
       "rw"
-      "nofail"
-      "exec"
-      "relatime"
+      "file_mode=0757"
+      "dir_mode=0757"
+       "x-systemd.requires=network-online.target"
+      "x-systemd.after=network-online.target" 
+      "_netdev"
     ];
   };
   
