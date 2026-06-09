@@ -10,6 +10,9 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     lanzaboote.url = "github:nix-community/lanzaboote/v0.4.3";
     nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
+    # Old ollama rev for temporary rollback while gemma4/pi /v1 issue
+    # is sorted upstream. See ollama/ollama#15288.
+    nixpkgs-ollama.url = "github:nixos/nixpkgs/4100e830e085863741bc69b156ec4ccd53ab5be0";
     pi-nix.url = "github:lukasl-dev/pi.nix";
     jaildotnix.url = "sourcehut:~alexdavid/jail.nix";
     jetpack.url = "github:anduril/jetpack-nixos/master";
@@ -74,6 +77,14 @@
               openldap = prev.openldap.overrideAttrs (_: {
                 doCheck = false;
               });
+            })
+            # Temporarily pull ollama-rocm from an older nixpkgs while the
+            # current ollama's reasoning_content streaming breaks pi on /v1.
+            (_: _: {
+              ollama-rocm = (import inputs.nixpkgs-ollama {
+                inherit system;
+                config.allowUnfree = true;
+              }).ollama-rocm;
             })
           ]; }
           inputs.lanzaboote.nixosModules.lanzaboote
