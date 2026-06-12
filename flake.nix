@@ -13,6 +13,8 @@
     # Old ollama rev for temporary rollback while gemma4/pi /v1 issue
     # is sorted upstream. See ollama/ollama#15288.
     nixpkgs-ollama.url = "github:nixos/nixpkgs/4100e830e085863741bc69b156ec4ccd53ab5be0";
+    # claude-code 2.1.170 from nixpkgs PR #530023, pending merge to unstable/26.11.
+    nixpkgs-claude-pr.url = "github:nixos/nixpkgs/5900fe6cf8eca7dc124309029a50c7f80e90b6c9";
     pi-nix.url = "github:lukasl-dev/pi.nix";
     jaildotnix.url = "sourcehut:~alexdavid/jail.nix";
     jetpack.url = "github:anduril/jetpack-nixos/master";
@@ -38,7 +40,7 @@
   outputs = { self, nixpkgs, nixos-hardware, nixos-generators, ... }@inputs:
   let
     system = "x86_64-linux";
-    mkSystem = import ./lib/mkSystem.nix { inherit inputs; };
+    mkSystem = import ./lib/mkSystem.nix { inherit inputs system; };
     # Stable package set, passed via specialArgs to unstable hosts that
     # still need an occasional stable package (e.g. VLC with BD+ support).
     stablenix = import nixpkgs { inherit system; };
@@ -61,26 +63,6 @@
         extraModules = [
           nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
           inputs.lanzaboote.nixosModules.lanzaboote
-          {
-            nixpkgs.overlays = [
-              inputs.nix-cachyos-kernel.overlays.default
-              # Skipping tests while upstream sorts it out, revert once
-              # Hydra consistently builds openldap green.
-              (_: prev: {
-                openldap = prev.openldap.overrideAttrs (_: {
-                  doCheck = false;
-                });
-              })
-              # Temporarily pull ollama-rocm from an older nixpkgs while the
-              # current ollama's reasoning_content streaming breaks pi on /v1.
-              (_: _: {
-                ollama-rocm = (import inputs.nixpkgs-ollama {
-                  inherit system;
-                  config.allowUnfree = true;
-                }).ollama-rocm;
-              })
-            ];
-          }
         ];
       };
 

@@ -469,6 +469,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-claude-pr": {
+      "locked": {
+        "lastModified": 1781027305,
+        "narHash": "sha256-V181bdVDULVR29RUahJZvMN99rbRKCc/CbDwU9Owv/Y=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "5900fe6cf8eca7dc124309029a50c7f80e90b6c9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "5900fe6cf8eca7dc124309029a50c7f80e90b6c9",
+        "type": "github"
+      }
+    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1777168982,
@@ -674,6 +690,7 @@
         "nixos-hardware": "nixos-hardware",
         "nixos-wsl": "nixos-wsl",
         "nixpkgs": "nixpkgs_5",
+        "nixpkgs-claude-pr": "nixpkgs-claude-pr",
         "nixpkgs-ollama": "nixpkgs-ollama",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixvim": "nixvim",
