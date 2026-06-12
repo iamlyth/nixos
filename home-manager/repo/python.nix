@@ -20,6 +20,11 @@ in
         httpx
         markitdown
       ]))
+      uv
     ];
+    home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
+    programs.zsh.initContent = ''
+      export PATH="${config.home.homeDirectory}/.local/bin:$PATH"
+    '';
   };
 }

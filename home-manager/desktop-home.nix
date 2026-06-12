@@ -8,6 +8,7 @@
     ./repo/gruvbox.nix
     ./repo/pi.nix
     ./repo/python.nix
+    ./repo/rust.nix
     ./repo/ghostty.nix
   ];
   nvimmodule = {
@@ -27,6 +28,9 @@
     enable = true;
   };
   pythonmodule = {
+    enable = true;
+  };
+  rustmodule = {
     enable = true;
   };
   ghosttymodule = {

@@ -76,7 +76,6 @@
     eza              #  ls replacement
     fzf              #  needed for zsh auto suggestion
     fastfetch
-		uv
 
     # desktop applications
     librewolf

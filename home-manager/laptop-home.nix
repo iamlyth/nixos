@@ -5,6 +5,7 @@
     ./repo/nvim.nix
     ./repo/gnome.nix
     ./repo/gruvbox.nix
+    ./repo/python.nix
     ./repo/ghostty.nix
   ];
   nvimmodule = {
@@ -15,6 +16,9 @@
     lite = false;
   };
   gruvboxmodule = {
+    enable = true;
+  };
+  pythonmodule = {
     enable = true;
   };
   ghosttymodule = {
