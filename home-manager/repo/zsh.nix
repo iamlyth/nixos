@@ -43,6 +43,9 @@ in {
       sessionVariables = {
         EDITOR = "vim";
       };
+      initContent = ''
+        vf() { vim "$(fzf)"; }
+      '';
     };
   };
 }
