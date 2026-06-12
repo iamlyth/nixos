@@ -24,7 +24,7 @@
     nixvim = {
       url = "github:nix-community/nixvim/nixos-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
-    };    
+    };
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -35,189 +35,117 @@
     };
   };
 
-  outputs = {self, nixpkgs, nixos-hardware, home-manager, nixos-generators, ... }@inputs: 
+  outputs = { self, nixpkgs, nixos-hardware, nixos-generators, ... }@inputs:
+  let
+    system = "x86_64-linux";
+    mkSystem = import ./lib/mkSystem.nix { inherit inputs; };
+    # Stable package set, passed via specialArgs to unstable hosts that
+    # still need an occasional stable package (e.g. VLC with BD+ support).
+    stablenix = import nixpkgs { inherit system; };
+  in
   {
     nixosConfigurations = {
-      # Define mediaOS  
-      mediaOS = let system = "x86_64-linux";
-      in nixpkgs.lib.nixosSystem {
-        modules = [
-          home-manager.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = {
-              imports = [ ./home-manager/server-home.nix ];
-              home.stateVersion = "25.05";
-            };
-            home-manager.extraSpecialArgs = {
-              inherit inputs;
-            };
-          }
-          ./hosts/mediaOS.nix
-          inputs.vpn-confinement.nixosModules.default
-        ];
+      mediaOS = mkSystem {
+        hostModule = ./hosts/mediaOS.nix;
+        homeProfile = ./home-manager/server-home.nix;
+        homeStateVersion = "25.05";
+        extraModules = [ inputs.vpn-confinement.nixosModules.default ];
       };
 
-      # Define desktopOS
-      desktopOS = let system = "x86_64-linux";
-      in inputs.nixpkgs-unstable.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs;
-          stablenix = import nixpkgs {
-            inherit system;
-          };
-        };
-        modules = [
+      desktopOS = mkSystem {
+        unstable = true;
+        hostModule = ./hosts/desktopOS.nix;
+        homeProfile = ./home-manager/desktop-home.nix;
+        homeExtraModules = [ inputs.nixvim.homeModules.nixvim ];
+        specialArgs = { inherit stablenix; };
+        extraModules = [
           nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
-          { nixpkgs.overlays = [
-            inputs.nix-cachyos-kernel.overlays.default
-            # Skipping tests while upstream sorts it out, revert once
-            # Hydra consistently builds openldap green.
-            (_: prev: {
-              openldap = prev.openldap.overrideAttrs (_: {
-                doCheck = false;
-              });
-            })
-            # Temporarily pull ollama-rocm from an older nixpkgs while the
-            # current ollama's reasoning_content streaming breaks pi on /v1.
-            (_: _: {
-              ollama-rocm = (import inputs.nixpkgs-ollama {
-                inherit system;
-                config.allowUnfree = true;
-              }).ollama-rocm;
-            })
-          ]; }
           inputs.lanzaboote.nixosModules.lanzaboote
-          inputs.home-manager-unstable.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = {
-              imports = [
-                ./home-manager/desktop-home.nix
-                inputs.nixvim.homeModules.nixvim
-              ];
-            };
-            home-manager.extraSpecialArgs = { inherit inputs; };
+          {
+            nixpkgs.overlays = [
+              inputs.nix-cachyos-kernel.overlays.default
+              # Skipping tests while upstream sorts it out, revert once
+              # Hydra consistently builds openldap green.
+              (_: prev: {
+                openldap = prev.openldap.overrideAttrs (_: {
+                  doCheck = false;
+                });
+              })
+              # Temporarily pull ollama-rocm from an older nixpkgs while the
+              # current ollama's reasoning_content streaming breaks pi on /v1.
+              (_: _: {
+                ollama-rocm = (import inputs.nixpkgs-ollama {
+                  inherit system;
+                  config.allowUnfree = true;
+                }).ollama-rocm;
+              })
+            ];
           }
-          ./hosts/desktopOS.nix
         ];
       };
 
-      # Define laptopOS
-      laptopOS = let system = "x86_64-linux";
-      in inputs.nixpkgs-unstable.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs;
-          stablenix = import nixpkgs {
-            inherit system;
-          };
-        };
-        modules = [
+      laptopOS = mkSystem {
+        unstable = true;
+        hostModule = ./hosts/laptopOS.nix;
+        homeProfile = ./home-manager/laptop-home.nix;
+        homeExtraModules = [ inputs.nixvim.homeModules.nixvim ];
+        specialArgs = { inherit stablenix; };
+        extraModules = [
           nixos-hardware.nixosModules.framework-12-13th-gen-intel
           inputs.lanzaboote.nixosModules.lanzaboote
-          inputs.home-manager-unstable.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = {
-              imports = [
-                ./home-manager/laptop-home.nix
-                inputs.nixvim.homeModules.nixvim
-              ];
-            };
-            home-manager.extraSpecialArgs = { inherit inputs; };
-          }
-          ./hosts/laptopOS.nix
-        ];
-      };
-    
-      # Define NixOS-WSL
-      wsl = let system = "x86_64-linux";
-      in nixpkgs.lib.nixosSystem {
-        modules = [
-          inputs.nixos-wsl.nixosModules.wsl
-          home-manager.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = {
-              imports = [
-                ./home-manager/portable-home.nix
-                inputs.nixvim.homeModules.nixvim
-              ];
-            };
-            home-manager.extraSpecialArgs = { inherit inputs; };
-          }
-          ./hosts/wsl.nix
-        ];
-      };
-     
-      # Define TatchiOS 
-      tatchiOS = let system = "aarch64-linux";
-      in nixpkgs.lib.nixosSystem {
-        modules = [
-          home-manager.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = {
-              imports = [ ./home-manager/server-home.nix ];
-              home.stateVersion = "25.11";
-            };
-            home-manager.extraSpecialArgs = {
-              inherit inputs;
-            };
-          }
-	  inputs.jetpack.nixosModules.default
-          ./hosts/tatchiOS.nix
         ];
       };
 
-      # Define paperLXC  
-      paperLXC = let system = "x86_64-linux";
-      in nixpkgs.lib.nixosSystem {
-        modules = [
-          home-manager.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = {
-              imports = [ ./home-manager/server-home.nix ];
-              home.stateVersion = "25.11";
-            };
-            home-manager.extraSpecialArgs = {
-              inherit inputs;
-            };
-          }
-          ./containers/paperLXC.nix
-        ];
+      tatchiOS = mkSystem {
+        hostModule = ./hosts/tatchiOS.nix;
+        homeProfile = ./home-manager/server-home.nix;
+        homeStateVersion = "25.11";
+        extraModules = [ inputs.jetpack.nixosModules.default ];
       };
 
-      # Define photoLXC  
-      photoLXC = let system = "x86_64-linux";
-      in nixpkgs.lib.nixosSystem {
-        modules = [
-          home-manager.nixosModules.home-manager {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.lalobied = {
-              imports = [ ./home-manager/server-home.nix ];
-              home.stateVersion = "25.11";
-            };
-            home-manager.extraSpecialArgs = {
-              inherit inputs;
-            };
-          }
-          ./containers/photoLXC.nix
-        ];
+      wsl = mkSystem {
+        hostModule = ./hosts/wsl.nix;
+        homeProfile = ./home-manager/portable-home.nix;
+        homeExtraModules = [ inputs.nixvim.homeModules.nixvim ];
+        extraModules = [ inputs.nixos-wsl.nixosModules.wsl ];
+      };
+
+      paperLXC = mkSystem {
+        hostModule = ./containers/paperLXC.nix;
+        homeProfile = ./home-manager/server-home.nix;
+        homeStateVersion = "25.11";
+      };
+
+      photoLXC = mkSystem {
+        hostModule = ./containers/photoLXC.nix;
+        homeProfile = ./home-manager/server-home.nix;
+        homeStateVersion = "25.11";
       };
     };
-    
-    # LXC Container Template
-    packages.x86_64-linux = {
-      lxctemplate = nixos-generators.nixosGenerate {
-        system = "x86_64-linux";
-        modules = [
-          ./containers/lxctemplate.nix
-        ];
-        format = "proxmox-lxc";
+
+    packages.${system} =
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+        nvim = inputs.nixvim.legacyPackages.${system}.makeNixvim
+          (import ./config/nvim.nix);
+      in
+      {
+        # Proxmox LXC template
+        lxctemplate = nixos-generators.nixosGenerate {
+          inherit system;
+          modules = [
+            ./containers/lxctemplate.nix
+          ];
+          format = "proxmox-lxc";
+        };
+
+        # Standalone nvim, built from the same config home-manager uses.
+        # `nix run .#nvim` or `nix build .#nvim`.
+        inherit nvim;
+
+        # Portable shell: zsh + nvim + the same oh-my-zsh setup, in one
+        # binary. `nix run github:iamlyth/nixos#shell` on any nix machine.
+        shell = import ./pkgs/shell { inherit pkgs nvim; };
       };
-    };
   };
 }
