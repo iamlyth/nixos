@@ -13,6 +13,7 @@
     nvim-tree.enable = true;
     web-devicons.enable = true; # explicit for nvim-tree
     telescope.enable = true;
+    zen-mode.enable = true;
     mini-map = {
       enable = true;
       settings = {
@@ -154,6 +155,14 @@
         silent = true;
         desc = "Toggle minimap focus";
       };
+    }
+
+    # zen-mode
+    {
+      mode = "n";
+      key = "<leader>z";
+      action = "<cmd>ZenMode<cr>";
+      options.desc = "Toggle ZenMode";
     }
   ];
 }
