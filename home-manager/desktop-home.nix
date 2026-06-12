@@ -30,6 +30,7 @@
   };
   pythonmodule = {
     enable = true;
+    extras = true;
   };
   rustmodule = {
     enable = true;

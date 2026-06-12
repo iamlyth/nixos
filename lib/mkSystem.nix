@@ -1,9 +1,9 @@
 # Factory for building a nixosConfiguration.
 #
-# Called as `mkSystem { inherit inputs; } { hostModule = ...; homeProfile = ...; ... }`.
+# Called as `mkSystem { inherit inputs system; } { hostModule = ...; homeProfile = ...; ... }`.
 # All nixosConfigurations in flake.nix go through here so the home-manager
 # wiring, channel selection, and user setup stays consistent.
-{ inputs }:
+{ inputs, system }:
 
 {
   # Path to the host's main NixOS module (e.g. ./hosts/desktopOS.nix).
@@ -40,7 +40,7 @@ let
   home-manager = if unstable then inputs.home-manager-unstable else inputs.home-manager;
 in
 nixpkgs.lib.nixosSystem {
-  specialArgs = { inherit inputs; } // specialArgs;
+  specialArgs = { inherit inputs system; } // specialArgs;
   modules = [
     home-manager.nixosModules.home-manager
     {

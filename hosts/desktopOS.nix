@@ -1,5 +1,24 @@
- { config, lib, pkgs, stablenix, modulesPath, ... }:
+ { config, lib, pkgs, inputs, system, stablenix, modulesPath, ... }:
 {
+  nixpkgs.overlays = [
+    inputs.nix-cachyos-kernel.overlays.default
+    # Skipping tests while upstream sorts it out, revert once
+    # Hydra consistently builds openldap green.
+    (_: prev: {
+      openldap = prev.openldap.overrideAttrs (_: {
+        doCheck = false;
+      });
+    })
+    # Temporarily pull ollama-rocm from an older nixpkgs while the
+    # current ollama's reasoning_content streaming breaks pi on /v1.
+    (_: _: {
+      ollama-rocm = (import inputs.nixpkgs-ollama {
+        inherit system;
+        config.allowUnfree = true;
+      }).ollama-rocm;
+    })
+  ];
+
   imports = [
     ../modules/desktop.nix
     ../modules/ssh.nix

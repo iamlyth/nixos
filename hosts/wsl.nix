@@ -1,6 +1,16 @@
- { config, lib, pkgs, ... }:
+ { config, lib, pkgs, inputs, system, ... }:
 
 {
+  nixpkgs.overlays = [
+    # claude-code 2.1.170 from nixpkgs PR #530023, pending merge to unstable/26.11.
+    (_: _: {
+      claude-code = (import inputs.nixpkgs-claude-pr {
+        inherit system;
+        config.allowUnfree = true;
+      }).claude-code;
+    })
+  ];
+
   imports = [
   # <nixos-wsl/modules>
   ];
