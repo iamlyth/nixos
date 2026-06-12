@@ -10,6 +10,7 @@
     ./repo/python.nix
     ./repo/rust.nix
     ./repo/ghostty.nix
+    ./repo/tmux.nix
   ];
   nvimmodule = {
     enable = true;
@@ -34,6 +35,9 @@
     enable = true;
   };
   ghosttymodule = {
+    enable = true;
+  };
+  tmuxmodule = {
     enable = true;
   };
   home.stateVersion = "25.11";

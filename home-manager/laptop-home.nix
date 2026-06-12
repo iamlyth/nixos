@@ -7,6 +7,7 @@
     ./repo/gruvbox.nix
     ./repo/python.nix
     ./repo/ghostty.nix
+    ./repo/tmux.nix
   ];
   nvimmodule = {
     enable = true;
@@ -22,6 +23,9 @@
     enable = true;
   };
   ghosttymodule = {
+    enable = true;
+  };
+  tmuxmodule = {
     enable = true;
   };
 

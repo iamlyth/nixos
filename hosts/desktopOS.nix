@@ -82,8 +82,10 @@
     rusty-psn        #  updating ps3 games
     traceroute
     fastfetch
-    tmux
     ripgrep
+
+    ## TUI
+    gurk-rs
 
     # desktop applications
     librewolf
@@ -106,8 +108,7 @@
     # develop applications
     libgcc          #  C/Cpp compilers
     bc
-  linuxHeaders    #  Don't need this anymore
-  godot           #  game development
+    gcc
   ];
 
   # DESKTOP OPTIONS

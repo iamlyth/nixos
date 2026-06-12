@@ -16,6 +16,9 @@ in {
     programs.tmux = {
       enable = true;
       mouse = true;
+      plugins = with pkgs.tmuxPlugins; [
+        resurrect
+      ];
     };
   };
 }

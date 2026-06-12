@@ -3,6 +3,7 @@
   imports = [
     ./repo/zsh.nix
     ./repo/vim.nix
+    ./repo/tmux.nix
   ];
 
   zshmodule = {
@@ -11,6 +12,10 @@
   };
 
   vimmodule = {
+    enable = true;
+  };
+
+  tmuxmodule = {
     enable = true;
   };
 
