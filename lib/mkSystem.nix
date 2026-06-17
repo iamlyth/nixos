@@ -5,6 +5,9 @@
 # wiring, channel selection, and user setup stays consistent.
 { inputs, system }:
 
+let
+  defaultSystem = system;
+in
 {
   # Path to the host's main NixOS module (e.g. ./hosts/desktopOS.nix).
   hostModule,
@@ -33,6 +36,9 @@
   # Extra entries to merge into specialArgs (e.g. { inherit stablenix; }).
   # `inputs` is always passed through.
   specialArgs ? { },
+
+  # Override the system for this call (e.g. "aarch64-linux" for a Pi).
+  system ? defaultSystem,
 }:
 
 let

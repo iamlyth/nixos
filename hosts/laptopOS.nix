@@ -12,6 +12,7 @@
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
    boot.plymouth = {
     enable = true;
     theme = "rings";

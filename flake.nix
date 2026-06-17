@@ -93,15 +93,23 @@
       };
 
       paperLXC = mkSystem {
-        hostModule = ./containers/paperLXC.nix;
+        hostModule = ./hosts/paperLXC.nix;
         homeProfile = ./home-manager/server-home.nix;
         homeStateVersion = "25.11";
       };
 
       photoLXC = mkSystem {
-        hostModule = ./containers/photoLXC.nix;
+        hostModule = ./hosts/photoLXC.nix;
         homeProfile = ./home-manager/server-home.nix;
         homeStateVersion = "25.11";
+      };
+
+      pijukeboxOS = mkSystem {
+        system = "aarch64-linux";
+        hostModule = ./hosts/pijukeboxOS.nix;
+        homeProfile = ./home-manager/server-home.nix;
+        homeStateVersion = "26.05";
+        extraModules = [ nixos-hardware.nixosModules.raspberry-pi-4 ];
       };
     };
 
@@ -115,7 +123,7 @@
         lxctemplate = nixos-generators.nixosGenerate {
           inherit system;
           modules = [
-            ./containers/lxctemplate.nix
+            ./templates/lxctemplate.nix
           ];
           format = "proxmox-lxc";
         };
@@ -124,5 +132,18 @@
         # `nix run .#nvim` or `nix build .#nvim`.
         inherit nvim;
       };
+
+    # Bootable SD card image for a Raspberry Pi 4. Build with
+    # `nix build .#piImage` from an aarch64 host, or from x86_64 after
+    # adding `boot.binfmt.emulatedSystems = [ "aarch64-linux" ];` to
+    # one of the existing hosts.
+    packages.aarch64-linux.piImage = nixos-generators.nixosGenerate {
+      system = "aarch64-linux";
+      modules = [
+        ./templates/pitemplate.nix
+        nixos-hardware.nixosModules.raspberry-pi-4
+      ];
+      format = "sd-aarch64";
+    };
   };
 }
