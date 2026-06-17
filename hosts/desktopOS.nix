@@ -75,12 +75,14 @@
   users.defaultUserShell = pkgs.zsh;
 
   # # # AI
-  ai.enable = true;
-  ai.acceleration = "rocm";
-  ai.models = [ "gemma4:26b" ];
-  ai.idleTimeout = "5min";
-  ai.openwebui.enable = true;
-  ai.openwebui.corsOrigin = "https://ai.tatchi.org";
+  ai = {
+    enable = true;
+    acceleration = "rocm";
+    models = [ "gemma4:26b" ];
+    idleTimeout = "5min";
+    openwebui.enable = true;
+    openwebui.corsOrigin = "https://ai.tatchi.org";
+  };
 
   # # #OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];
@@ -105,6 +107,7 @@
 
     ## TUI
     gurk-rs
+    irssi
 
     # desktop applications
     librewolf
