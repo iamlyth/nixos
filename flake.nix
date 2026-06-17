@@ -119,7 +119,8 @@
           (import ./config/nvim.nix);
       in
       {
-        # Proxmox LXC template
+        # Proxmox LXC template Build with
+        # nix build .#packages.x86_64-linux.lxctemplate
         lxctemplate = nixos-generators.nixosGenerate {
           inherit system;
           modules = [
@@ -134,9 +135,7 @@
       };
 
     # Bootable SD card image for a Raspberry Pi 4. Build with
-    # `nix build .#piImage` from an aarch64 host, or from x86_64 after
-    # adding `boot.binfmt.emulatedSystems = [ "aarch64-linux" ];` to
-    # one of the existing hosts.
+    # nix build .#packages.aarch64-linux.piImage
     packages.aarch64-linux.piImage = nixos-generators.nixosGenerate {
       system = "aarch64-linux";
       modules = [

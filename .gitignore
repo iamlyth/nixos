@@ -9,3 +9,5 @@ result-*
 *.swp
 
 .claude/
+
+*.img
