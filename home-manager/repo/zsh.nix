@@ -1,8 +1,6 @@
 { pkgs, lib, config, ... }:
-with lib;
-let
+with lib; let
   cfg = config.zshmodule;
-  pure = import ../../config/zsh.nix { inherit (cfg) lite; };
 in {
   options.zshmodule = {
     enable = mkOption {
@@ -31,18 +29,49 @@ in {
     };
     programs.zsh = {
       enable = true;
-      inherit (pure) autocd enableCompletion;
-      autosuggestion.enable = pure.autosuggestion;
-      syntaxHighlighting.enable = pure.syntaxHighlighting;
-      history = pure.history;
-      oh-my-zsh = {
-        enable = true;
-        inherit (pure.ohMyZsh) theme plugins;
+      autocd = true;
+      enableCompletion = true;
+      autosuggestion.enable = true;
+      syntaxHighlighting.enable = true;
+      history.path = "$HOME/.hf";
+      history.save = 10000;
+      history.size = 10000;
+      history.share = true;
+      history.extended = true;
+      history.ignoreSpace = true;
+      oh-my-zsh.enable = true;
+      oh-my-zsh.theme = "robbyrussell";
+      oh-my-zsh.plugins = mkMerge [
+        (mkIf (cfg.lite == false) [
+          "git"
+          "history"
+          "colored-man-pages"
+          "history-substring-search"
+          "zsh-interactive-cd"
+          "direnv"
+          "emoji"
+          "eza"
+        "fzf" #  needed for autosuggestion
+        ])
+        (mkIf (cfg.lite == true) [
+          "git"
+          "history"
+          "colored-man-pages"
+        ])
+      ];
+
+      shellAliases = mkIf (cfg.lite == false) {
+        ll = "eza --long --git -h";
+        pingt = "ping -c 5 google.com";
+        gitlog = "git log --graph --abbrev-commit --decorate
+        --date=format:'(%m_%d)' --format=format:'%C(bold blue)%h%C(reset) %C(bold
+        green)%ad%C(reset) %C(white)- %an%C(reset)%C(auto)%d%C(reset)'";
       };
-      shellAliases = pure.shellAliases;
+
       sessionVariables = {
         EDITOR = "vim";
       };
+
       initContent = ''
         vf() { vim "$(fzf)"; }
       '';

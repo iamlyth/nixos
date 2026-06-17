@@ -107,7 +107,6 @@
 
     packages.${system} =
       let
-        pkgs = nixpkgs.legacyPackages.${system};
         nvim = inputs.nixvim.legacyPackages.${system}.makeNixvim
           (import ./config/nvim.nix);
       in
@@ -124,10 +123,6 @@
         # Standalone nvim, built from the same config home-manager uses.
         # `nix run .#nvim` or `nix build .#nvim`.
         inherit nvim;
-
-        # Portable shell: zsh + nvim + the same oh-my-zsh setup, in one
-        # binary. `nix run github:iamlyth/nixos#shell` on any nix machine.
-        shell = import ./pkgs/shell { inherit pkgs nvim; };
       };
   };
 }

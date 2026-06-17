@@ -26,8 +26,7 @@ sudo nixos-rebuild switch --flake .#<hostname>
 | `containers/` | NixOS modules for Proxmox LXC hosts + the LXC base template. |
 | `modules/` | Reusable system modules. `modules/repo/*.nix` are toggleable services; the rest are core capabilities. |
 | `home-manager/` | User-space layer. `home-manager/repo/*.nix` are atomic tool configs; `*-home.nix` are role profiles. |
-| `config/` | Pure, framework-agnostic configuration data (`nvim.nix`, `zsh.nix`), consumed by both home-manager and standalone package outputs. |
-| `pkgs/` | Custom package derivations exposed via `packages.<system>`. |
+| `config/` | Pure, framework-agnostic configuration data (`nvim.nix`), consumed by both home-manager and the standalone `packages.nvim` output. |
 
 ## Hosts
 
