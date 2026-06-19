@@ -20,7 +20,7 @@ sudo nixos-rebuild switch --flake .#<hostname>
 
 | Path | Purpose |
 |------|---------|
-| `flake.nix` | Inputs + `nixosConfigurations` for every host, plus the `nvim`, `shell`, `lxctemplate`, and `piImage` package outputs. |
+| `flake.nix` | Inputs + `nixosConfigurations` for every host, plus the `nvim`, `lxctemplate`, and `piImage` package outputs. |
 | `lib/mkSystem.nix` | Factory that wires home-manager into each `nixosSystem` so the boilerplate stays in one place. |
 | `hosts/` | Per-host NixOS modules — bare-metal, VMs, Proxmox LXC hosts, the Pi jukebox. |
 | `templates/` | Image-source modules consumed by `packages.*` outputs (Proxmox LXC tarball, Raspberry Pi SD image). Not referenced by `nixosConfigurations`. |
@@ -81,10 +81,14 @@ Notes:
 
 ## Raspberry Pi SD Image
 
-Build a generic aarch64 SD image from `templates/pitemplate.nix` (run from an aarch64 host, or from x86_64 with `boot.binfmt.emulatedSystems = [ "aarch64-linux" ];` enabled — `desktopOS` and `laptopOS` already do):
+The Pi targets use [`nvmd/nixos-raspberrypi`](https://github.com/nvmd/nixos-raspberrypi) for kernel, firmware, DTB, bootloader, and the sd-image build. Stock `nixos-hardware` ships a device tree on which onboard Bluetooth doesn't come up; this flake builds against the Raspberry Pi vendor (RPi-Trading) kernel + DTBs — the same set RPi OS uses — where BT works correctly. The repo's own cachix is wired into the flake's `nixConfig` so kernel builds come down prebuilt instead of compiling locally.
+
+Build the SD image from an aarch64 host, or from x86_64 with `boot.binfmt.emulatedSystems = [ "aarch64-linux" ];` enabled — `desktopOS` and `laptopOS` already do:
 
 ```bash
-nix build .#packages.aarch64-linux.piImage
+nix build .#piImage
+# equivalent to:
+# nix build .#nixosConfigurations.pitemplate.config.system.build.sdImage
 ```
 
 `result/sd-image/*.img.zst` is the bootable image. Flash it to an SD card, boot the Pi, log in as `lalobied` / `nixos`, then specialize the host:
@@ -95,19 +99,9 @@ sudo nixos-rebuild switch --flake github:iamlyth/nixos#pijukeboxOS
 
 Notes:
 
-- `templates/pitemplate.nix` is the image source only — it's not in `nixosConfigurations`. `hosts/pijukeboxOS.nix` imports it as a base and layers spotifyd + Bluetooth on top.
-
-## Portable Shell on Any Machine
-
-The fastest way to feel at home on a strange nix machine:
-
-```bash
-nix run github:iamlyth/nixos#shell
-```
-
-You land in a zsh session with the same oh-my-zsh setup, aliases, history settings, autosuggestions, and syntax highlighting — plus `nvim` on `$PATH` and `EDITOR=nvim`. Nothing is written to `$HOME`; the launcher uses a self-contained `ZDOTDIR` inside the nix store.
-
-The shell and the home-manager `zshmodule` both consume `config/zsh.nix`, so they stay in lockstep.
+- `templates/pitemplate.nix` is the shared host base — `hosts/pijukeboxOS.nix` imports it and layers spotifyd + Bluetooth on top.
+- All Pi-specific knobs (kernel, firmware blobs, U-Boot, `config.txt`, `krnbt=on`, fileSystems) live in `nixos-raspberrypi`'s `raspberry-pi-4.{base,bluetooth}` modules wired in at the flake level — `pitemplate.nix` itself is just host config (ssh, user, hostname).
+- Setup, Bluetooth-speaker pairing, and per-host spotifyd tweaks: see [`docs/pijukebox.md`](docs/pijukebox.md).
 
 ## Running `nvim` from Another Flake
 

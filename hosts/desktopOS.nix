@@ -86,6 +86,7 @@
 
   # # #OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];
+  nix.settings.trusted-users = [ "root" "lalobied" ];
   environment.systemPackages = with pkgs; 
   [
     git
