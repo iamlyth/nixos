@@ -1,6 +1,17 @@
 {
   description = "A template that shows all standard flake outputs";
 
+  # Binary cache for the Pi flake — prebuilt linux_rpi4 kernels live here.
+  # Massive build-time saver vs. compiling on x86_64 via binfmt.
+  nixConfig = {
+    extra-substituters = [
+      "https://nixos-raspberrypi.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+    ];
+  };
+
   # Inputs
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
@@ -19,6 +30,11 @@
     jaildotnix.url = "sourcehut:~alexdavid/jail.nix";
     jetpack.url = "github:anduril/jetpack-nixos/master";
     jetpack.inputs.nixpkgs.follows = "nixpkgs";
+    # nvmd's flake — actively-maintained Pi support that ships its own
+    # working raspberry-pi-4.{base,bluetooth} modules built on top of
+    # the vendor (RPi-Trading) kernel + DTBs. Replaces our previous
+    # nixos-hardware + raspberry-pi-nix experiments.
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
        inputs.nixpkgs.follows = "nixpkgs";
@@ -37,13 +53,39 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixos-hardware, nixos-generators, ... }@inputs:
+  outputs = { self, nixpkgs, nixos-hardware, nixos-generators, nixos-raspberrypi, ... }@inputs:
   let
     system = "x86_64-linux";
     mkSystem = import ./lib/mkSystem.nix { inherit inputs system; };
     # Stable package set, passed via specialArgs to unstable hosts that
     # still need an occasional stable package (e.g. VLC with BD+ support).
     stablenix = import nixpkgs { inherit system; };
+
+    # Helper for Pi configurations. Uses nixos-raspberrypi.lib.nixosSystem
+    # (a drop-in replacement for nixpkgs.lib.nixosSystem) which wires up
+    # the vendor kernel + firmware + cachix-trusted overlays for us.
+    # Wires home-manager in by hand because we're bypassing mkSystem.
+    mkPiSystem = piModules: hostModule:
+      nixos-raspberrypi.lib.nixosSystem {
+        # Pin to our nixpkgs (26.05) instead of the 25.11 bundled with
+        # nixos-raspberrypi, so home-manager-26.05 stays compatible.
+        nixpkgs = nixpkgs;
+        specialArgs = { inherit inputs; system = "aarch64-linux"; };
+        modules = [
+          inputs.home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.lalobied = {
+              imports = [ ./home-manager/server-home.nix ];
+              home.stateVersion = "26.05";
+            };
+            home-manager.extraSpecialArgs = { inherit inputs; };
+          }
+          ({ ... }: { imports = piModules; })
+          hostModule
+        ];
+      };
   in
   {
     nixosConfigurations = {
@@ -93,16 +135,32 @@
       };
 
       paperLXC = mkSystem {
-        hostModule = ./containers/paperLXC.nix;
+        hostModule = ./hosts/paperLXC.nix;
         homeProfile = ./home-manager/server-home.nix;
         homeStateVersion = "25.11";
       };
 
       photoLXC = mkSystem {
-        hostModule = ./containers/photoLXC.nix;
+        hostModule = ./hosts/photoLXC.nix;
         homeProfile = ./home-manager/server-home.nix;
         homeStateVersion = "25.11";
       };
+
+      # The bare Pi base. Also the source for packages.aarch64-linux.piImage,
+      # so it pulls in nixos-raspberrypi's sd-image module.
+      pitemplate = mkPiSystem [
+        nixos-raspberrypi.nixosModules.raspberry-pi-4.base
+        nixos-raspberrypi.nixosModules.sd-image
+      ] ./templates/pitemplate.nix;
+
+      # Jukebox host: same Pi base, plus the working raspberry-pi-4
+      # bluetooth module (krnbt=on against the vendor kernel) so the
+      # onboard BCM4345 actually comes up. spotifyd + audio extras
+      # come from hosts/pijukeboxOS.nix's imports.
+      pijukeboxOS = mkPiSystem [
+        nixos-raspberrypi.nixosModules.raspberry-pi-4.base
+        nixos-raspberrypi.nixosModules.raspberry-pi-4.bluetooth
+      ] ./hosts/pijukeboxOS.nix;
     };
 
     packages.${system} =
@@ -111,11 +169,12 @@
           (import ./config/nvim.nix);
       in
       {
-        # Proxmox LXC template
+        # Proxmox LXC template Build with
+        # nix build .#packages.x86_64-linux.lxctemplate
         lxctemplate = nixos-generators.nixosGenerate {
           inherit system;
           modules = [
-            ./containers/lxctemplate.nix
+            ./templates/lxctemplate.nix
           ];
           format = "proxmox-lxc";
         };
@@ -124,5 +183,11 @@
         # `nix run .#nvim` or `nix build .#nvim`.
         inherit nvim;
       };
+
+    # Bootable SD card image for a Raspberry Pi 4. nixos-raspberrypi's
+    # sd-image module produces this from the pitemplate config.
+    # `nix build .#piImage`
+    packages.aarch64-linux.piImage =
+      self.nixosConfigurations.pitemplate.config.system.build.sdImage;
   };
 }

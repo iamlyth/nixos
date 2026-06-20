@@ -12,6 +12,7 @@
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
    boot.plymouth = {
     enable = true;
     theme = "rings";
@@ -62,6 +63,7 @@
 
   # # #OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];
+  nix.settings.trusted-users = [ "root" "lalobied" ];
   environment.systemPackages = with pkgs; 
   [
     git

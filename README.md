@@ -1,6 +1,6 @@
 # NixOS Configuration
 
-Declarative NixOS configuration suite managed via Nix Flakes. One repository, multiple targets: bare-metal desktops and laptops, Proxmox VMs, Proxmox LXC containers, an NVIDIA Jetson Orin Nano, and WSL.
+Declarative NixOS configuration suite managed via Nix Flakes. One repository, multiple targets: bare-metal desktops and laptops, Proxmox VMs, Proxmox LXC containers, an NVIDIA Jetson Orin Nano, a Raspberry Pi 4, and WSL.
 
 ## Quick Start
 
@@ -20,10 +20,10 @@ sudo nixos-rebuild switch --flake .#<hostname>
 
 | Path | Purpose |
 |------|---------|
-| `flake.nix` | Inputs + `nixosConfigurations` for every host, plus the `nvim`, `shell`, and `lxctemplate` package outputs. |
+| `flake.nix` | Inputs + `nixosConfigurations` for every host, plus the `nvim`, `lxctemplate`, and `piImage` package outputs. |
 | `lib/mkSystem.nix` | Factory that wires home-manager into each `nixosSystem` so the boilerplate stays in one place. |
-| `hosts/` | Hardware-specific NixOS modules for bare-metal / VM hosts. |
-| `containers/` | NixOS modules for Proxmox LXC hosts + the LXC base template. |
+| `hosts/` | Per-host NixOS modules — bare-metal, VMs, Proxmox LXC hosts, the Pi jukebox. |
+| `templates/` | Image-source modules consumed by `packages.*` outputs (Proxmox LXC tarball, Raspberry Pi SD image). Not referenced by `nixosConfigurations`. |
 | `modules/` | Reusable system modules. `modules/repo/*.nix` are toggleable services; the rest are core capabilities. |
 | `home-manager/` | User-space layer. `home-manager/repo/*.nix` are atomic tool configs; `*-home.nix` are role profiles. |
 | `config/` | Pure, framework-agnostic configuration data (`nvim.nix`), consumed by both home-manager and the standalone `packages.nvim` output. |
@@ -39,6 +39,7 @@ sudo nixos-rebuild switch --flake .#<hostname>
 | `wsl` | Windows Subsystem for Linux (x86_64) | Portable dev environment. |
 | `paperLXC` | Proxmox LXC | Paperless-ngx + FTP intake. |
 | `photoLXC` | Proxmox LXC | Immich photo library. |
+| `pijukeboxOS` | Raspberry Pi 4 (aarch64) | Spotify Connect endpoint + Bluetooth audio sink. |
 
 ## Common Workflows
 
@@ -76,19 +77,31 @@ sudo nixos-rebuild switch --flake .#paperLXC   # or .#photoLXC
 Notes:
 
 - The container hosts expect CIFS credentials at `/etc/nixos/.secrets/smbcred` (kept out of git).
-- `lxctemplate.nix` is the bootstrap template only — it's not in `nixosConfigurations`. It's built via `packages.lxctemplate` using `nixos-generators`.
+- `templates/lxctemplate.nix` is the bootstrap template only — it's not in `nixosConfigurations`. It's built via `packages.lxctemplate` using `nixos-generators`.
 
-## Portable Shell on Any Machine
+## Raspberry Pi SD Image
 
-The fastest way to feel at home on a strange nix machine:
+The Pi targets use [`nvmd/nixos-raspberrypi`](https://github.com/nvmd/nixos-raspberrypi) for kernel, firmware, DTB, bootloader, and the sd-image build. Stock `nixos-hardware` ships a device tree on which onboard Bluetooth doesn't come up; this flake builds against the Raspberry Pi vendor (RPi-Trading) kernel + DTBs — the same set RPi OS uses — where BT works correctly. The repo's own cachix is wired into the flake's `nixConfig` so kernel builds come down prebuilt instead of compiling locally.
+
+Build the SD image from an aarch64 host, or from x86_64 with `boot.binfmt.emulatedSystems = [ "aarch64-linux" ];` enabled — `desktopOS` and `laptopOS` already do:
 
 ```bash
-nix run github:iamlyth/nixos#shell
+nix build .#piImage
+# equivalent to:
+# nix build .#nixosConfigurations.pitemplate.config.system.build.sdImage
 ```
 
-You land in a zsh session with the same oh-my-zsh setup, aliases, history settings, autosuggestions, and syntax highlighting — plus `nvim` on `$PATH` and `EDITOR=nvim`. Nothing is written to `$HOME`; the launcher uses a self-contained `ZDOTDIR` inside the nix store.
+`result/sd-image/*.img.zst` is the bootable image. Flash it to an SD card, boot the Pi, log in as `lalobied` / `nixos`, then specialize the host:
 
-The shell and the home-manager `zshmodule` both consume `config/zsh.nix`, so they stay in lockstep.
+```bash
+sudo nixos-rebuild switch --flake github:iamlyth/nixos#pijukeboxOS
+```
+
+Notes:
+
+- `templates/pitemplate.nix` is the shared host base — `hosts/pijukeboxOS.nix` imports it and layers spotifyd + Bluetooth on top.
+- All Pi-specific knobs (kernel, firmware blobs, U-Boot, `config.txt`, `krnbt=on`, fileSystems) live in `nixos-raspberrypi`'s `raspberry-pi-4.{base,bluetooth}` modules wired in at the flake level — `pitemplate.nix` itself is just host config (ssh, user, hostname).
+- Setup, Bluetooth-speaker pairing, and per-host spotifyd tweaks: see [`docs/pijukebox.md`](docs/pijukebox.md).
 
 ## Running `nvim` from Another Flake
 
