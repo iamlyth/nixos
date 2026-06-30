@@ -43,6 +43,10 @@
       url = "github:nix-community/nixvim/nixos-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nixvim-unstable = {
+      url = "github:nix-community/nixvim/main";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -100,7 +104,7 @@
         unstable = true;
         hostModule = ./hosts/desktopOS.nix;
         homeProfile = ./home-manager/desktop-home.nix;
-        homeExtraModules = [ inputs.nixvim.homeModules.nixvim ];
+        homeExtraModules = [ inputs.nixvim-unstable.homeModules.nixvim ];
         specialArgs = { inherit stablenix; };
         extraModules = [
           nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
@@ -112,7 +116,7 @@
         unstable = true;
         hostModule = ./hosts/laptopOS.nix;
         homeProfile = ./home-manager/laptop-home.nix;
-        homeExtraModules = [ inputs.nixvim.homeModules.nixvim ];
+        homeExtraModules = [ inputs.nixvim-unstable.homeModules.nixvim ];
         specialArgs = { inherit stablenix; };
         extraModules = [
           nixos-hardware.nixosModules.framework-12-13th-gen-intel
