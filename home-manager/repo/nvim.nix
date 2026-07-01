@@ -13,6 +13,6 @@ in {
     };
   };
   config = mkIf cfg.enable {
-    programs.nixvim = { enable = true; } // (import ../../config/nvim.nix);
+    programs.nixvim = { enable = true; nixpkgs.pkgs = pkgs; } // (import ../../config/nvim.nix);
   };
 }
