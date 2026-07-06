@@ -160,7 +160,7 @@
 
       # Jukebox host: same Pi base, plus the working raspberry-pi-4
       # bluetooth module (krnbt=on against the vendor kernel) so the
-      # onboard BCM4345 actually comes up. spotifyd + audio extras
+      # onboard BCM4345 actually comes up. librespot + audio extras
       # come from hosts/pijukeboxOS.nix's imports.
       pijukeboxOS = mkPiSystem [
         nixos-raspberrypi.nixosModules.raspberry-pi-4.base
