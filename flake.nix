@@ -19,7 +19,7 @@
     nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
     vpn-confinement.url = "github:Maroka-chan/VPN-Confinement";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-    lanzaboote.url = "github:nix-community/lanzaboote/master";
+    lanzaboote.url = "github:nix-community/lanzaboote/v1.1.0";
     nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
     # Old ollama rev for temporary rollback while gemma4/pi /v1 issue
     # is sorted upstream. See ollama/ollama#15288.
