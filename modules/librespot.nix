@@ -61,6 +61,23 @@ in {
       '';
     };
 
+    beaconSeconds = mkOption {
+      type = types.int;
+      default = 0;
+      example = 30;
+      description = ''
+        Re-announce the Spotify Connect service over mDNS every this
+        many seconds by cycling a second "beacon" instance through
+        Avahi. mDNS mandates announcements on registration, so each
+        cycle multicasts fresh records that phones cache passively,
+        keeping the device visible on networks that drop enough
+        multicast for on-demand queries to be unreliable. The beacon
+        instance points at the same librespot endpoint, and the Spotify
+        app deduplicates by device ID, so users still see exactly one
+        device. Set to 0 (default) to disable on healthy networks.
+      '';
+    };
+
     idleResetMinutes = mkOption {
       type = types.int;
       default = 2;
@@ -136,6 +153,8 @@ in {
         [ -n "$active_user" ] || exit 0
 
         read -r event ts < "$state" || exit 0
+        now=$(date +%s)
+        echo "claimed by '$active_user'; last player event '$event' $((now - ts))s ago"
         case "$event" in
           playing|loading|preloading|preload_next|track_changed| \
           end_of_track|seeked|position_correction|play_request_id_changed| \
@@ -144,12 +163,38 @@ in {
             exit 0 ;;
         esac
 
-        now=$(date +%s)
         if [ "$((now - ts))" -ge "$((${toString cfg.idleResetMinutes} * 60))" ]; then
+          echo "idle threshold exceeded; restarting librespot to release the claim"
           rm -f "$state"
           systemctl restart librespot.service
         fi
       '';
+    };
+
+    # mDNS beacon: avahi-publish registers a second instance of the
+    # service, which forces a multicast announcement; RuntimeMaxSec
+    # kills it and Restart brings it right back, so the announcement
+    # repeats every beaconSeconds. See the option description for why.
+    systemd.services.librespot-beacon = mkIf (cfg.beaconSeconds != 0) {
+      description = "Periodic mDNS re-announcement for Spotify Connect";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "avahi-daemon.service" ];
+      serviceConfig = {
+        ExecStart = escapeShellArgs [
+          "${pkgs.avahi}/bin/avahi-publish"
+          "-s" "${cfg.deviceName} beacon"
+          "_spotify-connect._tcp"
+          (toString cfg.zeroconfPort)
+          "CPath=/"
+          "VERSION=1.0"
+        ];
+        Restart = "always";
+        RestartSec = "500ms";
+        RuntimeMaxSec = cfg.beaconSeconds;
+        DynamicUser = true;
+      };
+      # Cycling forever is the point; don't let the rate limiter stop it.
+      unitConfig.StartLimitIntervalSec = 0;
     };
 
     systemd.timers.librespot-idle-reset = mkIf (cfg.idleResetMinutes != 0) {

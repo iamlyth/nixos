@@ -31,6 +31,10 @@
   librespotmodule = {
     enable = true;
     deviceName = "controls-jukebox";
+    # The office network drops enough multicast that phones often miss
+    # on-demand mDNS lookups; keep re-announcing so their caches stay
+    # warm and the device reliably appears in the Spotify picker.
+    beaconSeconds = 30;
   };
 
   pibluetoothmodule.enable = true;
