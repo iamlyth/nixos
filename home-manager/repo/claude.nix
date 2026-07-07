@@ -17,8 +17,8 @@ with lib; let
     owner = "mksglu";
     repo = "context-mode";
     # version = "v1.0.137";
-    rev = "6ba6c9876a4ecba6626fe26e7ac62568cb52eea1";
-    hash = "sha256-V66nyd5RfgmI0O3qjqMkMNCecPz8r3X3vZH7dHTYtiY=";
+    rev = "8d685716596ce6315d6521cb1669f6c07b372c82";
+    hash = "sha256-cPYBI8N1htSjpetL33/hS6EAFN1G0fjoWwpkP5W0A3E=";
   };
 
   # Runtime deps that start.mjs would normally npm-install at runtime.
@@ -172,7 +172,7 @@ in {
             echo '{"version":2,"plugins":{}}' > "$PLUGINS_FILE"
           fi
           ${pkgs.jq}/bin/jq \
-            '."plugins"["context-mode"] = [{"scope":"user","installPath":"${contextModePkg}","version":"${contextModePkg.version}","installedAt":"2026-05-19T14:20:47.000Z","lastUpdated":"2026-05-19T14:20:47.000Z","gitCommitSha":"6ba6c9876a4ecba6626fe26e7ac62568cb52eea1"}]' \
+            '."plugins"["context-mode"] = [{"scope":"user","installPath":"${contextModePkg}","version":"${contextModePkg.version}","installedAt":"2026-05-19T14:20:47.000Z","lastUpdated":"2026-05-19T14:20:47.000Z","gitCommitSha":"8d685716596ce6315d6521cb1669f6c07b372c82"}]' \
             "$PLUGINS_FILE" > "$PLUGINS_FILE.tmp" && mv "$PLUGINS_FILE.tmp" "$PLUGINS_FILE"
 
           # Claude Code reads user mcpServers from ~/.claude.json (via P8()), NOT settings.json.
