@@ -172,15 +172,20 @@ in {
     };
 
     # mDNS beacon: avahi-publish registers a second instance of the
-    # service, which forces a multicast announcement; RuntimeMaxSec
-    # kills it and Restart brings it right back, so the announcement
-    # repeats every beaconSeconds. See the option description for why.
+    # service, which forces a multicast announcement; timeout(1) ends
+    # it after beaconSeconds and Restart brings it right back, so the
+    # announcement repeats forever. See the option description for why.
+    # The clock lives in the command rather than RuntimeMaxSec because
+    # systemd reports a runtime-limit stop as a failure, which would
+    # bury real failures under one phony one per cycle.
     systemd.services.librespot-beacon = mkIf (cfg.beaconSeconds != 0) {
       description = "Periodic mDNS re-announcement for Spotify Connect";
       wantedBy = [ "multi-user.target" ];
       after = [ "avahi-daemon.service" ];
       serviceConfig = {
         ExecStart = escapeShellArgs [
+          "${pkgs.coreutils}/bin/timeout"
+          (toString cfg.beaconSeconds)
           "${pkgs.avahi}/bin/avahi-publish"
           "-s" "${cfg.deviceName} beacon"
           "_spotify-connect._tcp"
@@ -190,7 +195,9 @@ in {
         ];
         Restart = "always";
         RestartSec = "500ms";
-        RuntimeMaxSec = cfg.beaconSeconds;
+        # timeout(1) exits 124 when the clock fires; that is the normal
+        # end of a cycle, not an error.
+        SuccessExitStatus = 124;
         DynamicUser = true;
       };
       # Cycling forever is the point; don't let the rate limiter stop it.
