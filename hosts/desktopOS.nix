@@ -1,7 +1,19 @@
  { config, lib, pkgs, inputs, system, stablenix, modulesPath, ... }:
 {
   nixpkgs.overlays = [
+    # CachyOS kernel packages for boot.kernelPackages. Structural rather
+    # than temporary: stays as long as this host runs the CachyOS kernel.
+    # Overlay added 2026-04-11.
     inputs.nix-cachyos-kernel.overlays.default
+    # FIXME: Remove this once ctranslate2 hash mismatch is fixed upstream.
+    # Overlay added 2026-07-08.
+    (final: prev: {
+      ctranslate2 = prev.ctranslate2.overrideAttrs (oldAttrs: {
+        src = (oldAttrs.src or { }).override {
+          hash = "sha256-cchwv+esysn/0v6RqD5zp306HfzOjjlCxH5usLETXs0=";
+        };
+      });
+    })
     # Skipping tests while upstream sorts it out, revert once
     # Hydra consistently builds openldap green.
     (_: prev: {
@@ -11,6 +23,9 @@
     })
     # Temporarily pull ollama-rocm from an older nixpkgs while the
     # current ollama's reasoning_content streaming breaks pi on /v1.
+    # Overlay added 2026-06-08.
+    # Checked 2026-07-08: still needed, no fixed ollama release exists yet.
+    # Track ollama/ollama#10976 and PR ollama/ollama#16758.
     (_: _: {
       ollama-rocm = (import inputs.nixpkgs-ollama {
         inherit system;

@@ -28,21 +28,6 @@
     "pipewire"
   ];
 
-  # ffmpeg-headless pulls in openapv 0.2.1.2 on ffmpeg ≥ 8.0, but
-  # openapv's GitHub tarball was regenerated upstream and nixos-26.05
-  # hasn't backported the new hash. Even cache.nixos.org can't supply
-  # this source derivation, so the build can't proceed without
-  # rebuilding ffmpeg + the whole closure downstream of it. The
-  # jukebox doesn't need an APV encoder; drop the dependency.
-  # Remove this when nixos-26.05 picks up the openapv hash fix.
-  nixpkgs.overlays = [
-    (final: prev: {
-      ffmpeg-headless = prev.ffmpeg-headless.override {
-        withOpenapv = false;
-      };
-    })
-  ];
-
   spotifydmodule = {
     enable = true;
     deviceName = "controls-jukebox";

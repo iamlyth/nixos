@@ -22,10 +22,11 @@
     lanzaboote.url = "github:nix-community/lanzaboote/v1.1.0";
     nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
     # Old ollama rev for temporary rollback while gemma4/pi /v1 issue
-    # is sorted upstream. See ollama/ollama#15288.
+    # is sorted upstream. Added 2026-06-08.
+    # Checked 2026-07-08: still needed. ollama/ollama#15288 was closed as
+    # a misdiagnosis; the real tracker is ollama/ollama#10976 (thinking
+    # forced on for /v1 tool requests), fix pending in ollama/ollama#16758.
     nixpkgs-ollama.url = "github:nixos/nixpkgs/4100e830e085863741bc69b156ec4ccd53ab5be0";
-    # claude-code 2.1.170 from nixpkgs PR #530023, pending merge to unstable/26.11.
-    nixpkgs-claude-pr.url = "github:nixos/nixpkgs/5900fe6cf8eca7dc124309029a50c7f80e90b6c9";
     pi-nix.url = "github:lukasl-dev/pi.nix";
     jaildotnix.url = "sourcehut:~alexdavid/jail.nix";
     jetpack.url = "github:anduril/jetpack-nixos/master";
