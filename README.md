@@ -99,9 +99,9 @@ sudo nixos-rebuild switch --flake github:iamlyth/nixos#pijukeboxOS
 
 Notes:
 
-- `templates/pitemplate.nix` is the shared host base — `hosts/pijukeboxOS.nix` imports it and layers spotifyd + Bluetooth on top.
+- `templates/pitemplate.nix` is the shared host base — `hosts/pijukeboxOS.nix` imports it and layers librespot + Bluetooth on top.
 - All Pi-specific knobs (kernel, firmware blobs, U-Boot, `config.txt`, `krnbt=on`, fileSystems) live in `nixos-raspberrypi`'s `raspberry-pi-4.{base,bluetooth}` modules wired in at the flake level — `pitemplate.nix` itself is just host config (ssh, user, hostname).
-- Setup, Bluetooth-speaker pairing, and per-host spotifyd tweaks: see [`docs/pijukebox.md`](docs/pijukebox.md).
+- Setup, Bluetooth-speaker pairing, and per-host librespot tweaks: see [`docs/pijukebox.md`](docs/pijukebox.md).
 
 ## Running `nvim` from Another Flake
 
