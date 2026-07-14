@@ -27,6 +27,7 @@ sudo nixos-rebuild switch --flake .#<hostname>
 | `modules/` | Reusable system modules. `modules/repo/*.nix` are toggleable services; the rest are core capabilities. |
 | `home-manager/` | User-space layer. `home-manager/repo/*.nix` are atomic tool configs; `*-home.nix` are role profiles. |
 | `config/` | Pure, framework-agnostic configuration data (`nvim.nix`), consumed by both home-manager and the standalone `packages.nvim` output. |
+| `scripts/` | Maintenance tooling. `update-deps.sh` updates the manually pinned dependencies in `home-manager/repo/pins.json` (see below). |
 
 ## Hosts
 
@@ -49,9 +50,47 @@ sudo nixos-rebuild switch    --flake .#<hostname>   # apply
 nix flake update                                    # bump all inputs
 nix flake update nixpkgs                            # bump one input
 nix flake check                                     # validate
+scripts/update-deps.sh --check                      # manual pins: what's outdated
+scripts/update-deps.sh <target>                     # manual pins: update (or `all`)
 ```
 
 Always commit `flake.lock` after updating inputs.
+
+## Manually Pinned Dependencies
+
+Some sources are pinned outside `flake.lock`, so `nix flake update` never
+touches them. All of their pin values live in `home-manager/repo/pins.json`,
+which the nix modules read via `importJSON`:
+
+| Pin | Consumed by | What it is |
+|-----|-------------|------------|
+| `claude-plugins-official`, `claude-skills` | `home-manager/repo/claude.nix` | Claude Code plugin and skill sources (GitHub rev + hash). |
+| `claude-context-mode`, `claude-context-mode-deps` | `home-manager/repo/claude.nix` | The context-mode plugin for Claude Code, plus the `npmDepsHash` for its runtime dependencies. |
+| `pi-extensions` | `home-manager/repo/pi.nix` | `npmDepsHash` for the pi coding-agent extensions (`context-mode`, `@tintinweb/pi-subagents`); their versions live in `home-manager/repo/pi-extensions-deps/package.json`. |
+
+Update them with `scripts/update-deps.sh`: `--check` reports what is outdated
+without changing anything, a target name updates one pin (mirroring
+`nix flake update <input>`), and `all` updates everything. The script bumps
+versions and revs, regenerates npm lockfiles, recomputes `npmDepsHash`
+values, and runs a verification build. Don't hand-edit hashes.
+
+Targets are derived from the data, not hardcoded: adding an entry to
+`pins.json` (with its `type` field; see the script header for the schema) or
+a package to a managed npm dir makes it updatable with no script changes.
+`scripts/update-deps.sh --help` lists the current targets.
+
+Pi and Claude Code extensions are never installed imperatively on a host
+(`pi install npm:...` and friends); they load from the nix store via these
+pins so updates stay git-visible and revertible.
+
+## Overlay Policy
+
+Overlays are temporary workarounds by default. Each one carries an
+`Overlay added YYYY-MM-DD` tag plus a `Checked YYYY-MM-DD` note stating the
+upstream issue it waits on, and gets deleted once the fix reaches the locked
+rev. Overlays that are permanent by design (the CachyOS kernel overlay) say
+so in their comment. The same convention covers pinned-commit flake inputs
+like `nixpkgs-ollama`.
 
 ## Proxmox LXC Containers
 
