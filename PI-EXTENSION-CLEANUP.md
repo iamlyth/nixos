@@ -72,9 +72,10 @@ block hurts a 26 to 31B model. Toggling is now a one-line experiment:
 comment out the context-mode entry in the `extensions` list in
 `home-manager/repo/pi.nix` and rebuild.
 
-## Updating the pinned extensions later (keep this part in mind, then delete the file)
+## Updating the pinned extensions later (keep this in mind, then delete the file)
 
-1. Bump versions in `home-manager/repo/pi-extensions-deps/package.json`.
-2. Regenerate the lock: `npm install --package-lock-only` in that directory.
-3. Set `npmDepsHash = lib.fakeHash` in `home-manager/repo/pi.nix`, rebuild,
-   and paste the real hash from the error message.
+Run `scripts/update-deps.sh context-mode "@tintinweb/pi-subagents"`. Use
+`--check` to see what is outdated without changing anything, `--help` to
+list all targets, or `all` for every manual pin including the Claude Code
+ones. The script bumps versions, regenerates lockfiles, recomputes
+npmDepsHash values, and verifies the builds.

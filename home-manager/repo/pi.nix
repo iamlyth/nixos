@@ -8,20 +8,22 @@ let
   piAgentDir = "${config.home.homeDirectory}/.pi/agent";
 
   # Pi extensions, nix-pinned instead of `pi install npm:...` (which leaves
-  # imperative, self-updating state in ~/.pi/agent). To update: bump the
-  # versions in pi-extensions-deps/package.json, regenerate the lock with
-  # `npm install --package-lock-only`, set npmDepsHash = lib.fakeHash,
-  # rebuild, and paste the real hash from the error.
+  # imperative, self-updating state in ~/.pi/agent). To update:
+  # scripts/update-deps.sh context-mode "@tintinweb/pi-subagents"
   #
   # Built with pi.nix's own nixpkgs, not ours: context-mode ships the
   # native better-sqlite3 addon, which must match the node ABI that pi
   # itself is wrapped with.
+  # NOTE: scripts/update-deps.sh regenerates npmDepsHash from a derivation
+  # built out of the pin's dir/nixpkgs/fetcherVersion fields in pins.json;
+  # if you change this derivation's shape, update those fields to match.
+  pins = importJSON ./pins.json;
   piPkgs = inputs.pi-nix.inputs.nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system};
   piExtensionDeps = piPkgs.buildNpmPackage {
     pname = "pi-extensions-deps";
     version = "2026-07-14";
     src = ./pi-extensions-deps;
-    npmDepsHash = "sha256-0U89rqOew3RtNX3/RJ+V3beY/hVIkcjbK8SuS4UNykE=";
+    npmDepsHash = pins."pi-extensions".npmDepsHash;
     # Fetcher v1 skips lock entries flagged "peer": true (the pi packages
     # that pi-subagents peer-depends on), which npm ci then can not find
     # offline. v2 fetches them.
