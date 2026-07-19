@@ -30,7 +30,7 @@
   };
   pythonmodule = {
     enable = true;
-    extras = true;
+    extras = false;
   };
   rustmodule = {
     enable = true;
@@ -41,5 +41,15 @@
   tmuxmodule = {
     enable = true;
   };
+
+  ## Override for Flatpak Retrodeck
+  xdg.dataFile."flatpak/overrides/net.retrodeck.retrodeck".text = ''
+    [Context]
+    sockets=wayland;fallback-x11;pulseaudio;x11
+
+    [Environment]
+    XDG_DATA_DIRS=/app/share:/usr/share:/usr/share/runtime/share
+  '';
+
   home.stateVersion = "25.11";
 }
