@@ -30,7 +30,10 @@
   };
   pythonmodule = {
     enable = true;
-    extras = true;
+    # markitdown pulls in a heavy python closure (openai, fastapi, ...) whose
+    # inline-snapshot test dep fails to build on the current nixpkgs-unstable.
+    # Off for now; markitdown will move to an on-demand uv environment instead.
+    extras = false;
   };
   rustmodule = {
     enable = true;
