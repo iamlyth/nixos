@@ -1,0 +1,10 @@
+{
+  "name": "pi-extensions-deps",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pinned pi extensions, loaded via --extension flags instead of pi install. See pi.nix.",
+  "dependencies": {
+    "context-mode": "1.0.169",
+    "@tintinweb/pi-subagents": "0.14.1"
+  }
+}

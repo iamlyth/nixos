@@ -7,6 +7,53 @@ let
 
   piAgentDir = "${config.home.homeDirectory}/.pi/agent";
 
+  # Pi extensions, nix-pinned instead of `pi install npm:...` (which leaves
+  # imperative, self-updating state in ~/.pi/agent). To update:
+  # scripts/update-deps.sh context-mode "@tintinweb/pi-subagents"
+  #
+  # Built with pi.nix's own nixpkgs, not ours: context-mode ships the
+  # native better-sqlite3 addon, which must match the node ABI that pi
+  # itself is wrapped with.
+  # NOTE: scripts/update-deps.sh regenerates npmDepsHash from a derivation
+  # built out of the pin's dir/nixpkgs/fetcherVersion fields in pins.json;
+  # if you change this derivation's shape, update those fields to match.
+  pins = importJSON ./pins.json;
+  piPkgs = inputs.pi-nix.inputs.nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  piExtensionDeps = piPkgs.buildNpmPackage {
+    pname = "pi-extensions-deps";
+    version = "2026-07-14";
+    src = ./pi-extensions-deps;
+    npmDepsHash = pins."pi-extensions".npmDepsHash;
+    # Fetcher v1 skips lock entries flagged "peer": true (the pi packages
+    # that pi-subagents peer-depends on), which npm ci then can not find
+    # offline. v2 fetches them.
+    npmDepsFetcherVersion = 2;
+    nativeBuildInputs = [ piPkgs.python3 ];
+    dontBuild = true;
+    installPhase = ''
+      mkdir -p $out
+      cp -r node_modules $out/
+    '';
+  };
+
+  # Wrapper that passes the pinned extensions (and context-mode's skills)
+  # to pi via --extension/--skill flags on every launch. The entry points
+  # come from each package's "pi" field in package.json, the same ones
+  # `pi install` would register.
+  piWrapped = (inputs.pi-nix.lib.mkCodingAgent {
+    inherit pkgs;
+    modules = [{
+      pi.coding-agent = {
+        package = piPackage;
+        extensions = [
+          "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
+          "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
+        ];
+        skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
+      };
+    }];
+  }).package;
+
   modelsJson = builtins.toJSON {
     providers = {
       ollama = {
@@ -20,7 +67,7 @@ let
     };
   };
 
-  jailed-pi = jail "pi" piPackage [
+  jailed-pi = jail "pi" piWrapped [
     jail.combinators.network
     (jail.combinators.persist-home "pi-coder")
     (jail.combinators.try-readwrite piAgentDir)

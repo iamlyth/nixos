@@ -1,6 +1,8 @@
 # pijukeboxOS — Setup & Usage
 
-A Raspberry Pi 4 running NixOS as a Spotify Connect endpoint with onboard Bluetooth audio output. Built from `templates/pitemplate.nix` (the bare base) and specialised by `hosts/pijukeboxOS.nix` (spotifyd + Bluetooth + PipeWire). See [the SD-image section in the top-level README](../README.md#raspberry-pi-sd-image) for how the image is built and flashed.
+A Raspberry Pi 4 running NixOS as a Spotify Connect endpoint with onboard Bluetooth audio output. Built from `templates/pitemplate.nix` (the bare base) and specialised by `hosts/pijukeboxOS.nix` (librespot + Bluetooth + PipeWire). See [the SD-image section in the top-level README](../README.md#raspberry-pi-sd-image) for how the image is built and flashed.
+
+> Historical note: this host originally ran spotifyd. spotifyd 0.4.x hardwires its own libmdns zeroconf responder, which fights Avahi over UDP 5353 and made the device vanish from phones about two minutes after each announcement. Plain librespot registers through the already-running Avahi daemon instead, so the box has exactly one mDNS stack.
 
 ## First boot
 
@@ -62,9 +64,9 @@ Keybindings (press `?` inside for the full list):
 
 It's especially nice for spotting the speaker among a noisy scan: each row shows RSSI alongside the name/MAC, so the one labelled with your speaker's name and the strongest signal is obvious.
 
-## Setting the speaker as spotifyd's audio output
+## Setting the speaker as librespot's audio output
 
-spotifyd uses ALSA, which on this host is provided by [PipeWire's ALSA shim](https://docs.pipewire.org/page_man_pipewire-pulse_conf_5.html). That means whichever sink PipeWire treats as its default is where spotifyd plays — including a Bluetooth speaker.
+librespot runs with `--backend alsa`, which on this host is provided by [PipeWire's ALSA shim](https://docs.pipewire.org/page_man_pipewire-pulse_conf_5.html). That means whichever sink PipeWire treats as its default is where librespot plays — including a Bluetooth speaker.
 
 List the sinks PipeWire knows about:
 
@@ -95,31 +97,45 @@ To switch back to a different sink later, just `wpctl set-default <other-id>`.
 2. Open the device picker (Connect to a device).
 3. Look for `pijukeboxOS`. If it's not listed:
    - Confirm the phone is on the same SSID (Connect's mDNS is L2-scoped; guest VLANs and 2.4 / 5 GHz isolation drop the discovery packets).
-   - On the Pi: `systemctl status spotifyd` should be `active (running)`.
-   - On the Pi: `avahi-browse -t -r _spotify-connect._tcp` should list the device with port `5354` (our pinned `spotifydmodule.zeroconfPort`).
+   - On the Pi: `systemctl status librespot` should be `active (running)`.
+   - On the Pi: `avahi-browse -t -r _spotify-connect._tcp` should list the device with port `5354` (our pinned `librespotmodule.zeroconfPort`).
 4. Tap `pijukeboxOS`, then hit play.
 
-## Tweaking spotifyd
+## Tweaking librespot
 
-The module's options live in `modules/spotifyd.nix`. Per-host overrides go in `hosts/pijukeboxOS.nix`:
+The module's options live in `modules/librespot.nix`. Per-host overrides go in `hosts/pijukeboxOS.nix`:
 
 ```nix
-spotifydmodule = {
-  enable       = true;
-  deviceName   = "Living Room";   # shown in the Spotify picker
-  bitrate      = 320;             # 96 | 160 | 320
-  zeroconfPort = 5354;            # control port; opened in the firewall
+librespotmodule = {
+  enable           = true;
+  deviceName       = "Living Room";   # shown in the Spotify picker
+  bitrate          = 320;             # 96 | 160 | 320
+  zeroconfPort     = 5354;            # control port; opened in the firewall
+  beaconSeconds    = 30;              # mDNS re-announce interval; 0 disables
+  idleResetMinutes = 2;               # release a stale user claim; 0 disables
 };
 ```
+
+Two options exist because of real-world network and sharing quirks:
+
+- `beaconSeconds` re-announces the Connect service over mDNS on a cycle, for
+  networks that drop enough multicast that phones miss on-demand lookups
+  (the office network does). Healthy home networks can leave it at 0.
+- `idleResetMinutes` restarts librespot when someone has claimed the device
+  but played nothing for that long. librespot never clears its `activeUser`
+  on its own, and the Spotify app hides a device claimed by another account,
+  so without this the first user owns the jukebox until a restart.
 
 Changes take effect on the next `nixos-rebuild switch`.
 
 ## Diagnostics
 
 ```bash
-# spotifyd
-systemctl status spotifyd --no-pager
-journalctl -u spotifyd -n 50 --no-pager
+# librespot (and its helper units)
+systemctl status librespot --no-pager
+journalctl -u librespot -n 50 --no-pager
+systemctl status librespot-beacon --no-pager       # if beaconSeconds != 0
+systemctl list-timers librespot-idle-reset         # if idleResetMinutes != 0
 
 # bluetooth
 sudo dmesg | grep -i bluetooth --no-pager   # BCM4345C0 chip id + patch loading
@@ -138,6 +154,7 @@ systemctl --user status pipewire            # (system-wide, so no --user needed 
 |---|---|
 | `Reset failed (-110)` in dmesg | Pi 4 BT bring-up isn't using the vendor kernel. Confirm the flake input is `nvmd/nixos-raspberrypi` and the host imports `raspberry-pi-4.bluetooth`. |
 | Speaker pairs but no audio | `wpctl status` shows the speaker but it isn't default — `wpctl set-default <id>`. |
-| Spotify app can't find the device | mDNS isn't reaching the phone (guest WLAN / Pi-hole / VLAN isolation). Direct-test with `avahi-browse -t -r _spotify-connect._tcp` on the Pi. |
+| Spotify app can't find the device | mDNS isn't reaching the phone (guest WLAN / Pi-hole / VLAN isolation). Direct-test with `avahi-browse -t -r _spotify-connect._tcp` on the Pi. On multicast-lossy networks, set `librespotmodule.beaconSeconds`. |
+| Device visible to one account but not others | librespot is holding a stale `activeUser` claim. The `librespot-idle-reset` timer clears it after `idleResetMinutes`; for an immediate fix, `systemctl restart librespot`. |
 | `Reset failed` returns after a kernel update | The vendor kernel branch on `nixos-raspberrypi` may have shifted; `nix flake update nixos-raspberrypi` and rebuild. |
 | OOM on `nixos-rebuild` | Confirm `free -h` shows the 4 GB swap is active. If `Swap: 0B`, the pitemplate-with-swap generation hasn't booted yet. |

@@ -7,6 +7,9 @@
     inputs.nix-cachyos-kernel.overlays.default
     # FIXME: Remove this once ctranslate2 hash mismatch is fixed upstream.
     # Overlay added 2026-07-08.
+    # Checked 2026-07-14: fixed on nixpkgs master 2026-07-05 (PR #538805,
+    # same hash as below), but the current unstable pin predates it.
+    # Droppable after the next flake update.
     (final: prev: {
       ctranslate2 = prev.ctranslate2.overrideAttrs (oldAttrs: {
         src = (oldAttrs.src or { }).override {
@@ -14,18 +17,15 @@
         };
       });
     })
-    # Skipping tests while upstream sorts it out, revert once
-    # Hydra consistently builds openldap green.
-    (_: prev: {
-      openldap = prev.openldap.overrideAttrs (_: {
-        doCheck = false;
-      });
-    })
     # Temporarily pull ollama-rocm from an older nixpkgs while the
     # current ollama's reasoning_content streaming breaks pi on /v1.
     # Overlay added 2026-06-08.
-    # Checked 2026-07-08: still needed, no fixed ollama release exists yet.
-    # Track ollama/ollama#10976 and PR ollama/ollama#16758.
+    # Checked 2026-07-14: still needed. Fix PR ollama/ollama#16758 is
+    # approved but unmerged (tracker ollama/ollama#10976 still open);
+    # v0.32.0 shipped 2026-07-11 without it. Unpin only once a release
+    # containing the fix reaches nixpkgs, then verify by sending a /v1
+    # tool request to gemma4: a fixed build returns real content and
+    # tool_calls with nothing in reasoning_content.
     (_: _: {
       ollama-rocm = (import inputs.nixpkgs-ollama {
         inherit system;
@@ -93,7 +93,9 @@
   ai = {
     enable = true;
     acceleration = "rocm";
-    models = [ "gemma4:26b" ];
+    # 31b is pi's default model (home-manager/repo/pi.nix); preload it so
+    # a fresh install always has it. 26b stays for open-webui sessions.
+    models = [ "gemma4:26b" "gemma4:31b" ];
     idleTimeout = "5min";
     openwebui.enable = true;
     openwebui.corsOrigin = "https://ai.tatchi.org";

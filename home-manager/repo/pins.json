@@ -1,0 +1,39 @@
+{
+  "claude-plugins-official": {
+    "type": "github-head",
+    "owner": "anthropics",
+    "repo": "claude-plugins-official",
+    "rev": "0742692199b49af5c6c33cd68ee674fb2e679d50",
+    "hash": "sha256-5h7uXbqtuguCw9AMpEFJiKAH7ZmGgJJvm3yyec6+BXE="
+  },
+  "claude-skills": {
+    "type": "github-head",
+    "owner": "anthropics",
+    "repo": "skills",
+    "rev": "f458cee31a7577a47ba0c9a101976fa599385174",
+    "hash": "sha256-jKNYFom6R+Qw7LQ8vFPBe51JpqIP0tTSY8LM4aPlnT4="
+  },
+  "claude-context-mode": {
+    "type": "github-release",
+    "owner": "mksglu",
+    "repo": "context-mode",
+    "rev": "8d685716596ce6315d6521cb1669f6c07b372c82",
+    "hash": "sha256-cPYBI8N1htSjpetL33/hS6EAFN1G0fjoWwpkP5W0A3E=",
+    "version": "1.0.136",
+    "note": "If upstream's runtime dependencies changed, sync home-manager/repo/context-mode-deps/package.json and run: scripts/update-deps.sh claude-context-mode-deps"
+  },
+  "claude-context-mode-deps": {
+    "type": "npm-deps",
+    "dir": "home-manager/repo/context-mode-deps",
+    "nixpkgs": "nixpkgs",
+    "npmDepsHash": "sha256-0J3z+CgKV9FinGNIqKohPUvrarqeSJyAPRygePagiFI="
+  },
+  "pi-extensions": {
+    "type": "npm-deps",
+    "dir": "home-manager/repo/pi-extensions-deps",
+    "nixpkgs": "pi-nix.inputs.nixpkgs",
+    "fetcherVersion": 2,
+    "managePackages": true,
+    "npmDepsHash": "sha256-0U89rqOew3RtNX3/RJ+V3beY/hVIkcjbK8SuS4UNykE="
+  }
+}

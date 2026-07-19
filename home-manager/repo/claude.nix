@@ -1,37 +1,29 @@
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.claudemodule;
+  # Manually pinned sources, shared with pi.nix via pins.json.
+  # Update with scripts/update-deps.sh, not by hand.
+  pins = importJSON ./pins.json;
   claudePluginsOfficial = pkgs.fetchFromGitHub {
-    owner = "anthropics";
-    repo = "claude-plugins-official";
-    rev = "0742692199b49af5c6c33cd68ee674fb2e679d50";
-    hash = "sha256-5h7uXbqtuguCw9AMpEFJiKAH7ZmGgJJvm3yyec6+BXE=";
+    inherit (pins."claude-plugins-official") owner repo rev hash;
   };
   claudeSkills = pkgs.fetchFromGitHub {
-    owner = "anthropics";
-    repo = "skills";
-    rev = "f458cee31a7577a47ba0c9a101976fa599385174";
-    hash = "sha256-jKNYFom6R+Qw7LQ8vFPBe51JpqIP0tTSY8LM4aPlnT4=";
+    inherit (pins."claude-skills") owner repo rev hash;
   };
   contextMode = pkgs.fetchFromGitHub {
-    owner = "mksglu";
-    repo = "context-mode";
-    # version = "v1.0.137";
-    rev = "8d685716596ce6315d6521cb1669f6c07b372c82";
-    hash = "sha256-cPYBI8N1htSjpetL33/hS6EAFN1G0fjoWwpkP5W0A3E=";
+    inherit (pins."claude-context-mode") owner repo rev hash;
   };
 
   # Runtime deps that start.mjs would normally npm-install at runtime.
   # better-sqlite3 is a native addon compiled against pkgs.nodejs.
   # When running under Bun (which has bun:sqlite built-in), better-sqlite3
   # is never loaded — but we include it for Node fallback correctness.
-  # To update: bump package.json versions, regenerate package-lock.json,
-  # set npmDepsHash = lib.fakeHash, switch, paste the hash from the error.
+  # To update: scripts/update-deps.sh claude-context-mode-deps
   contextModeDeps = pkgs.buildNpmPackage {
     pname = "context-mode-runtime-deps";
     version = "1.0.0";
     src = ./context-mode-deps;
-    npmDepsHash = "sha256-0J3z+CgKV9FinGNIqKohPUvrarqeSJyAPRygePagiFI=";
+    npmDepsHash = pins."claude-context-mode-deps".npmDepsHash;
     nativeBuildInputs = [ pkgs.python3 ];
     dontBuild = true;
     installPhase = ''
@@ -47,7 +39,7 @@ with lib; let
   # configs/, hooks/, and node_modules must be co-located in $out.
   contextModePkg = pkgs.stdenv.mkDerivation {
     pname = "context-mode";
-    version = "1.0.136";
+    version = pins."claude-context-mode".version;
     src = contextMode;
     nativeBuildInputs = [ pkgs.jq ];
     installPhase = ''
@@ -172,7 +164,7 @@ in {
             echo '{"version":2,"plugins":{}}' > "$PLUGINS_FILE"
           fi
           ${pkgs.jq}/bin/jq \
-            '."plugins"["context-mode"] = [{"scope":"user","installPath":"${contextModePkg}","version":"${contextModePkg.version}","installedAt":"2026-05-19T14:20:47.000Z","lastUpdated":"2026-05-19T14:20:47.000Z","gitCommitSha":"8d685716596ce6315d6521cb1669f6c07b372c82"}]' \
+            '."plugins"["context-mode"] = [{"scope":"user","installPath":"${contextModePkg}","version":"${contextModePkg.version}","installedAt":"2026-05-19T14:20:47.000Z","lastUpdated":"2026-05-19T14:20:47.000Z","gitCommitSha":"${pins."claude-context-mode".rev}"}]' \
             "$PLUGINS_FILE" > "$PLUGINS_FILE.tmp" && mv "$PLUGINS_FILE.tmp" "$PLUGINS_FILE"
 
           # Claude Code reads user mcpServers from ~/.claude.json (via P8()), NOT settings.json.
