@@ -1,4 +1,4 @@
-{ lib, config, pkgs, inputs, ... }:
+{ lib, config, pkgs, inputs, osConfig, ... }:
 with lib;
 let
   cfg = config.pimodule;
@@ -87,10 +87,16 @@ in
         (persist-home "pi-coder")
         (set-env "EDITOR" "vim")
         (set-env "VISUAL" "vim")
-        (add-pkg-deps (with pkgs; [
-          git fd bash gnused findutils coreutils gnugrep ripgrep gawk
-          diffutils jq nodejs python313 gcc gnumake sqlite pkg-config bun vim
-        ]))
+        # All tools, no wall: give the jail the whole system + home-manager
+        # package sets, so pi can run anything installed on the machine and
+        # this never needs editing when you add a package. This only widens
+        # what pi can *run* -- the filesystem stays workspace-scoped (only the
+        # project dir is bound below), so ~/.ssh and the rest of $HOME remain
+        # invisible regardless of which binaries are on PATH.
+        # pi's own build/runtime toolchain is kept explicit so `pi install`
+        # native addons and EDITOR=vim work even on a lean profile.
+        (add-pkg-deps ([ osConfig.system.path config.home.path ]
+          ++ (with pkgs; [ git bash nodejs bun gcc gnumake python313 pkg-config sqlite vim ])))
         (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
         (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
         (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
