@@ -149,6 +149,7 @@
     libgcc          #  C/Cpp compilers
     bc
     gcc
+    love
   ];
 
   # DESKTOP OPTIONS
