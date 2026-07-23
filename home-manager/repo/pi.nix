@@ -84,6 +84,7 @@ in
       jail.enable = true;
       jail.permissions = combinators: with combinators; [
         network
+        no-new-session
         (persist-home "pi-coder")
         (set-env "EDITOR" "vim")
         (set-env "VISUAL" "vim")
