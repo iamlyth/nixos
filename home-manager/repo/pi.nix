@@ -45,63 +45,147 @@ let
       };
     };
   });
+
+  # ---- Jail permission set shared by both instances ----
+  # Reduces duplication — each instance overrides the bits that differ.
+  sharedJailPkgs = with pkgs; [
+    git fd bash gnused findutils coreutils gnugrep ripgrep gawk
+    diffutils jq nodejs python313 gcc gnumake sqlite pkg-config vim
+  ];
+
+  # ---- Instance 1: pi (primary coding agent) ----
+  # Same config as before: context-mode + pi-subagents, gemma4:31b,
+  # persisted home "pi-coder", vim editor, bun included.
+  piMain = inputs.pi-nix.lib.mkCodingAgent {
+    inherit pkgs;
+    modules = [{
+      config.pi.coding-agent = {
+        # DECLARATIVE baseline: these are pinned from the nix store and injected
+        # via --extension/--skill on every launch. The entry points come from
+        # each package's "pi" field in package.json.
+        #
+        # You can still EXPERIMENT imperatively: `pi install npm:...` drops an
+        # extension in ~/.pi/agent and pi auto-discovers it alongside these pins.
+        # To keep one, promote it to a pin: `pi uninstall <name>`, add it to
+        # pi-extensions-deps/package.json + this list, run scripts/update-deps.sh,
+        # rebuild. Never leave the same extension both pinned here AND installed
+        # in ~/.pi/agent, or pi loads it twice (conflict diagnostics).
+        extensions = [
+          "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
+          "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
+        ];
+        skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
+
+        # bubblewrap isolation via jail.nix. The module always binds pi's agent
+        # dir (~/.pi/agent) read-write itself, so it is intentionally absent from
+        # this list; persist-home keeps the imperative npm install root
+        # (~/.local/share/pi/npm) across launches so `pi install` experiments
+        # survive relaunches.
+        jail.enable = true;
+        jail.permissions = combinators: with combinators; [
+          network
+          no-new-session
+          (persist-home "pi-coder")
+          (set-env "EDITOR" "vim")
+          (set-env "VISUAL" "vim")
+          (add-pkg-deps (sharedJailPkgs ++ [ pkgs.bun ]))
+          (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
+          (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
+          (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
+        ];
+
+        models = modelsFile;
+        settings = {
+          defaultProvider = "ollama";
+          defaultModel = "gemma4:31b";
+        };
+      };
+    }];
+  };
+
+  # ---- Instance 2: pi2 (secondary, separately configured) ----
+  # Separate persisted home ("pi2"), separate agent dir (~/.pi/agent2),
+  # different model (gemma4:26b). Extend/modify this block to diverge further
+  # (different extensions, different jail packages, different rules, etc.).
+  pi2 = inputs.pi-nix.lib.mkCodingAgent {
+    inherit pkgs;
+    modules = [{
+      config.pi.coding-agent = {
+        extensions = [
+          "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
+          "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
+        ];
+        skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
+
+        # Separate agent config directory so settings/models don't collide
+        # with the primary instance. CONTEXT_MODE_DATA_DIR isolates the
+        # context-mode session DB from pi's — context-mode hardcodes its
+        # session store under ~/.pi/context-mode/sessions/ using homedir(),
+        # NOT PI_CODING_AGENT_DIR, so without this override both instances
+        # would share the same database and leak conversation history.
+        # Use ~/.pi2 as context-mode's data root (sessions land at
+        # ~/.pi2/context-mode/sessions/), keeping it separate from the
+        # agent config at ~/.pi/agent2.
+        environment = {
+          PI_CODING_AGENT_DIR.value = "${config.home.homeDirectory}/.pi/agent2";
+          CONTEXT_MODE_DATA_DIR.value = "${config.home.homeDirectory}/.pi2";
+        };
+
+        jail.enable = true;
+        jail.permissions = combinators: with combinators; [
+          network
+          no-new-session
+          (persist-home "pi2")
+          (set-env "EDITOR" "vim")
+          (set-env "VISUAL" "vim")
+          (add-pkg-deps sharedJailPkgs)
+          (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
+          (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
+          (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
+        ];
+
+        models = modelsFile;
+        settings = {
+          defaultProvider = "openai-codex";
+          defaultModel = "gpt-5.6-terra";
+        };
+      };
+    }];
+  };
+
+  # mkCodingAgent always produces a binary named "pi". Rename the second
+  # instance so both are available side by side on PATH.
+  pi2Renamed = pkgs.writeShellScriptBin "pi2" ''
+    exec ${pi2.package}/bin/pi "$@"
+  '';
+  # ---- Per-instance options ----
+  # Each instance is independently toggleable so hosts can pick which to use.
+  # E.g. desktop runs both, laptop runs only pi2 (API keys only).
 in
 {
-  # pi is configured through pi-nix's own home-manager module
-  # (programs.pi.coding-agent) instead of a hand-rolled mkCodingAgent + jail
-  # wrapper. The module bundles the jail (same jail.nix rev we pinned before),
-  # the settings/models management, and the --extension/--skill plumbing.
-  imports = [ inputs.pi-nix.homeManagerModules.coding-agent ];
+  options.pimodule = {
+    enable = mkEnableOption "pi coding agent (via mkCodingAgent)";
 
-  options.pimodule.enable =
-    mkEnableOption "pi coding agent (via the pi-nix home-manager module)";
-
-  config = mkIf cfg.enable {
-    programs.pi.coding-agent = {
-      enable = true;
-
-      # DECLARATIVE baseline: these are pinned from the nix store and injected
-      # via --extension/--skill on every launch. The entry points come from
-      # each package's "pi" field in package.json.
-      #
-      # You can still EXPERIMENT imperatively: `pi install npm:...` drops an
-      # extension in ~/.pi/agent and pi auto-discovers it alongside these pins.
-      # To keep one, promote it to a pin: `pi uninstall <name>`, add it to
-      # pi-extensions-deps/package.json + this list, run scripts/update-deps.sh,
-      # rebuild. Never leave the same extension both pinned here AND installed
-      # in ~/.pi/agent, or pi loads it twice (conflict diagnostics).
-      extensions = [
-        "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
-        "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
-      ];
-      skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
-
-      # bubblewrap isolation via jail.nix. The module always binds pi's agent
-      # dir (~/.pi/agent) read-write itself, so it is intentionally absent from
-      # this list; persist-home keeps the imperative npm install root
-      # (~/.local/share/pi/npm) across launches so `pi install` experiments
-      # survive relaunches.
-      jail.enable = true;
-      jail.permissions = combinators: with combinators; [
-        network
-        no-new-session
-        (persist-home "pi-coder")
-        (set-env "EDITOR" "vim")
-        (set-env "VISUAL" "vim")
-        (add-pkg-deps (with pkgs; [
-          git fd bash gnused findutils coreutils gnugrep ripgrep gawk
-          diffutils jq nodejs python313 gcc gnumake sqlite pkg-config bun vim
-        ]))
-        (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
-        (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
-        (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
-      ];
-
-      models = modelsFile;
-      settings = {
-        defaultProvider = "ollama";
-        defaultModel = "gemma4:31b";
+    pi = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enable the primary pi instance (local ollama, gemma4:31b).";
       };
     };
+
+    pi2 = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the secondary pi2 instance (API keys, gemma4:26b).";
+      };
+    };
+  };
+
+  config = mkIf cfg.enable {
+    home.packages =
+      optional cfg.pi.enable piMain.package    # → `pi` command  (primary, gemma4:31b, ~/.pi/agent)
+      ++ optional cfg.pi2.enable pi2Renamed;   # → `pi2` command  (secondary, gemma4:26b, ~/.pi/agent2)
   };
 }
