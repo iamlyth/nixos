@@ -111,6 +111,14 @@ let
           (set-env "EDITOR" "vim")
           (set-env "VISUAL" "vim")
           (add-pkg-deps sharedJailPkgs)
+          # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
+          # recreates the symlink but only bind-mounts targets under /nix/store,
+          # so inside the jail the link dangles, glibc falls back to
+          # 127.0.0.1:53, and every lookup fails with EAI_AGAIN (this breaks
+          # OAuth login, which resolves platform.claude.com). Bind the target so
+          # the link resolves. Uses -try because the path is absent on non-WSL
+          # hosts, where this becomes a no-op.
+          (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
           (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
           (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
           (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
@@ -126,9 +134,9 @@ let
   };
 
   # ---- Instance 2: pi2 (secondary, separately configured) ----
-  # Separate persisted home ("pi2"), separate agent dir (~/.pi/agent2),
-  # different model (gemma4:26b). Extend/modify this block to diverge further
-  # (different extensions, different jail packages, different rules, etc.).
+  # Separate persisted home ("pi2"), separate agent dir (~/.pi/agent2), and a
+  # per-host provider/model via pimodule.pi2.{provider,model}. Extend/modify
+  # this block to diverge further (different extensions, jail packages, rules).
   pi2 = inputs.pi-nix.lib.mkCodingAgent {
     inherit pkgs;
     modules = [{
@@ -161,15 +169,25 @@ let
           (set-env "EDITOR" "vim")
           (set-env "VISUAL" "vim")
           (add-pkg-deps sharedJailPkgs)
+          # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
+          # recreates the symlink but only bind-mounts targets under /nix/store,
+          # so inside the jail the link dangles, glibc falls back to
+          # 127.0.0.1:53, and every lookup fails with EAI_AGAIN (this breaks
+          # OAuth login, which resolves platform.claude.com). Bind the target so
+          # the link resolves. Uses -try because the path is absent on non-WSL
+          # hosts, where this becomes a no-op.
+          (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
           (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
           (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
           (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
         ];
 
         models = modelsFile;
+        # Provider/model come from pimodule.pi2.{provider,model} so each host
+        # can point this instance at whatever it has credentials for.
         settings = {
-          defaultProvider = "openai-codex";
-          defaultModel = "gpt-5.6-terra";
+          defaultProvider = cfg.pi2.provider;
+          defaultModel = cfg.pi2.model;
         };
       };
     }];
@@ -200,7 +218,28 @@ in
       enable = mkOption {
         type = types.bool;
         default = false;
-        description = "Enable the secondary pi2 instance (API keys, gemma4:26b).";
+        description = "Enable the secondary pi2 instance (hosted provider).";
+      };
+
+      provider = mkOption {
+        type = types.str;
+        default = "openai-codex";
+        example = "anthropic";
+        description = ''
+          Provider written to pi2's settings as defaultProvider. Built-in
+          OAuth/API-key providers (for example "anthropic", "openai-codex")
+          work as-is; anything else must be declared in the models file.
+        '';
+      };
+
+      model = mkOption {
+        type = types.str;
+        default = "gpt-5.6-terra";
+        example = "claude-opus-5";
+        description = ''
+          Model id written to pi2's settings as defaultModel. Must be a model
+          the chosen provider serves.
+        '';
       };
     };
   };
@@ -208,6 +247,6 @@ in
   config = mkIf cfg.enable {
     home.packages =
       optional cfg.pi.enable piMain.package    # → `pi` command  (primary, gemma4:31b, ~/.pi/agent)
-      ++ optional cfg.pi2.enable pi2Renamed;   # → `pi2` command  (secondary, gemma4:26b, ~/.pi/agent2)
+      ++ optional cfg.pi2.enable pi2Renamed;   # → `pi2` command  (secondary, per-host provider, ~/.pi/agent2)
   };
 }

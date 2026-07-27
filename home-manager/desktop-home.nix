@@ -28,7 +28,11 @@
   pimodule = {
     enable = true;
     pi.enable = true;    # local ollama (gemma4:31b)
-    pi2.enable = true;   # API keys (gemma4:26b)
+    pi2 = {
+      enable = true;
+      provider = "openai-codex";
+      model = "gpt-5.6-terra";
+    };
   };
   pythonmodule = {
     enable = true;
