@@ -47,15 +47,37 @@ let
   });
 
   # ---- Jail permission set shared by both instances ----
-  # Reduces duplication — each instance overrides the bits that differ.
+  # General-purpose development baseline. add-pkg-deps exposes each package's
+  # binaries and runtime closure, but does not expose privileged host sockets
+  # (notably the Nix daemon, Docker, or an SSH agent).
   sharedJailPkgs = with pkgs; [
-    git fd bash gnused findutils coreutils gnugrep ripgrep gawk
-    diffutils jq nodejs python313 gcc gnumake sqlite pkg-config vim
+    # Shell, source control, and navigation
+    bash coreutils diffutils fd findutils gawk git gnugrep gnused jq
+    ripgrep vim which tree
+
+    # Network access and remote Git
+    cacert curl wget openssh netcat-openbsd
+
+    # Archives, patches, and file inspection
+    file patch gnutar gzip bzip2 xz zip unzip
+
+    # Language runtimes and package managers
+    nodejs bun pnpm yarn python313 uv
+
+    # Native compilation and build systems
+    gcc gnumake cmake ninja meson pkg-config
+
+    # Data and diagnostics
+    sqlite procps lsof strace gdb
+
+    # Nix and repository quality tools. The Nix CLI is available for parsing
+    # and local operations, but the daemon socket remains intentionally absent.
+    nix nixfmt-rfc-style statix deadnix shellcheck shfmt
   ];
 
   # ---- Instance 1: pi (primary coding agent) ----
   # Same config as before: context-mode + pi-subagents, gemma4:31b,
-  # persisted home "pi-coder", vim editor, bun included.
+  # persisted home "pi-coder", vim editor.
   piMain = inputs.pi-nix.lib.mkCodingAgent {
     inherit pkgs;
     modules = [{
@@ -88,7 +110,7 @@ let
           (persist-home "pi-coder")
           (set-env "EDITOR" "vim")
           (set-env "VISUAL" "vim")
-          (add-pkg-deps (sharedJailPkgs ++ [ pkgs.bun ]))
+          (add-pkg-deps sharedJailPkgs)
           (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
           (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
           (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
