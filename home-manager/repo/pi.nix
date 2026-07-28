@@ -115,6 +115,10 @@ let
           network
           no-new-session
           (persist-home "pi-coder")
+          # Allow SSH administration with the user's existing key, config, and
+          # known-hosts entries. Read-only preserves the host's credentials;
+          # add remote host keys to ~/.ssh/known_hosts before using pi.
+          (unsafe-add-raw-args "--ro-bind-try ${config.home.homeDirectory}/.ssh ${config.home.homeDirectory}/.ssh")
           (set-env "EDITOR" "vim")
           (set-env "VISUAL" "vim")
           (add-pkg-deps sharedJailPkgs)
@@ -249,7 +253,7 @@ in
 
       model = mkOption {
         type = types.str;
-        default = "gpt-5.6-terra";
+        default = "gpt-5.6-sol";
         example = "claude-opus-5";
         description = ''
           Model id written to pi2's settings as defaultModel. Must be a model
