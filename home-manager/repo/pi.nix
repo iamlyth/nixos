@@ -98,6 +98,13 @@ let
         ];
         skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
 
+        # Load the Firecrawl credential at runtime so it never enters the Nix
+        # store. pi.nix exports file-backed values before starting the agent.
+        environment = {
+          FIRECRAWL_API_KEY.file = "/etc/nixos/.secrets/firecrawl-api-key";
+          FIRECRAWL_API_URL.value = "https://firecrawl.tatchi.org/v1";
+        };
+
         # bubblewrap isolation via jail.nix. The module always binds pi's agent
         # dir (~/.pi/agent) read-write itself, so it is intentionally absent from
         # this list; persist-home keeps the imperative npm install root
@@ -119,6 +126,9 @@ let
           # the link resolves. Uses -try because the path is absent on non-WSL
           # hosts, where this becomes a no-op.
           (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
+          # The environment wrapper runs inside the jail, so expose only the
+          # file required by FIRECRAWL_API_KEY.file, read-only.
+          (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
           (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
           (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
           (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
@@ -159,6 +169,8 @@ let
         environment = {
           PI_CODING_AGENT_DIR.value = "${config.home.homeDirectory}/.pi/agent2";
           CONTEXT_MODE_DATA_DIR.value = "${config.home.homeDirectory}/.pi2";
+          FIRECRAWL_API_KEY.file = "/etc/nixos/.secrets/firecrawl-api-key";
+          FIRECRAWL_API_URL.value = "https://firecrawl.tatchi.org/v1";
         };
 
         jail.enable = true;
@@ -177,6 +189,9 @@ let
           # the link resolves. Uses -try because the path is absent on non-WSL
           # hosts, where this becomes a no-op.
           (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
+          # The environment wrapper runs inside the jail, so expose only the
+          # file required by FIRECRAWL_API_KEY.file, read-only.
+          (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
           (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
           (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
           (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
