@@ -35,5 +35,13 @@
     "fetcherVersion": 2,
     "managePackages": true,
     "npmDepsHash": "sha256-0U89rqOew3RtNX3/RJ+V3beY/hVIkcjbK8SuS4UNykE="
+  },
+  "ralph-orchestrator": {
+    "type": "github-release",
+    "owner": "mikeyobrien",
+    "repo": "ralph-orchestrator",
+    "rev": "407cb96b25a5705a779d598282d070e6f80f712c",
+    "hash": "sha256-aHvMkWU7st7ormrbHWISwQo+1an9XBiBJB/7fo3ErXo=",
+    "version": "2.10.1"
   }
 }

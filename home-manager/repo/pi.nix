@@ -31,18 +31,29 @@ let
     '';
   };
 
-  # models.json contents. The pi-nix module installs this into
-  # ~/.pi/agent/models.json (only if one is not already present).
-  modelsFile = pkgs.writeText "pi-models.json" (builtins.toJSON {
-    providers = {
-      ollama = {
-        baseUrl = "http://localhost:11434/v1";
-        api = "openai-completions";
-        apiKey = "ollama";
-        models = [
-          { id = "gemma4:31b"; }
-        ];
-      };
+  # Per-instance models.json contents. Both providers intentionally use the
+  # "ollama" id: each instance has a separate agent directory/auth.json, so
+  # pi2 can use an Ollama API key stored under that provider id without
+  # affecting the primary instance's unauthenticated local endpoint.
+  localModelsFile = pkgs.writeText "pi-local-models.json" (builtins.toJSON {
+    providers.ollama = {
+      baseUrl = "http://localhost:11434/v1";
+      api = "openai-completions";
+      apiKey = "ollama";
+      models = [
+        { id = "gemma4:31b"; }
+      ];
+    };
+  });
+
+  cloudModelsFile = pkgs.writeText "pi-cloud-models.json" (builtins.toJSON {
+    providers.ollama = {
+      baseUrl = "https://ollama.com/v1";
+      api = "openai-completions";
+      # No apiKey here: pi resolves the key from pi2's auth.json.
+      models = [
+        { id = "gemma4:31b"; }
+      ];
     };
   });
 
@@ -138,7 +149,7 @@ let
           (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
         ];
 
-        models = modelsFile;
+        models = localModelsFile;
         settings = {
           defaultProvider = "ollama";
           defaultModel = "gemma4:31b";
@@ -146,6 +157,38 @@ let
       };
     }];
   };
+
+  # Discover installed local models on every launch. pi requires custom
+  # providers to enumerate models explicitly, while Ollama exposes the current
+  # catalog through its OpenAI-compatible /v1/models endpoint. Keep the static
+  # gemma4 catalog above as a fallback when Ollama is unavailable.
+  piMainDynamic = pkgs.writeShellScriptBin "pi" ''
+    agent_dir="${config.home.homeDirectory}/.pi/agent"
+    ${pkgs.coreutils}/bin/mkdir -p "$agent_dir"
+
+    if response="$(${pkgs.curl}/bin/curl --fail --silent --connect-timeout 1 --max-time 3 http://localhost:11434/v1/models)"; then
+      tmp="$(${pkgs.coreutils}/bin/mktemp "$agent_dir/models.json.XXXXXX")"
+      if printf '%s' "$response" | ${pkgs.jq}/bin/jq -c '
+        {
+          providers: {
+            ollama: {
+              baseUrl: "http://localhost:11434/v1",
+              api: "openai-completions",
+              apiKey: "ollama",
+              models: [.data[] | select(.id != null) | { id: .id }] | sort_by(.id)
+            }
+          }
+        }
+      ' > "$tmp"; then
+        ${pkgs.coreutils}/bin/chmod 0600 "$tmp"
+        ${pkgs.coreutils}/bin/mv "$tmp" "$agent_dir/models.json"
+      else
+        ${pkgs.coreutils}/bin/rm -f "$tmp"
+      fi
+    fi
+
+    exec ${piMain.package}/bin/pi "$@"
+  '';
 
   # ---- Instance 2: pi2 (secondary, separately configured) ----
   # Separate persisted home ("pi2"), separate agent dir (~/.pi/agent2), and a
@@ -201,7 +244,7 @@ let
           (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
         ];
 
-        models = modelsFile;
+        models = cloudModelsFile;
         # Provider/model come from pimodule.pi2.{provider,model} so each host
         # can point this instance at whatever it has credentials for.
         settings = {
@@ -213,8 +256,13 @@ let
   };
 
   # mkCodingAgent always produces a binary named "pi". Rename the second
-  # instance so both are available side by side on PATH.
+  # instance so both are available side by side on PATH. pi-nix preserves an
+  # existing regular models.json, so install the declarative cloud catalog
+  # here on every launch; this also replaces pi2's previously copied local
+  # Ollama catalog while leaving auth.json untouched.
   pi2Renamed = pkgs.writeShellScriptBin "pi2" ''
+    ${pkgs.coreutils}/bin/mkdir -p "${config.home.homeDirectory}/.pi/agent2"
+    ${pkgs.coreutils}/bin/install -m 0600 ${cloudModelsFile} "${config.home.homeDirectory}/.pi/agent2/models.json"
     exec ${pi2.package}/bin/pi "$@"
   '';
   # ---- Per-instance options ----
@@ -242,7 +290,7 @@ in
 
       provider = mkOption {
         type = types.str;
-        default = "openai-codex";
+        default = "ollama";
         example = "anthropic";
         description = ''
           Provider written to pi2's settings as defaultProvider. Built-in
@@ -253,7 +301,7 @@ in
 
       model = mkOption {
         type = types.str;
-        default = "gpt-5.6-sol";
+        default = "gemma4:31b";
         example = "claude-opus-5";
         description = ''
           Model id written to pi2's settings as defaultModel. Must be a model
@@ -265,7 +313,7 @@ in
 
   config = mkIf cfg.enable {
     home.packages =
-      optional cfg.pi.enable piMain.package    # → `pi` command  (primary, gemma4:31b, ~/.pi/agent)
+      optional cfg.pi.enable piMainDynamic     # → `pi` command  (primary, dynamic local Ollama catalog, ~/.pi/agent)
       ++ optional cfg.pi2.enable pi2Renamed;   # → `pi2` command  (secondary, per-host provider, ~/.pi/agent2)
   };
 }
