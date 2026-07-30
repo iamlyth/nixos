@@ -2,18 +2,13 @@
 with lib;
 let
   cfg = config.pimodule;
-  jail = inputs.jaildotnix.lib.init pkgs;
-  piPackage = inputs.pi-nix.packages.${pkgs.stdenv.hostPlatform.system}.coding-agent;
 
-  piAgentDir = "${config.home.homeDirectory}/.pi/agent";
-
-  # Pi extensions, nix-pinned instead of `pi install npm:...` (which leaves
-  # imperative, self-updating state in ~/.pi/agent). To update:
+  # Nix-pinned baseline extensions (context-mode + pi-subagents). To update:
   # scripts/update-deps.sh context-mode "@tintinweb/pi-subagents"
   #
-  # Built with pi.nix's own nixpkgs, not ours: context-mode ships the
-  # native better-sqlite3 addon, which must match the node ABI that pi
-  # itself is wrapped with.
+  # Built with pi.nix's own nixpkgs, not ours: context-mode ships the native
+  # better-sqlite3 addon, which must match the node ABI that pi itself is
+  # wrapped with.
   # NOTE: scripts/update-deps.sh regenerates npmDepsHash from a derivation
   # built out of the pin's dir/nixpkgs/fetcherVersion fields in pins.json;
   # if you change this derivation's shape, update those fields to match.
@@ -24,9 +19,9 @@ let
     version = "2026-07-14";
     src = ./pi-extensions-deps;
     npmDepsHash = pins."pi-extensions".npmDepsHash;
-    # Fetcher v1 skips lock entries flagged "peer": true (the pi packages
-    # that pi-subagents peer-depends on), which npm ci then can not find
-    # offline. v2 fetches them.
+    # Fetcher v1 skips lock entries flagged "peer": true (the pi packages that
+    # pi-subagents peer-depends on), which npm ci then can not find offline.
+    # v2 fetches them.
     npmDepsFetcherVersion = 2;
     nativeBuildInputs = [ piPkgs.python3 ];
     dontBuild = true;
@@ -36,77 +31,307 @@ let
     '';
   };
 
-  # Wrapper that passes the pinned extensions (and context-mode's skills)
-  # to pi via --extension/--skill flags on every launch. The entry points
-  # come from each package's "pi" field in package.json, the same ones
-  # `pi install` would register.
-  piWrapped = (inputs.pi-nix.lib.mkCodingAgent {
+  # Per-instance models.json contents. Both providers intentionally use the
+  # "ollama" id: each instance has a separate agent directory/auth.json, so
+  # pi2 can use an Ollama API key stored under that provider id without
+  # affecting the primary instance's unauthenticated local endpoint.
+  localModelsFile = pkgs.writeText "pi-local-models.json" (builtins.toJSON {
+    providers.ollama = {
+      baseUrl = "http://localhost:11434/v1";
+      api = "openai-completions";
+      apiKey = "ollama";
+      models = [
+        { id = "gemma4:31b"; }
+      ];
+    };
+  });
+
+  cloudModelsFile = pkgs.writeText "pi-cloud-models.json" (builtins.toJSON {
+    providers.ollama = {
+      baseUrl = "https://ollama.com/v1";
+      api = "openai-completions";
+      # No apiKey here: pi resolves the key from pi2's auth.json.
+      models = [
+        { id = "deepseek-v4-flash"; reasoning = true; }
+        { id = "deepseek-v4-pro"; reasoning = true; }
+        { id = "gemma4:31b"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "glm-5.1"; reasoning = true; }
+        { id = "glm-5.2"; reasoning = true; }
+        { id = "gpt-oss:20b"; reasoning = true; }
+        { id = "gpt-oss:120b"; reasoning = true; }
+        { id = "kimi-k2.5"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "kimi-k2.6"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "kimi-k2.7-code"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "kimi-k3"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "minimax-m2.5"; reasoning = true; }
+        { id = "minimax-m2.7"; reasoning = true; }
+        { id = "minimax-m3"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "mistral-large-3:675b"; input = [ "text" "image" ]; }
+        { id = "nemotron-3-nano:30b"; reasoning = true; }
+        { id = "nemotron-3-super"; reasoning = true; }
+        { id = "nemotron-3-ultra"; reasoning = true; }
+        { id = "qwen3.5:397b"; reasoning = true; input = [ "text" "image" ]; }
+      ];
+    };
+  });
+
+  # ---- Jail permission set shared by both instances ----
+  # General-purpose development baseline. add-pkg-deps exposes each package's
+  # binaries and runtime closure, but does not expose privileged host sockets
+  # (notably the Nix daemon, Docker, or an SSH agent).
+  sharedJailPkgs = with pkgs; [
+    # Shell, source control, and navigation
+    bash coreutils diffutils fd findutils gawk git gnugrep gnused jq
+    ripgrep vim which tree
+
+    # Network access and remote Git
+    cacert curl wget openssh netcat-openbsd
+
+    # Archives, patches, and file inspection
+    file patch gnutar gzip bzip2 xz zip unzip
+
+    # Language runtimes and package managers
+    nodejs bun pnpm yarn python313 uv
+
+    # Native compilation and build systems
+    gcc gnumake cmake ninja meson pkg-config
+
+    # Data and diagnostics
+    sqlite procps lsof strace gdb
+
+    # Nix and repository quality tools. The Nix CLI is available for parsing
+    # and local operations, but the daemon socket remains intentionally absent.
+    nix nixfmt-rfc-style statix deadnix shellcheck shfmt
+  ];
+
+  # ---- Instance 1: pi (primary coding agent) ----
+  # Same config as before: context-mode + pi-subagents, gemma4:31b,
+  # persisted home "pi-coder", vim editor.
+  piMain = inputs.pi-nix.lib.mkCodingAgent {
     inherit pkgs;
     modules = [{
-      pi.coding-agent = {
-        package = piPackage;
+      config.pi.coding-agent = {
+        # DECLARATIVE baseline: these are pinned from the nix store and injected
+        # via --extension/--skill on every launch. The entry points come from
+        # each package's "pi" field in package.json.
+        #
+        # You can still EXPERIMENT imperatively: `pi install npm:...` drops an
+        # extension in ~/.pi/agent and pi auto-discovers it alongside these pins.
+        # To keep one, promote it to a pin: `pi uninstall <name>`, add it to
+        # pi-extensions-deps/package.json + this list, run scripts/update-deps.sh,
+        # rebuild. Never leave the same extension both pinned here AND installed
+        # in ~/.pi/agent, or pi loads it twice (conflict diagnostics).
         extensions = [
           "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
           "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
         ];
         skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
+
+        # Load the Firecrawl credential at runtime so it never enters the Nix
+        # store. pi.nix exports file-backed values before starting the agent.
+        environment = {
+          FIRECRAWL_API_KEY.file = "/etc/nixos/.secrets/firecrawl-api-key";
+          FIRECRAWL_API_URL.value = "https://firecrawl.tatchi.org/v1";
+        };
+
+        # bubblewrap isolation via jail.nix. The module always binds pi's agent
+        # dir (~/.pi/agent) read-write itself, so it is intentionally absent from
+        # this list; persist-home keeps the imperative npm install root
+        # (~/.local/share/pi/npm) across launches so `pi install` experiments
+        # survive relaunches.
+        jail.enable = true;
+        jail.permissions = combinators: with combinators; [
+          network
+          no-new-session
+          (persist-home "pi-coder")
+          # Allow SSH administration with the user's existing key, config, and
+          # known-hosts entries. Read-only preserves the host's credentials;
+          # add remote host keys to ~/.ssh/known_hosts before using pi.
+          (unsafe-add-raw-args "--ro-bind-try ${config.home.homeDirectory}/.ssh ${config.home.homeDirectory}/.ssh")
+          (set-env "EDITOR" "vim")
+          (set-env "VISUAL" "vim")
+          (add-pkg-deps sharedJailPkgs)
+          # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
+          # recreates the symlink but only bind-mounts targets under /nix/store,
+          # so inside the jail the link dangles, glibc falls back to
+          # 127.0.0.1:53, and every lookup fails with EAI_AGAIN (this breaks
+          # OAuth login, which resolves platform.claude.com). Bind the target so
+          # the link resolves. Uses -try because the path is absent on non-WSL
+          # hosts, where this becomes a no-op.
+          (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
+          # The environment wrapper runs inside the jail, so expose only the
+          # file required by FIRECRAWL_API_KEY.file, read-only.
+          (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
+          (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
+          (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
+          (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
+        ];
+
+        models = localModelsFile;
+        settings = {
+          defaultProvider = "ollama";
+          defaultModel = "gemma4:31b";
+        };
       };
     }];
-  }).package;
-
-  modelsJson = builtins.toJSON {
-    providers = {
-      ollama = {
-        baseUrl = "http://localhost:11434/v1";
-        api = "openai-completions";
-        apiKey = "ollama";
-        models = [
-          { id = "gemma4:31b"; }
-        ];
-      };
-    };
   };
 
-  jailed-pi = jail "pi" piWrapped [
-    jail.combinators.network
-    (jail.combinators.persist-home "pi-coder")
-    (jail.combinators.try-readwrite piAgentDir)
-    (jail.combinators.set-env "PI_AGENT_DIR" piAgentDir)
-    (jail.combinators.set-env "EDITOR" "vim")
-    (jail.combinators.set-env "VISUAL" "vim")
-    (jail.combinators.add-pkg-deps (with pkgs; [ git fd bash gnused findutils coreutils gnugrep ripgrep gawk diffutils jq nodejs python313 gcc gnumake sqlite pkg-config bun vim ]))
-    (jail.combinators.unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
-    (jail.combinators.unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
-    (jail.combinators.unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
-  ];
+  # Discover installed local models on every launch. pi requires custom
+  # providers to enumerate models explicitly, while Ollama exposes the current
+  # catalog through its OpenAI-compatible /v1/models endpoint. Keep the static
+  # gemma4 catalog above as a fallback when Ollama is unavailable.
+  piMainDynamic = pkgs.writeShellScriptBin "pi" ''
+    agent_dir="${config.home.homeDirectory}/.pi/agent"
+    ${pkgs.coreutils}/bin/mkdir -p "$agent_dir"
+
+    if response="$(${pkgs.curl}/bin/curl --fail --silent --connect-timeout 1 --max-time 3 http://localhost:11434/v1/models)"; then
+      tmp="$(${pkgs.coreutils}/bin/mktemp "$agent_dir/models.json.XXXXXX")"
+      if printf '%s' "$response" | ${pkgs.jq}/bin/jq -c '
+        {
+          providers: {
+            ollama: {
+              baseUrl: "http://localhost:11434/v1",
+              api: "openai-completions",
+              apiKey: "ollama",
+              models: [.data[] | select(.id != null) | { id: .id }] | sort_by(.id)
+            }
+          }
+        }
+      ' > "$tmp"; then
+        ${pkgs.coreutils}/bin/chmod 0600 "$tmp"
+        ${pkgs.coreutils}/bin/mv "$tmp" "$agent_dir/models.json"
+      else
+        ${pkgs.coreutils}/bin/rm -f "$tmp"
+      fi
+    fi
+
+    exec ${piMain.package}/bin/pi "$@"
+  '';
+
+  # ---- Instance 2: pi2 (secondary, separately configured) ----
+  # Separate persisted home ("pi2"), separate agent dir (~/.pi/agent2), and a
+  # per-host provider/model via pimodule.pi2.{provider,model}. Extend/modify
+  # this block to diverge further (different extensions, jail packages, rules).
+  pi2 = inputs.pi-nix.lib.mkCodingAgent {
+    inherit pkgs;
+    modules = [{
+      config.pi.coding-agent = {
+        extensions = [
+          "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
+          "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
+        ];
+        skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
+
+        # Separate agent config directory so settings/models don't collide
+        # with the primary instance. CONTEXT_MODE_DATA_DIR isolates the
+        # context-mode session DB from pi's — context-mode hardcodes its
+        # session store under ~/.pi/context-mode/sessions/ using homedir(),
+        # NOT PI_CODING_AGENT_DIR, so without this override both instances
+        # would share the same database and leak conversation history.
+        # Use ~/.pi2 as context-mode's data root (sessions land at
+        # ~/.pi2/context-mode/sessions/), keeping it separate from the
+        # agent config at ~/.pi/agent2.
+        environment = {
+          PI_CODING_AGENT_DIR.value = "${config.home.homeDirectory}/.pi/agent2";
+          CONTEXT_MODE_DATA_DIR.value = "${config.home.homeDirectory}/.pi2";
+          FIRECRAWL_API_KEY.file = "/etc/nixos/.secrets/firecrawl-api-key";
+          FIRECRAWL_API_URL.value = "https://firecrawl.tatchi.org/v1";
+        };
+
+        jail.enable = true;
+        jail.permissions = combinators: with combinators; [
+          network
+          no-new-session
+          (persist-home "pi2")
+          (set-env "EDITOR" "vim")
+          (set-env "VISUAL" "vim")
+          (add-pkg-deps sharedJailPkgs)
+          # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
+          # recreates the symlink but only bind-mounts targets under /nix/store,
+          # so inside the jail the link dangles, glibc falls back to
+          # 127.0.0.1:53, and every lookup fails with EAI_AGAIN (this breaks
+          # OAuth login, which resolves platform.claude.com). Bind the target so
+          # the link resolves. Uses -try because the path is absent on non-WSL
+          # hosts, where this becomes a no-op.
+          (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
+          # The environment wrapper runs inside the jail, so expose only the
+          # file required by FIRECRAWL_API_KEY.file, read-only.
+          (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
+          (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
+          (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
+          (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
+        ];
+
+        models = cloudModelsFile;
+        # Provider/model come from pimodule.pi2.{provider,model} so each host
+        # can point this instance at whatever it has credentials for.
+        settings = {
+          defaultProvider = cfg.pi2.provider;
+          defaultModel = cfg.pi2.model;
+        };
+      };
+    }];
+  };
+
+  # mkCodingAgent always produces a binary named "pi". Rename the second
+  # instance so both are available side by side on PATH. pi-nix preserves an
+  # existing regular models.json, so install the declarative cloud catalog
+  # here on every launch; this also replaces pi2's previously copied local
+  # Ollama catalog while leaving auth.json untouched.
+  pi2Renamed = pkgs.writeShellScriptBin "pi2" ''
+    ${pkgs.coreutils}/bin/mkdir -p "${config.home.homeDirectory}/.pi/agent2"
+    ${pkgs.coreutils}/bin/install -m 0600 ${cloudModelsFile} "${config.home.homeDirectory}/.pi/agent2/models.json"
+    exec ${pi2.package}/bin/pi "$@"
+  '';
+  # ---- Per-instance options ----
+  # Each instance is independently toggleable so hosts can pick which to use.
+  # E.g. desktop runs both, laptop runs only pi2 (API keys only).
 in
 {
   options.pimodule = {
-    enable = mkOption {
-      type = types.bool;
-      default = false;
-      example = true;
-      description = ''
-        Whether or not to enable pi coding agent
-      '';
+    enable = mkEnableOption "pi coding agent (via mkCodingAgent)";
+
+    pi = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enable the primary pi instance (local ollama, gemma4:31b).";
+      };
+    };
+
+    pi2 = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the secondary pi2 instance (hosted provider).";
+      };
+
+      provider = mkOption {
+        type = types.str;
+        default = "openai";
+        example = "anthropic";
+        description = ''
+          Provider written to pi2's settings as defaultProvider. Built-in
+          OAuth/API-key providers (for example "anthropic", "openai-codex")
+          work as-is; anything else must be declared in the models file.
+        '';
+      };
+
+      model = mkOption {
+        type = types.str;
+        default = "gpt-5.6-sol";
+        example = "claude-opus-5";
+        description = ''
+          Model id written to pi2's settings as defaultModel. Must be a model
+          the chosen provider serves.
+        '';
+      };
     };
   };
 
   config = mkIf cfg.enable {
-    home.packages = [ jailed-pi ];
-
-    home.activation.piSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      run mkdir -p "${piAgentDir}"
-
-      echo '${modelsJson}' > "${piAgentDir}/models.json"
-
-      settingsFile="${piAgentDir}/settings.json"
-      if [ ! -f "$settingsFile" ]; then
-        echo '{}' > "$settingsFile"
-      fi
-      tmp=$(mktemp)
-      ${pkgs.jq}/bin/jq '. + {defaultProvider: "ollama", defaultModel: "gemma4:31b"}' "$settingsFile" > "$tmp"
-      run mv "$tmp" "$settingsFile"
-    '';
+    home.packages =
+      optional cfg.pi.enable piMainDynamic     # → `pi` command  (primary, dynamic local Ollama catalog, ~/.pi/agent)
+      ++ optional cfg.pi2.enable pi2Renamed;   # → `pi2` command  (secondary, per-host provider, ~/.pi/agent2)
   };
 }

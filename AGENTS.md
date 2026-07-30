@@ -44,7 +44,7 @@ Your role is that of a **NixOS Configuration Architect**. Your goal is to mainta
 ## 📏 Coding Standards & Constraints
 
 ### The Golden Rules
-- **Declarative Only**: Never suggest imperative commands (e.g., `sudo apt install`) to modify the system. All changes must be in Nix code. This includes agent extensions: never `pi install npm:...` or ad-hoc npm installs on a host; pin them via `pins.json` / `pi-extensions-deps` instead.
+- **Declarative Only**: Never suggest imperative commands (e.g., `sudo apt install`) to modify the system. All changes must be in Nix code. **pi agent extensions** carry one nuance: the settled set is pinned declaratively via `pins.json` + `pi-extensions-deps`, wired through the pi-nix home-manager module's `extensions`/`skills` options (`programs.pi.coding-agent` in `home-manager/repo/pi.nix`). `pi install npm:...` is allowed *only for experimenting* with a candidate extension; to keep one, promote it — `pi uninstall` the imperative copy, then add it to the pinned set. Never leave an extension both pinned and imperatively installed, or pi double-loads it.
 - **Overlays Are Temporary**: Tag every new overlay with `Overlay added YYYY-MM-DD` and a note naming the upstream issue it works around. Re-check overlays when updating inputs (add a `Checked YYYY-MM-DD` note) and delete them once the fix reaches the locked rev. Overlays that are permanent by design (the CachyOS kernel) must say so in their comment.
 - **Minimize Redundancy**: If a configuration is used by more than one host, it **must** be moved to a module in `/modules`.
 - **Pinning**: Respect the nixpkgs versions defined in `flake.nix`. Do not arbitrarily change channels.

@@ -1,4 +1,9 @@
- { config, pkgs, lib, ...}:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   imports = [
     ./repo/zsh.nix
@@ -7,6 +12,7 @@
     ./repo/lutris.nix
     ./repo/gruvbox.nix
     ./repo/pi.nix
+    ./repo/ralph.nix
     ./repo/python.nix
     ./repo/rust.nix
     ./repo/ghostty.nix
@@ -27,7 +33,14 @@
   };
   pimodule = {
     enable = true;
+    pi.enable = true; # local ollama (gemma4:31b)
+    pi2 = {
+      enable = true;
+      provider = "openai";
+      model = "gpt-5.6-sol";
+    };
   };
+  ralphmodule.enable = true;
   pythonmodule = {
     enable = true;
     extras = false;

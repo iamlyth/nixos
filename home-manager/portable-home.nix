@@ -7,6 +7,7 @@
     ./repo/claude.nix
     ./repo/tmux.nix
     ./repo/python.nix
+    ./repo/pi.nix
   ];
 
   zshmodule = {
@@ -20,6 +21,15 @@
   
   claudemodule = {
     enable = true;
+  };
+
+  pimodule = {
+    enable = true;
+    pi2 = {
+      enable = true;
+      provider = "anthropic";
+      model = "claude-opus-5";
+    };
   };
 
   tmuxmodule = {
