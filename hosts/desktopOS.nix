@@ -164,6 +164,7 @@
     bc
     gcc
     love
+    huggingface-hub # hf CLI for downloading GGUF models
   ];
 
   # DESKTOP OPTIONS
