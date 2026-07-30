@@ -13,7 +13,15 @@ in {
 
     acceleration = mkOption {
       type = types.enum [ "rocm" "jetson-cuda" ];
-      description = "GPU acceleration backend for ollama.";
+      default = "rocm";
+      description = "GPU acceleration backend for ollama. Only used when ollama.enable = true.";
+    };
+
+    # Ollama is optional — desktop uses llama-server only, tatchi uses Ollama.
+    ollama.enable = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Enable Ollama LLM server. Disable on hosts using llama-server exclusively.";
     };
 
     models = mkOption {
@@ -31,6 +39,7 @@ in {
 
     openwebui = {
       enable = mkEnableOption "Open WebUI frontend";
+
       port = mkOption {
         type = types.port;
         default = 8080;
@@ -42,6 +51,14 @@ in {
         default = "*";
         example = "https://ai.example.com";
         description = "Value for CORS_ALLOW_ORIGIN.";
+      };
+
+      # When Ollama is disabled, Open WebUI connects to llama-server via
+      # its OpenAI-compatible API instead of the native Ollama API.
+      openaiBaseUrl = mkOption {
+        type = types.str;
+        default = "http://localhost:8001/v1";
+        description = "OpenAI-compatible endpoint for Open WebUI (used when ollama.enable = false).";
       };
     };
 
@@ -71,7 +88,7 @@ in {
   };
 
   config = mkIf cfg.enable {
-    ollamamodule = {
+    ollamamodule = mkIf cfg.ollama.enable {
       enable = true;
       acceleration = cfg.acceleration;
       models = cfg.models;
@@ -82,6 +99,10 @@ in {
       enable = true;
       port = cfg.openwebui.port;
       corsOrigin = cfg.openwebui.corsOrigin;
+      # When Ollama is off, pass llama-server as the OpenAI endpoint and
+      # disable the Ollama backend so Open WebUI doesn't try to reach it.
+      openaiBaseUrl = mkIf (!cfg.ollama.enable) cfg.openwebui.openaiBaseUrl;
+      ollamaEnabled = cfg.ollama.enable;
     };
 
     llamaservermodule = mkIf cfg.llamaServer.enable {

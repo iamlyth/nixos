@@ -38,23 +38,27 @@ let
   #
   # The "llama-server" provider points at the local llama.cpp Vulkan server
   # (port 8001) which runs Qwen3.6-35B-A3B with native MTP speculative
-  # decoding — the 70+ t/s path. Switch to it with:
-  #   defaultProvider = "llama-server"; defaultModel = "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf";
+  # decoding — the 70+ t/s path. On desktop (no Ollama), this is the primary
+  # local provider. On tatchi (Ollama present), the dynamic discovery script
+  # merges in Ollama's catalog too.
   localModelsFile = pkgs.writeText "pi-local-models.json" (builtins.toJSON {
-    providers.ollama = {
-      baseUrl = "http://localhost:11434/v1";
-      api = "openai-completions";
-      apiKey = "ollama";
-      models = [
-        { id = "gemma4:31b"; }
-      ];
-    };
     providers.llama-server = {
       baseUrl = "http://localhost:8001/v1";
       api = "openai-completions";
       apiKey = "llama-server";
       models = [
         { id = "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf"; reasoning = true; }
+      ];
+    };
+    # Ollama provider is included as a fallback — the dynamic script below
+    # only merges live models if :11434 responds. On desktop it won't, so
+    # this entry stays empty and unused.
+    providers.ollama = {
+      baseUrl = "http://localhost:11434/v1";
+      api = "openai-completions";
+      apiKey = "ollama";
+      models = [
+        { id = "gemma4:31b"; }
       ];
     };
   });
@@ -182,8 +186,11 @@ let
 
         models = localModelsFile;
         settings = {
-          defaultProvider = "ollama";
-          defaultModel = "gemma4:31b";
+          # Default to llama-server (MTP, 70+ t/s) on desktop. Falls back to
+          # Ollama on hosts where :8001 isn't running (the dynamic script
+          # populates the Ollama catalog when :11434 is available).
+          defaultProvider = "llama-server";
+          defaultModel = "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf";
         };
       };
     }];

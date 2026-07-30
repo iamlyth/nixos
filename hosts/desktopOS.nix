@@ -17,18 +17,9 @@
         };
       });
     })
-    # Temporarily pull ollama-rocm from an older nixpkgs because current
-    # Ollama forces thinking for /v1 tool requests and leaks Gemma 4's
-    # reasoning instead of returning the requested answer.
-    # Overlay added 2026-06-08.
-    # Checked 2026-07-30: reproduced with v0.32.0. Fix PR
-    # ollama/ollama#16758 remains unmerged (tracker #10976 is still open).
-    (_: _: {
-      ollama-rocm = (import inputs.nixpkgs-ollama {
-        inherit system;
-        config.allowUnfree = true;
-      }).ollama-rocm;
-    })
+    # ollama-rocm overlay removed 2026-07-30 — desktop no longer runs Ollama
+    # (switched to llama.cpp Vulkan server with MTP). The nixpkgs-ollama pin
+    # in flake.nix is kept for now in case another host needs it.
   ];
 
   imports = [
@@ -91,15 +82,16 @@
   users.defaultUserShell = pkgs.zsh;
 
   # # # AI
+  # Desktop runs llama.cpp Vulkan server only (no Ollama — saves ~18-33GB RAM
+  # on 64GB unified). Open WebUI connects to llama-server via its OpenAI-
+  # compatible API on :8001. Ollama still runs on tatchiOS for HA.
   ai = {
     enable = true;
-    acceleration = "rocm";
-    # 31b is pi's default model (home-manager/repo/pi.nix); preload it so
-    # a fresh install always has it. 26b stays for open-webui sessions.
-    models = [ "gemma4:26b" "gemma4:31b" ];
-    idleTimeout = "5min";
+    ollama.enable = false;  # no local Ollama on desktop
+
     openwebui.enable = true;
     openwebui.corsOrigin = "https://ai.tatchi.org";
+    openwebui.openaiBaseUrl = "http://localhost:8001/v1";
 
     # llama.cpp Vulkan server with native MTP speculative decoding.
     # This is the 70+ t/s path for A3B models on Strix Halo.
@@ -111,7 +103,7 @@
       enable = true;
       modelPath = "/home/lalobied/models/qwen3.6-mtp/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf";
       port = 8001;
-      contextSize = 262144;  # full 256k native context
+      contextSize = 131072;  # 128k — fits comfortably in 64GB unified
     };
   };
 
