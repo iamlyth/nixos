@@ -126,6 +126,17 @@
         ];
       };
 
+      wixomOS = mkSystem {
+        unstable = false;
+        hostModule = ./hosts/wixomOS.nix;
+        homeProfile = ./home-manager/wixom-home.nix;
+        homeExtraModules = [ inputs.nixvim.homeModules.nixvim ];
+        specialArgs = { };
+        extraModules = [
+          inputs.lanzaboote.nixosModules.lanzaboote
+        ];
+      };
+
       tatchiOS = mkSystem {
         hostModule = ./hosts/tatchiOS.nix;
         homeProfile = ./home-manager/server-home.nix;
