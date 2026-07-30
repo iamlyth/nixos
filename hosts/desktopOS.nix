@@ -17,15 +17,12 @@
         };
       });
     })
-    # Temporarily pull ollama-rocm from an older nixpkgs while the
-    # current ollama's reasoning_content streaming breaks pi on /v1.
+    # Temporarily pull ollama-rocm from an older nixpkgs because current
+    # Ollama forces thinking for /v1 tool requests and leaks Gemma 4's
+    # reasoning instead of returning the requested answer.
     # Overlay added 2026-06-08.
-    # Checked 2026-07-14: still needed. Fix PR ollama/ollama#16758 is
-    # approved but unmerged (tracker ollama/ollama#10976 still open);
-    # v0.32.0 shipped 2026-07-11 without it. Unpin only once a release
-    # containing the fix reaches nixpkgs, then verify by sending a /v1
-    # tool request to gemma4: a fixed build returns real content and
-    # tool_calls with nothing in reasoning_content.
+    # Checked 2026-07-30: reproduced with v0.32.0. Fix PR
+    # ollama/ollama#16758 remains unmerged (tracker #10976 is still open).
     (_: _: {
       ollama-rocm = (import inputs.nixpkgs-ollama {
         inherit system;

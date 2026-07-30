@@ -30,7 +30,6 @@ in {
     };
 
     systemd.services.open-webui = {
-      wantedBy = mkForce [];
       after = [ "ollama.service" ];
       requires = [ "ollama.service" ];
     };

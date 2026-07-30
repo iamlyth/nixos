@@ -23,11 +23,10 @@
     nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
     # Old ollama rev for temporary rollback while gemma4/pi /v1 issue
     # is sorted upstream. Added 2026-06-08.
-    # Checked 2026-07-14: still needed. The real tracker is
+    # Checked 2026-07-30: still needed. The real tracker is
     # ollama/ollama#10976 (thinking forced on for /v1 tool requests);
-    # fix PR ollama/ollama#16758 is approved but unmerged, and v0.32.0
-    # (2026-07-11) shipped without it. #15288 was closed as a duplicate,
-    # consolidated into #10976.
+    # fix PR ollama/ollama#16758 remains open and unmerged, and v0.32.5
+    # (2026-07-27) shipped without it.
     nixpkgs-ollama.url = "github:nixos/nixpkgs/4100e830e085863741bc69b156ec4ccd53ab5be0";
     pi-nix.url = "github:lukasl-dev/pi.nix";
     jaildotnix.url = "sourcehut:~alexdavid/jail.nix";
