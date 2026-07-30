@@ -47,10 +47,14 @@
   boot.extraModulePackages = [ ];
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
-  # Remap memory allocation for AI Model training
-  #boot.extraModprobeConfig = ''
-  #  options ttm pages_limit=14680064
-  #'';
+  # Strix Halo unified memory tuning (per sypherin/strix-halo-setup).
+  # Lets the iGPU address nearly all 128GB via GTT instead of a hard BIOS carve.
+  # Requires BIOS VGM/UMA set to 1GB minimum (not a large dedicated carve).
+  boot.kernelParams = [
+    "iommu=pt"
+    "amdgpu.gttsize=126976"     # 124 GiB GTT window (126976 MiB)
+    "ttm.pages_limit=32505856"  # pinned-pages cap matching GTT (32505856 × 4KiB = 124GiB)
+  ];
 
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/a75c9312-aaf8-43d3-a7e7-f292a54e0e87";
@@ -96,6 +100,19 @@
     idleTimeout = "5min";
     openwebui.enable = true;
     openwebui.corsOrigin = "https://ai.tatchi.org";
+
+    # llama.cpp Vulkan server with native MTP speculative decoding.
+    # This is the 70+ t/s path for A3B models on Strix Halo.
+    # Model must be downloaded separately (unsloth MTP GGUF):
+    #   hf download unsloth/Qwen3.6-35B-A3B-MTP-GGUF \
+    #     --include "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf" \
+    #     --local-dir ~/models/qwen3.6-mtp
+    llamaServer = {
+      enable = true;
+      modelPath = "/home/lalobied/models/qwen3.6-mtp/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf";
+      port = 8001;
+      contextSize = 262144;  # full 256k native context
+    };
   };
 
   # # #OS TOOLS

@@ -5,6 +5,7 @@ in {
   imports = [
     ./repo/ollama.nix
     ./repo/openwebui.nix
+    ./repo/llama-server.nix
   ];
 
   options.ai = {
@@ -30,7 +31,6 @@ in {
 
     openwebui = {
       enable = mkEnableOption "Open WebUI frontend";
-
       port = mkOption {
         type = types.port;
         default = 8080;
@@ -42,6 +42,30 @@ in {
         default = "*";
         example = "https://ai.example.com";
         description = "Value for CORS_ALLOW_ORIGIN.";
+      };
+    };
+
+    # llama.cpp Vulkan server with MTP — the 70+ t/s path for A3B models.
+    # Runs alongside Ollama on a separate port. Ollama handles chat/webui;
+    # this serves coding/agent workloads that benefit from MTP spec decoding.
+    llamaServer = {
+      enable = mkEnableOption "llama.cpp Vulkan server (MTP speculative decoding)";
+
+      modelPath = mkOption {
+        type = types.str;
+        description = "Absolute path to the main GGUF model file (MTP-grafted).";
+      };
+
+      port = mkOption {
+        type = types.port;
+        default = 8001;
+        description = "Port for llama-server (separate from Ollama's 11434).";
+      };
+
+      contextSize = mkOption {
+        type = types.int;
+        default = 262144;
+        description = "Context window size.";
       };
     };
   };
@@ -58,6 +82,13 @@ in {
       enable = true;
       port = cfg.openwebui.port;
       corsOrigin = cfg.openwebui.corsOrigin;
+    };
+
+    llamaservermodule = mkIf cfg.llamaServer.enable {
+      enable = true;
+      modelPath = cfg.llamaServer.modelPath;
+      port = cfg.llamaServer.port;
+      contextSize = cfg.llamaServer.contextSize;
     };
   };
 }

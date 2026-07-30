@@ -45,7 +45,9 @@ in {
       loadModels = cfg.models;
       environmentVariables = mkMerge [
         (mkIf (cfg.acceleration == "rocm") {
-          HSA_OVERRIDE_GFX_VERSION = "11.0.0";
+          # Strix Halo is gfx1151 (RDNA 3.5). Must use 11.5.1, not 11.0.0
+          # (which maps to gfx1100 / RDNA 3 — wrong instruction set).
+          HSA_OVERRIDE_GFX_VERSION = "11.5.1";
         })
         (mkIf (cfg.acceleration == "jetson-cuda") {
           OLLAMA_KEEP_ALIVE = "-1";

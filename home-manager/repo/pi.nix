@@ -35,6 +35,11 @@ let
   # "ollama" id: each instance has a separate agent directory/auth.json, so
   # pi2 can use an Ollama API key stored under that provider id without
   # affecting the primary instance's unauthenticated local endpoint.
+  #
+  # The "llama-server" provider points at the local llama.cpp Vulkan server
+  # (port 8001) which runs Qwen3.6-35B-A3B with native MTP speculative
+  # decoding — the 70+ t/s path. Switch to it with:
+  #   defaultProvider = "llama-server"; defaultModel = "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf";
   localModelsFile = pkgs.writeText "pi-local-models.json" (builtins.toJSON {
     providers.ollama = {
       baseUrl = "http://localhost:11434/v1";
@@ -42,6 +47,14 @@ let
       apiKey = "ollama";
       models = [
         { id = "gemma4:31b"; }
+      ];
+    };
+    providers.llama-server = {
+      baseUrl = "http://localhost:8001/v1";
+      api = "openai-completions";
+      apiKey = "llama-server";
+      models = [
+        { id = "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf"; reasoning = true; }
       ];
     };
   });
@@ -179,25 +192,37 @@ let
   # Discover installed local models on every launch. pi requires custom
   # providers to enumerate models explicitly, while Ollama exposes the current
   # catalog through its OpenAI-compatible /v1/models endpoint. Keep the static
-  # gemma4 catalog above as a fallback when Ollama is unavailable.
+  # catalog above as a fallback when Ollama is unavailable.
+  #
+  # Also probes the llama.cpp Vulkan server at :8001 (MTP speculative decoding)
+  # and merges its model list under the "llama-server" provider.
   piMainDynamic = pkgs.writeShellScriptBin "pi" ''
     agent_dir="${config.home.homeDirectory}/.pi/agent"
     ${pkgs.coreutils}/bin/mkdir -p "$agent_dir"
 
+    # Start from the static fallback catalog
+    ${pkgs.coreutils}/bin/cp ${localModelsFile} "$agent_dir/models.json"
+    ${pkgs.coreutils}/bin/chmod 0600 "$agent_dir/models.json"
+
+    # Probe Ollama (:11434) and merge its live catalog if available
     if response="$(${pkgs.curl}/bin/curl --fail --silent --connect-timeout 1 --max-time 3 http://localhost:11434/v1/models)"; then
       tmp="$(${pkgs.coreutils}/bin/mktemp "$agent_dir/models.json.XXXXXX")"
       if printf '%s' "$response" | ${pkgs.jq}/bin/jq -c '
-        {
-          providers: {
-            ollama: {
-              baseUrl: "http://localhost:11434/v1",
-              api: "openai-completions",
-              apiKey: "ollama",
-              models: [.data[] | select(.id != null) | { id: .id }] | sort_by(.id)
-            }
-          }
-        }
-      ' > "$tmp"; then
+        .providers.ollama.models = [.data[] | select(.id != null) | { id: .id }] | sort_by(.id)
+      ' "$agent_dir/models.json" > "$tmp" 2>/dev/null; then
+        ${pkgs.coreutils}/bin/chmod 0600 "$tmp"
+        ${pkgs.coreutils}/bin/mv "$tmp" "$agent_dir/models.json"
+      else
+        ${pkgs.coreutils}/bin/rm -f "$tmp"
+      fi
+    fi
+
+    # Probe llama-server (:8001) and merge its live catalog if available
+    if response="$(${pkgs.curl}/bin/curl --fail --silent --connect-timeout 1 --max-time 3 http://localhost:8001/v1/models)"; then
+      tmp="$(${pkgs.coreutils}/bin/mktemp "$agent_dir/models.json.XXXXXX")"
+      if printf '%s' "$response" | ${pkgs.jq}/bin/jq -c '
+        .providers."llama-server".models = [.data[] | select(.id != null) | { id: .id, reasoning: true }] | sort_by(.id)
+      ' "$agent_dir/models.json" > "$tmp" 2>/dev/null; then
         ${pkgs.coreutils}/bin/chmod 0600 "$tmp"
         ${pkgs.coreutils}/bin/mv "$tmp" "$agent_dir/models.json"
       else
