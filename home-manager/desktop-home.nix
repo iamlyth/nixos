@@ -36,8 +36,8 @@
     pi.enable = true; # local ollama (gemma4:31b)
     pi2 = {
       enable = true;
-      provider = "ollama";
-      model = "gemma4:31b";
+      provider = "openai";
+      model = "gpt-5.6-sol";
     };
   };
   ralphmodule.enable = true;

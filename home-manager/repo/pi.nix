@@ -52,7 +52,25 @@ let
       api = "openai-completions";
       # No apiKey here: pi resolves the key from pi2's auth.json.
       models = [
-        { id = "gemma4:31b"; }
+        { id = "deepseek-v4-flash"; reasoning = true; }
+        { id = "deepseek-v4-pro"; reasoning = true; }
+        { id = "gemma4:31b"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "glm-5.1"; reasoning = true; }
+        { id = "glm-5.2"; reasoning = true; }
+        { id = "gpt-oss:20b"; reasoning = true; }
+        { id = "gpt-oss:120b"; reasoning = true; }
+        { id = "kimi-k2.5"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "kimi-k2.6"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "kimi-k2.7-code"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "kimi-k3"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "minimax-m2.5"; reasoning = true; }
+        { id = "minimax-m2.7"; reasoning = true; }
+        { id = "minimax-m3"; reasoning = true; input = [ "text" "image" ]; }
+        { id = "mistral-large-3:675b"; input = [ "text" "image" ]; }
+        { id = "nemotron-3-nano:30b"; reasoning = true; }
+        { id = "nemotron-3-super"; reasoning = true; }
+        { id = "nemotron-3-ultra"; reasoning = true; }
+        { id = "qwen3.5:397b"; reasoning = true; input = [ "text" "image" ]; }
       ];
     };
   });
@@ -290,7 +308,7 @@ in
 
       provider = mkOption {
         type = types.str;
-        default = "ollama";
+        default = "openai";
         example = "anthropic";
         description = ''
           Provider written to pi2's settings as defaultProvider. Built-in
@@ -301,7 +319,7 @@ in
 
       model = mkOption {
         type = types.str;
-        default = "gemma4:31b";
+        default = "gpt-5.6-sol";
         example = "claude-opus-5";
         description = ''
           Model id written to pi2's settings as defaultModel. Must be a model
