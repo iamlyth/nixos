@@ -16,7 +16,11 @@ in {
   config = mkIf cfg.enable {
     services.mullvad-vpn = {
       enable = true;
-      package = pkgs.mullvad-vpn;
+      gui.enable = true;  # desktop GUI app (daemon comes from the mullvad package now)
+      # Don't set package — nixpkgs split mullvad-vpn into mullvad (daemon)
+      # and mullvad-vpn (GUI only). The module defaults to the right daemon
+      # package now.
+      # package = pkgs.mullvad-vpn;  # removed — triggers assertion in nixpkgs
     };
   };
 }

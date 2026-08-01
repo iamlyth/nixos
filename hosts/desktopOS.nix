@@ -17,9 +17,16 @@
         };
       });
     })
-    # ollama-rocm overlay removed 2026-07-30 — desktop no longer runs Ollama
-    # (switched to llama.cpp Vulkan server with MTP). The nixpkgs-ollama pin
-    # in flake.nix is kept for now in case another host needs it.
+    # ollama-rocm pinned to older nixpkgs — Ollama forces thinking for /v1
+    # tool requests and leaks Gemma 4's reasoning (tracker #10976, PR #16758
+    # unmerged). Kept for occasional model exploration via `ollama run`.
+    # Overlay added 2026-06-08. Checked 2026-07-30: still needed.
+    (_: _: {
+      ollama-rocm = (import inputs.nixpkgs-ollama {
+        inherit system;
+        config.allowUnfree = true;
+      }).ollama-rocm;
+    })
   ];
 
   imports = [
@@ -39,12 +46,20 @@
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
   # Strix Halo unified memory tuning (per sypherin/strix-halo-setup).
-  # Lets the iGPU address nearly all 128GB via GTT instead of a hard BIOS carve.
+  # Lets the iGPU address system RAM via GTT instead of a hard BIOS carve.
   # Requires BIOS VGM/UMA set to 1GB minimum (not a large dedicated carve).
+  # NOTE: GTT is an address-space ceiling, NOT a memory reservation. The GPU
+  # allocates from system RAM on demand; the OS uses the same RAM when the GPU
+  # doesn't need it. Set close to (but not exceeding) total physical RAM.
+  # 64GB RAM → 60GiB GTT (61440 MiB), leaving 4GB headroom.
+  # Side effect: the GTT params cause a low-res framebuffer during early boot
+  # (GRUB + kernel loading screen). This is cosmetic only — Gnome loads at
+  # native resolution. The Framework Desktop has no traditional DRM connector
+  # exposed before the full driver loads, so video= can't override it.
   boot.kernelParams = [
     "iommu=pt"
-    "amdgpu.gttsize=126976"     # 124 GiB GTT window (126976 MiB)
-    "ttm.pages_limit=32505856"  # pinned-pages cap matching GTT (32505856 × 4KiB = 124GiB)
+    "amdgpu.gttsize=61440"     # 60 GiB GTT address window
+    "ttm.pages_limit=15728640"  # pinned-pages cap matching GTT (15728640 × 4KiB = 60GiB)
   ];
 
   fileSystems."/" =
@@ -82,28 +97,33 @@
   users.defaultUserShell = pkgs.zsh;
 
   # # # AI
-  # Desktop runs llama.cpp Vulkan server only (no Ollama — saves ~18-33GB RAM
-  # on 64GB unified). Open WebUI connects to llama-server via its OpenAI-
-  # compatible API on :8001. Ollama still runs on tatchiOS for HA.
+  # Ollama + Open WebUI auto-start at boot (Ollama models always available).
+  # llama-server starts manually for MTP 81 t/s inference:
+  #   sudo systemctl start llama-server
+  #
+  # Download model:
+  #   hf download unsloth/Qwen3.6-35B-A3B-MTP-GGUF \
+  #     --include "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf" \
+  #     --local-dir ~/.models/qwen3.6-mtp
   ai = {
     enable = true;
-    ollama.enable = false;  # no local Ollama on desktop
+    acceleration = "rocm";
+    ollama.enable = true;
+    ollama.autoStart = true;
+    models = [];
+    idleTimeout = "5min";
 
     openwebui.enable = true;
     openwebui.corsOrigin = "https://ai.tatchi.org";
     openwebui.openaiBaseUrl = "http://localhost:8001/v1";
 
-    # llama.cpp Vulkan server with native MTP speculative decoding.
-    # This is the 70+ t/s path for A3B models on Strix Halo.
-    # Model must be downloaded separately (unsloth MTP GGUF):
-    #   hf download unsloth/Qwen3.6-35B-A3B-MTP-GGUF \
-    #     --include "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf" \
-    #     --local-dir ~/models/qwen3.6-mtp
     llamaServer = {
       enable = true;
-      modelPath = "/home/lalobied/models/qwen3.6-mtp/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf";
+      modelPath = "/home/lalobied/.models/qwen3.6-mtp/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf";
+      alias = "Qwen3.6-35B-A3B";
       port = 8001;
-      contextSize = 131072;  # 128k — fits comfortably in 64GB unified
+      contextSize = 524288;  # 131072 per slot × 4 parallel slots
+      kvCacheType = "q8_0";
     };
   };
 
@@ -156,7 +176,7 @@
     bc
     gcc
     love
-    huggingface-hub # hf CLI for downloading GGUF models
+    (python3.withPackages (ps: [ ps.huggingface-hub ]))  # hf CLI for downloading GGUF models
   ];
 
   # DESKTOP OPTIONS

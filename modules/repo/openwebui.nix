@@ -1,3 +1,6 @@
+# Open WebUI frontend. Auto-starts at boot alongside Ollama.
+# Also connects to llama-server's OpenAI-compatible API when configured,
+# so models from both backends appear in the dropdown simultaneously.
 { lib, config, ... }:
 with lib; let
   cfg = config.openwebuimodule;
@@ -18,19 +21,16 @@ in {
       description = "Value for CORS_ALLOW_ORIGIN.";
     };
 
-    # When Ollama is disabled, Open WebUI connects to llama-server (or any
-    # OpenAI-compatible endpoint) via OPENAI_API_BASE_URL instead of the
-    # native Ollama API.
     openaiBaseUrl = mkOption {
       type = types.nullOr types.str;
       default = null;
-      description = "OpenAI-compatible endpoint URL. Set when not using Ollama.";
+      description = "OpenAI-compatible endpoint URL (llama-server). When set, both Ollama and this endpoint appear in the dropdown.";
     };
 
     ollamaEnabled = mkOption {
       type = types.bool;
       default = true;
-      description = "Whether Ollama is running on this host. Controls service dependencies and backend config.";
+      description = "Enable the native Ollama backend. Set false only on hosts with no Ollama.";
     };
   };
 
@@ -42,22 +42,26 @@ in {
       environment = {
         CORS_ALLOW_ORIGIN = cfg.corsOrigin;
       } // (optionalAttrs (!cfg.ollamaEnabled) {
-        # Point Open WebUI at the llama-server OpenAI-compatible endpoint
-        # and disable the Ollama backend so it doesn't try to reach :11434.
-        OPENAI_API_BASE_URL = cfg.openaiBaseUrl;
-        OPENAI_API_KEY = "llama-server";
         ENABLE_OLLAMA_API = "False";
-        # Persist config from env vars on every restart (see open-webui docs
-        # on ConfigVar behavior — without this, first-boot values stick and
-        # later env changes are ignored).
+      }) // (optionalAttrs (cfg.openaiBaseUrl != null) {
+        # Add llama-server as an OpenAI-compatible backend alongside Ollama.
+        OPENAI_API_BASE_URL = cfg.openaiBaseUrl;
+        OPENAI_API_BASE_URLS = cfg.openaiBaseUrl;
+        OPENAI_API_KEY = "llama-server";
+        OPENAI_API_KEYS = "llama-server";
         ENABLE_PERSISTENT_CONFIG = "False";
       });
     };
 
-    systemd.services.open-webui = {
-      after = if cfg.ollamaEnabled then [ "ollama.service" ] else [ "llama-server.service" ];
-      requires = if cfg.ollamaEnabled then [ "ollama.service" ] else [ "llama-server.service" ];
-    };
+    systemd.services.open-webui = mkMerge [
+      {
+        wantedBy = [ "multi-user.target" ];
+      }
+      (mkIf cfg.ollamaEnabled {
+        after = [ "ollama.service" ];
+        wants = [ "ollama.service" ];
+      })
+    ];
 
     networking.firewall.allowedTCPPorts = [ cfg.port ];
   };

@@ -1,3 +1,6 @@
+# llama.cpp Vulkan server with MTP speculative decoding.
+# Runs a single model via systemd. Does not auto-start at boot —
+# start manually: sudo systemctl start llama-server
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.llamaservermodule;
@@ -8,7 +11,7 @@ in {
     package = mkOption {
       type = types.package;
       default = pkgs.llama-cpp-vulkan;
-      description = "llama.cpp package to use (Vulkan build recommended for Strix Halo).";
+      description = "llama.cpp package (Vulkan build recommended for Strix Halo).";
     };
 
     modelPath = mkOption {
@@ -19,13 +22,19 @@ in {
     draftModelPath = mkOption {
       type = types.nullOr types.str;
       default = null;
-      description = "Path to a separate MTP draft model GGUF (if not using native grafted MTP).";
+      description = "Path to a separate MTP draft head GGUF (Gemma 4 needs this; Qwen has it embedded).";
+    };
+
+    alias = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Display name for the model (shows in Open WebUI /v1/models).";
     };
 
     port = mkOption {
       type = types.port;
       default = 8001;
-      description = "Port for llama-server to listen on.";
+      description = "Port for llama-server.";
     };
 
     host = mkOption {
@@ -34,16 +43,22 @@ in {
       description = "Host address to bind to.";
     };
 
+    user = mkOption {
+      type = types.str;
+      default = "lalobied";
+      description = "User account to run the service as (for GPU access).";
+    };
+
     contextSize = mkOption {
       type = types.int;
-      default = 262144;
-      description = "Context window size (Qwen3.6 supports 256k).";
+      default = 524288;
+      description = "Total context window size. Divided across parallel slots (e.g. 524288 / 4 slots = 131072 each).";
     };
 
     specDraftNMax = mkOption {
       type = types.int;
       default = 3;
-      description = "Max draft tokens for MTP. Sweet spot is 3; higher lowers acceptance.";
+      description = "Max draft tokens for MTP. Sweet spot is 3.";
     };
 
     gpuLayers = mkOption {
@@ -79,7 +94,7 @@ in {
     mmap = mkOption {
       type = types.bool;
       default = true;
-      description = "Use mmap for model weights. Fine under the GTT regime with 1GB VGM carve.";
+      description = "Use mmap for model weights.";
     };
 
     reasoningBudget = mkOption {
@@ -88,28 +103,28 @@ in {
       description = "Token cap for hybrid-thinking reasoning. 0 disables thinking.";
     };
 
+    parallel = mkOption {
+      type = types.int;
+      default = 4;
+      description = "Number of concurrent request slots. Allows pi, Hermes, and Open WebUI to share the model.";
+    };
+
     extraFlags = mkOption {
       type = types.listOf types.str;
       default = [];
       description = "Additional flags to pass to llama-server.";
     };
-
-    user = mkOption {
-      type = types.str;
-      default = "lalobied";
-      description = "User account to run the service as (for GPU access).";
-    };
   };
 
   config = mkIf cfg.enable {
-    # Provide the llama.cpp binaries in system packages for manual use
     environment.systemPackages = [ cfg.package ];
 
     systemd.services.llama-server = {
       description = "llama.cpp Vulkan server — MTP speculative decoding (Strix Halo)";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
-      wantedBy = [ "multi-user.target" ];
+      # Manual start only — don't auto-start at boot.
+      wantedBy = mkForce [];
 
       serviceConfig = {
         Type = "simple";
@@ -145,14 +160,24 @@ in {
         "--cache-prompt"
         "--reasoning-budget" (toString cfg.reasoningBudget)
         "--reasoning-format" "auto"
+        "--parallel" (toString cfg.parallel)
       ] ++ (optional cfg.mmap "--mmap")
         ++ (optionals (cfg.draftModelPath != null) [
           "-md" cfg.draftModelPath
+        ])
+        ++ (optionals (cfg.alias != null) [
+          "--alias" cfg.alias
         ])
         ++ cfg.extraFlags);
 
       script = ''
         exec ${cfg.package}/bin/llama-server "$@"
+      '';
+
+      # Free page cache when the model unloads so the 23GB of mmap'd
+      # weights doesn't linger in RAM after stopping the service.
+      postStop = ''
+        ${pkgs.coreutils}/bin/echo 3 > /proc/sys/vm/drop_caches 2>/dev/null || true
       '';
     };
 

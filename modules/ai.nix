@@ -1,3 +1,8 @@
+# AI services module. Coordinates Ollama, Open WebUI, and llama-server.
+#
+# Desktop: Ollama + Open WebUI auto-start at boot. llama-server starts
+#   manually for MTP 81 t/s inference. Open WebUI connects to both.
+# Tatchi: Ollama + Open WebUI auto-start. No llama-server.
 { lib, config, ... }:
 with lib; let
   cfg = config.ai;
@@ -14,20 +19,27 @@ in {
     acceleration = mkOption {
       type = types.enum [ "rocm" "jetson-cuda" ];
       default = "rocm";
-      description = "GPU acceleration backend for ollama. Only used when ollama.enable = true.";
+      description = "GPU acceleration backend for ollama.";
     };
 
-    # Ollama is optional — desktop uses llama-server only, tatchi uses Ollama.
-    ollama.enable = mkOption {
-      type = types.bool;
-      default = true;
-      description = "Enable Ollama LLM server. Disable on hosts using llama-server exclusively.";
+    ollama = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enable Ollama LLM server.";
+      };
+
+      autoStart = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Auto-start Ollama at boot.";
+      };
     };
 
     models = mkOption {
       type = types.listOf types.str;
       default = [];
-      description = "Models to preload on startup.";
+      description = "Ollama models to preload on startup.";
     };
 
     idleTimeout = mkOption {
@@ -43,7 +55,7 @@ in {
       port = mkOption {
         type = types.port;
         default = 8080;
-        description = "Port for Open WebUI to listen on.";
+        description = "Port for Open WebUI.";
       };
 
       corsOrigin = mkOption {
@@ -53,36 +65,51 @@ in {
         description = "Value for CORS_ALLOW_ORIGIN.";
       };
 
-      # When Ollama is disabled, Open WebUI connects to llama-server via
-      # its OpenAI-compatible API instead of the native Ollama API.
       openaiBaseUrl = mkOption {
         type = types.str;
         default = "http://localhost:8001/v1";
-        description = "OpenAI-compatible endpoint for Open WebUI (used when ollama.enable = false).";
+        description = "OpenAI-compatible endpoint for llama-server. Open WebUI connects to both Ollama and this.";
       };
     };
 
-    # llama.cpp Vulkan server with MTP — the 70+ t/s path for A3B models.
-    # Runs alongside Ollama on a separate port. Ollama handles chat/webui;
-    # this serves coding/agent workloads that benefit from MTP spec decoding.
+    # llama.cpp Vulkan server with MTP speculative decoding.
+    # Does not auto-start — run: sudo systemctl start llama-server
     llamaServer = {
       enable = mkEnableOption "llama.cpp Vulkan server (MTP speculative decoding)";
 
       modelPath = mkOption {
         type = types.str;
-        description = "Absolute path to the main GGUF model file (MTP-grafted).";
+        description = "Absolute path to the MTP GGUF model file.";
+      };
+
+      draftModelPath = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Path to a separate MTP draft head GGUF (Gemma 4 needs this; Qwen has it embedded).";
+      };
+
+      alias = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Display name in Open WebUI.";
       };
 
       port = mkOption {
         type = types.port;
         default = 8001;
-        description = "Port for llama-server (separate from Ollama's 11434).";
+        description = "Port for llama-server.";
       };
 
       contextSize = mkOption {
         type = types.int;
-        default = 262144;
-        description = "Context window size.";
+        default = 524288;
+        description = "Total context window size. Divided across parallel slots.";
+      };
+
+      kvCacheType = mkOption {
+        type = types.str;
+        default = "q8_0";
+        description = "KV cache type (-ctk/-ctv).";
       };
     };
   };
@@ -93,23 +120,25 @@ in {
       acceleration = cfg.acceleration;
       models = cfg.models;
       idleTimeout = cfg.idleTimeout;
+      autoStart = cfg.ollama.autoStart;
     };
 
     openwebuimodule = mkIf cfg.openwebui.enable {
       enable = true;
       port = cfg.openwebui.port;
       corsOrigin = cfg.openwebui.corsOrigin;
-      # When Ollama is off, pass llama-server as the OpenAI endpoint and
-      # disable the Ollama backend so Open WebUI doesn't try to reach it.
-      openaiBaseUrl = mkIf (!cfg.ollama.enable) cfg.openwebui.openaiBaseUrl;
       ollamaEnabled = cfg.ollama.enable;
+      openaiBaseUrl = mkIf cfg.llamaServer.enable cfg.openwebui.openaiBaseUrl;
     };
 
     llamaservermodule = mkIf cfg.llamaServer.enable {
       enable = true;
       modelPath = cfg.llamaServer.modelPath;
+      draftModelPath = cfg.llamaServer.draftModelPath;
+      alias = cfg.llamaServer.alias;
       port = cfg.llamaServer.port;
       contextSize = cfg.llamaServer.contextSize;
+      kvCacheType = cfg.llamaServer.kvCacheType;
     };
   };
 }

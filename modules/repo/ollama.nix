@@ -18,6 +18,12 @@ in {
   options.ollamamodule = {
     enable = mkEnableOption "ollama LLM server";
 
+    autoStart = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Auto-start ollama at boot.";
+    };
+
     acceleration = mkOption {
       type = types.enum [ "rocm" "jetson-cuda" ];
       description = "GPU acceleration backend to use.";
@@ -58,7 +64,7 @@ in {
 
     systemd.services.ollama = mkMerge [
       (mkIf (cfg.acceleration == "rocm") {
-        wantedBy = mkForce [];
+        wantedBy = mkIf (!cfg.autoStart) (mkForce []);
         serviceConfig.TimeoutIdleSec = mkIf (cfg.idleTimeout != null) cfg.idleTimeout;
       })
       (mkIf (cfg.acceleration == "jetson-cuda") {

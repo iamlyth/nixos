@@ -31,16 +31,27 @@ let
     '';
   };
 
-  # Per-instance models.json contents. The "llama-server" provider points at
-  # the local llama.cpp Vulkan server (port 8001) which runs Qwen3.6-35B-A3B
-  # with native MTP speculative decoding — the 70+ t/s path.
+  # Per-instance models.json contents. Both providers are listed so pi can
+  # use whichever backend is running. The dynamic discovery script below
+  # probes both endpoints and merges live model lists.
+  #
+  # llama-server (port 8001): Qwen3.6-35B-A3B with MTP — 81 t/s
+  # ollama (port 11434): whatever models you've pulled — use for experiments
   localModelsFile = pkgs.writeText "pi-local-models.json" (builtins.toJSON {
     providers.llama-server = {
       baseUrl = "http://localhost:8001/v1";
       api = "openai-completions";
       apiKey = "llama-server";
       models = [
-        { id = "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf"; reasoning = true; }
+        { id = "Qwen3.6-35B-A3B"; reasoning = true; }
+      ];
+    };
+    providers.ollama = {
+      baseUrl = "http://localhost:11434/v1";
+      api = "openai-completions";
+      apiKey = "ollama";
+      models = [
+        { id = "gemma4:31b"; }
       ];
     };
   });
@@ -168,18 +179,20 @@ let
 
         models = localModelsFile;
         settings = {
-          # Default to llama-server (MTP, 70+ t/s) on desktop. Falls back to
-          # Ollama on hosts where :8001 isn't running (the dynamic script
-          # populates the Ollama catalog when :11434 is available).
-          defaultProvider = "llama-server";
-          defaultModel = "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf";
+          # Ollama is the default (auto-starts at boot, always available).
+          # Switch to llama-server manually in pi settings when you want
+          # MTP 81 t/s speed (after: sudo systemctl start llama-server).
+          defaultProvider = "ollama";
+          defaultModel = "gemma4:31b";
         };
       };
     }];
   };
 
-  # Discover live models from the llama-server on every launch. Keeps the
-  # static catalog above as a fallback when :8001 is unreachable.
+  # Discover live models from both backends on every launch. Probes
+  # llama-server (:8001) and Ollama (:11434), merges whatever responds.
+  # Keeps the static catalog above as a fallback. Uses Python (always
+  # available) instead of jq for the JSON merge.
   piMainDynamic = pkgs.writeShellScriptBin "pi" ''
     agent_dir="${config.home.homeDirectory}/.pi/agent"
     ${pkgs.coreutils}/bin/mkdir -p "$agent_dir"
@@ -188,19 +201,42 @@ let
     ${pkgs.coreutils}/bin/cp ${localModelsFile} "$agent_dir/models.json"
     ${pkgs.coreutils}/bin/chmod 0600 "$agent_dir/models.json"
 
-    # Probe llama-server (:8001) and merge its live catalog if available
-    if response="$(${pkgs.curl}/bin/curl --fail --silent --connect-timeout 1 --max-time 3 http://localhost:8001/v1/models)"; then
-      tmp="$(${pkgs.coreutils}/bin/mktemp "$agent_dir/models.json.XXXXXX")"
-      if printf '%s' "$response" | ${pkgs.jq}/bin/jq -c '
-        .providers."llama-server".models = [.data[] | select(.id != null) | { id: .id, reasoning: true }] | sort_by(.id)
-      ' "$agent_dir/models.json" > "$tmp" 2>/dev/null; then
-        ${pkgs.coreutils}/bin/chmod 0600 "$tmp"
-        ${pkgs.coreutils}/bin/mv "$tmp" "$agent_dir/models.json"
-      else
-        ${pkgs.coreutils}/bin/rm -f "$tmp"
-      fi
-    fi
+    # Probe and merge both backends using Python
+    ${pkgs.python3}/bin/python3 -c '
+import json, urllib.request, sys
 
+models_path = sys.argv[1]
+with open(models_path) as f:
+    catalog = json.load(f)
+
+for provider, url, reasoning in [
+    ("llama-server", "http://localhost:8001/v1/models", True),
+    ("ollama", "http://localhost:11434/v1/models", False),
+]:
+    try:
+        req = urllib.request.Request(url, headers={"Authorization": "Bearer x"})
+        resp = urllib.request.urlopen(req, timeout=3)
+        data = json.loads(resp.read())
+        models = []
+        for m in data.get("data", []):
+            mid = m.get("id")
+            if mid:
+                entry = {"id": mid}
+                if reasoning:
+                    entry["reasoning"] = True
+                models.append(entry)
+        models.sort(key=lambda x: x["id"])
+        if models:
+            catalog.setdefault("providers", {})[provider] = catalog.get("providers", {}).get(provider, {})
+            catalog["providers"][provider]["models"] = models
+    except Exception:
+        pass  # backend not running — keep static fallback
+
+with open(models_path, "w") as f:
+    json.dump(catalog, f)
+' "$agent_dir/models.json"
+
+    ${pkgs.coreutils}/bin/chmod 0600 "$agent_dir/models.json"
     exec ${piMain.package}/bin/pi "$@"
   '';
 
