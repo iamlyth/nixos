@@ -122,7 +122,7 @@
       modelPath = "/home/lalobied/.models/qwen3.6-mtp/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf";
       alias = "Qwen3.6-35B-A3B";
       port = 8001;
-      contextSize = 524288;  # 131072 per slot × 4 parallel slots
+      contextSize = 1048576;  # 262144 per slot × 4 parallel slots (native max)
       kvCacheType = "q8_0";
     };
   };

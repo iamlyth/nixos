@@ -102,7 +102,7 @@ in {
 
       contextSize = mkOption {
         type = types.int;
-        default = 524288;
+        default = 1048576;
         description = "Total context window size. Divided across parallel slots.";
       };
 

@@ -51,8 +51,8 @@ in {
 
     contextSize = mkOption {
       type = types.int;
-      default = 524288;
-      description = "Total context window size. Divided across parallel slots (e.g. 524288 / 4 slots = 131072 each).";
+      default = 1048576;
+      description = "Total context window size. Divided across parallel slots (e.g. 1048576 / 4 slots = 262144 each).";
     };
 
     specDraftNMax = mkOption {
@@ -161,7 +161,7 @@ in {
         "--reasoning-budget" (toString cfg.reasoningBudget)
         "--reasoning-format" "auto"
         "--parallel" (toString cfg.parallel)
-      ] ++ (optional cfg.mmap "--mmap")
+      ] ++ (optional cfg.mmap "--load-mode mmap")
         ++ (optionals (cfg.draftModelPath != null) [
           "-md" cfg.draftModelPath
         ])
@@ -176,10 +176,17 @@ in {
 
       # Free page cache when the model unloads so the 23GB of mmap'd
       # weights doesn't linger in RAM after stopping the service.
+      # The '+' prefix on ExecStopPost tells systemd to run it as root
+      # (overrides the User= setting), which is needed for /proc/sys/vm.
       postStop = ''
-        ${pkgs.coreutils}/bin/echo 3 > /proc/sys/vm/drop_caches 2>/dev/null || true
+        true  # cleanup via ExecStopPost below
       '';
     };
+
+    # Run drop_caches as root — the '+' prefix overrides User=lalobied
+    systemd.services.llama-server.serviceConfig.ExecStopPost = [
+      "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
+    ];
 
     networking.firewall.allowedTCPPorts = [ cfg.port ];
   };
