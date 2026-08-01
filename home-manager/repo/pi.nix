@@ -43,7 +43,7 @@ let
       api = "openai-completions";
       apiKey = "llama-server";
       models = [
-        { id = "Qwen3.6-35B-A3B"; reasoning = true; }
+        { id = "Qwen3.6-35B-A3B"; reasoning = true; contextWindow = 262144; maxTokens = 262144; }
       ];
     };
     providers.ollama = {
@@ -228,7 +228,19 @@ for provider, url, reasoning in [
         models.sort(key=lambda x: x["id"])
         if models:
             catalog.setdefault("providers", {})[provider] = catalog.get("providers", {}).get(provider, {})
-            catalog["providers"][provider]["models"] = models
+            merged_models = []
+            for m in models:
+                mid = m.get("id")
+                if mid:
+                    entry = {"id": mid}
+                    if reasoning:
+                        entry["reasoning"] = True
+                        entry["contextWindow"] = 262144
+                        entry["maxTokens"] = 262144
+                    merged_models.append(entry)
+            merged_models.sort(key=lambda x: x["id"])
+            if merged_models:
+                catalog["providers"][provider]["models"] = merged_models
     except Exception:
         pass  # backend not running — keep static fallback
 
