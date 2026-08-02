@@ -183,11 +183,76 @@ in {
       '';
     };
 
-    # Run drop_caches as root — the '+' prefix overrides User=lalobied
+    # Single-slot instance: full 262k context, no concurrency.
+    # Use when you need maximum context for one long conversation.
+    # sudo systemctl start llama-server-single
+    # Runs on port 8002 so it can coexist with the main instance.
+    systemd.services.llama-server-single = {
+      description = "llama.cpp Vulkan — single slot, full 262k context";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = mkForce [];
+
+      serviceConfig = {
+        Type = "simple";
+        User = cfg.user;
+        Group = "video";
+        Restart = "on-failure";
+        RestartSec = 10;
+        Environment = [
+          "GGML_VK_PREFER_HOST_MEMORY=ON"
+          "XDG_CACHE_HOME=/var/cache/llama-cpp"
+          "MESA_SHADER_CACHE_DIR=/var/cache/llama-cpp"
+        ];
+        StateDirectory = "llama-cpp";
+        CacheDirectory = "llama-cpp";
+      };
+
+      scriptArgs = builtins.concatStringsSep " " ([
+        "-m" cfg.modelPath
+        "--spec-type" "draft-mtp"
+        "--spec-draft-n-max" (toString cfg.specDraftNMax)
+        "-ngl" (toString cfg.gpuLayers)
+        "-ngld" (toString cfg.draftGpuLayers)
+        "--ctx-size" "262144"
+        "--port" "8002"
+        "--host" cfg.host
+        "--no-warmup"
+        "--jinja"
+        "--ubatch-size" (toString cfg.ubatchSize)
+        "-fa" (if cfg.flashAttention then "1" else "0")
+        "-ctk" cfg.kvCacheType
+        "-ctv" cfg.kvCacheType
+        "--cache-prompt"
+        "--reasoning-budget" (toString cfg.reasoningBudget)
+        "--reasoning-format" "auto"
+        "--parallel" "1"
+      ] ++ (optional cfg.mmap "--load-mode mmap")
+        ++ (optionals (cfg.draftModelPath != null) [
+          "-md" cfg.draftModelPath
+        ])
+        ++ (optionals (cfg.alias != null) [
+          "--alias" cfg.alias
+        ])
+        ++ cfg.extraFlags);
+
+      script = ''
+        exec ${cfg.package}/bin/llama-server "$@"
+      '';
+
+      postStop = ''
+        true  # cleanup via ExecStopPost below
+      '';
+    };
+
+    # Run drop_caches as root for both services
     systemd.services.llama-server.serviceConfig.ExecStopPost = [
       "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
     ];
+    systemd.services.llama-server-single.serviceConfig.ExecStopPost = [
+      "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
+    ];
 
-    networking.firewall.allowedTCPPorts = [ cfg.port ];
+    networking.firewall.allowedTCPPorts = [ cfg.port 8002 ];
   };
 }
