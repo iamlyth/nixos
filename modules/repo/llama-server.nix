@@ -186,12 +186,15 @@ in {
     # Single-slot instance: full 262k context, no concurrency.
     # Use when you need maximum context for one long conversation.
     # sudo systemctl start llama-server-single
-    # Runs on port 8002 so it can coexist with the main instance.
+    # Shares port 8001 with llama-server — mutually exclusive.
     systemd.services.llama-server-single = {
       description = "llama.cpp Vulkan — single slot, full 262k context";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
       wantedBy = mkForce [];
+      # Prevent both from running at the same time — they share port 8001.
+      conflicts = [ "llama-server.service" ];
+      partOf = [ "llama-server.service" ];
 
       serviceConfig = {
         Type = "simple";
@@ -215,7 +218,7 @@ in {
         "-ngl" (toString cfg.gpuLayers)
         "-ngld" (toString cfg.draftGpuLayers)
         "--ctx-size" "262144"
-        "--port" "8002"
+        "--port" (toString cfg.port)
         "--host" cfg.host
         "--no-warmup"
         "--jinja"
@@ -253,6 +256,6 @@ in {
       "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
     ];
 
-    networking.firewall.allowedTCPPorts = [ cfg.port 8002 ];
+    networking.firewall.allowedTCPPorts = [ cfg.port ];
   };
 }
