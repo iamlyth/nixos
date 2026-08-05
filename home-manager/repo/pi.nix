@@ -105,6 +105,12 @@ let
 
     # Native compilation and build systems
     gcc gnumake cmake ninja meson pkg-config
+    clang clang-tools lld lldb
+    autoconf automake libtool
+    ccache bear mold patchelf
+
+    # Native diagnostics, static analysis, profiling, and coverage
+    valgrind linuxPackages.perf cppcheck lcov
 
     # Data and diagnostics
     sqlite procps lsof strace gdb
