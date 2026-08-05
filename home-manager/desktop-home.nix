@@ -56,13 +56,16 @@
   };
 
   ## Override for Flatpak Retrodeck
-  xdg.dataFile."flatpak/overrides/net.retrodeck.retrodeck".text = ''
-    [Context]
-    sockets=wayland;fallback-x11;pulseaudio;x11
+  xdg.dataFile."flatpak/overrides/net.retrodeck.retrodeck" = {
+    force = true;
+    text = ''
+      [Context]
+      sockets=wayland;fallback-x11;pulseaudio;x11
 
-    [Environment]
-    XDG_DATA_DIRS=/app/share:/usr/share:/usr/share/runtime/share
-  '';
+      [Environment]
+      XDG_DATA_DIRS=/app/share:/usr/share:/usr/share/runtime/share
+    '';
+  };
 
   home.stateVersion = "25.11";
 }
