@@ -88,8 +88,9 @@ let
   # ---- Jail permission set shared by both instances ----
   # General-purpose development baseline. add-pkg-deps exposes each package's
   # binaries and runtime closure, but does not expose privileged host sockets
-  # (notably the Nix daemon, Docker, or an SSH agent).
-  sharedJailPkgs = with pkgs; [
+  # (notably Docker or an SSH agent). Nix daemon access is granted separately
+  # below so agents can realise project development environments.
+  sharedJailPkgs = (with pkgs; [
     # Shell, source control, and navigation
     bash coreutils diffutils fd findutils gawk git gnugrep gnused jq
     ripgrep vim which tree
@@ -118,7 +119,23 @@ let
     # Nix and repository quality tools. The Nix CLI is available for parsing
     # and local operations, but the daemon socket remains intentionally absent.
     nix nixfmt-rfc-style statix deadnix shellcheck shfmt
-  ];
+  ]) ++ cfg.extraJailPackages;
+
+  # Let jailed agents evaluate, build, and run project-provided Nix shells and
+  # flake apps. The daemon performs store writes while the jail sees the whole
+  # store read-only, including paths realised after the jail starts. Keep agent
+  # users out of nix.settings.trusted-users: daemon access by a trusted user is
+  # effectively root access and would defeat the jail's security boundary.
+  nixDaemonJailAccess = combinators:
+    with combinators;
+    compose [
+      (unsafe-add-raw-args "--dir /nix/var --dir /nix/var/nix")
+      (readonly "/nix/store")
+      (readonly "/nix/var/nix/daemon-socket")
+      (set-env "NIX_REMOTE" "daemon")
+      (set-env "NIX_CONFIG" "experimental-features = nix-command flakes")
+      (set-env "NIX_PATH" "nixpkgs=${pkgs.path}")
+    ];
 
   # ---- Instance 1: pi (primary coding agent) ----
   # Same config as before: context-mode + pi-subagents, gemma4:31b,
@@ -167,6 +184,7 @@ let
           (set-env "EDITOR" "vim")
           (set-env "VISUAL" "vim")
           (add-pkg-deps sharedJailPkgs)
+          (nixDaemonJailAccess combinators)
           # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
           # recreates the symlink but only bind-mounts targets under /nix/store,
           # so inside the jail the link dangles, glibc falls back to
@@ -296,6 +314,7 @@ with open(models_path, "w") as f:
           (set-env "EDITOR" "vim")
           (set-env "VISUAL" "vim")
           (add-pkg-deps sharedJailPkgs)
+          (nixDaemonJailAccess combinators)
           # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
           # recreates the symlink but only bind-mounts targets under /nix/store,
           # so inside the jail the link dangles, glibc falls back to
@@ -349,6 +368,16 @@ in
       };
     };
 
+    # Extension point used by other Home Manager modules (for example Ralph)
+    # to expose tools in both curated jail environments without broad host PATH
+    # access.
+    extraJailPackages = mkOption {
+      type = types.listOf types.package;
+      default = [ ];
+      internal = true;
+      description = "Additional packages exposed inside both Pi jails.";
+    };
+
     pi2 = {
       enable = mkOption {
         type = types.bool;
@@ -358,7 +387,7 @@ in
 
       provider = mkOption {
         type = types.str;
-        default = "openai";
+        default = "openai-codex";
         example = "anthropic";
         description = ''
           Provider written to pi2's settings as defaultProvider. Built-in

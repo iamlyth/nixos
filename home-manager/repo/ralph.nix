@@ -2,6 +2,7 @@
   lib,
   config,
   pkgs,
+  inputs,
   ...
 }:
 with lib;
@@ -68,6 +69,20 @@ let
         makeWrapper "${ralph-orchestrator}/bin/ralph" "$out/bin/ralph" \
           --prefix PATH : ${makeBinPath [ pi2AsPi ]}
       '';
+
+  # Ralph runs inside an existing Pi jail, so its child Pi must be the raw
+  # coding-agent payload rather than another jail launcher. The child inherits
+  # HOME and PI_CODING_AGENT_DIR, selecting the invoking instance's isolated
+  # settings and credentials without requiring access to the host profile.
+  innerPi = inputs.pi-nix.packages.${pkgs.stdenv.hostPlatform.system}.coding-agent;
+  ralphInJail =
+    pkgs.runCommand "ralph-orchestrator-in-pi-jail-${pin.version}"
+      { nativeBuildInputs = [ pkgs.makeWrapper ]; }
+      ''
+        mkdir -p "$out/bin"
+        makeWrapper "${ralph-orchestrator}/bin/ralph" "$out/bin/ralph" \
+          --prefix PATH : ${makeBinPath [ innerPi ]}
+      '';
 in
 {
   options.ralphmodule.enable = mkEnableOption "Ralph Orchestrator using pi2 as its Pi backend";
@@ -80,6 +95,9 @@ in
       }
     ];
 
+    # Keep the host command wired to pi2, while both Pi jails receive a Ralph
+    # wrapper whose Pi backend stays within the already-established jail.
     home.packages = [ ralphWithPi2 ];
+    pimodule.extraJailPackages = [ ralphInJail ];
   };
 }

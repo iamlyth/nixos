@@ -36,7 +36,7 @@
     pi.enable = true; # local ollama (gemma4:31b)
     pi2 = {
       enable = true;
-      provider = "openai";
+      provider = "openai-codex";
       model = "gpt-5.6-sol";
     };
   };

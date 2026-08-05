@@ -129,7 +129,10 @@
 
   # # #OS TOOLS
   nix.settings.experimental-features = ["nix-command" "flakes"];
-  nix.settings.trusted-users = [ "root" "lalobied" ];
+  # pi/pi2 may reach the daemon from their jail; keep the interactive user
+  # untrusted so agent-controlled Nix evaluation cannot gain root-equivalent
+  # daemon privileges.
+  nix.settings.trusted-users = [ "root" ];
   environment.systemPackages = with pkgs; 
   [
     git
