@@ -55,17 +55,12 @@
     enable = true;
   };
 
-  ## Override for Flatpak Retrodeck
-  xdg.dataFile."flatpak/overrides/net.retrodeck.retrodeck" = {
-    force = true;
-    text = ''
-      [Context]
-      sockets=wayland;fallback-x11;pulseaudio;x11
-
-      [Environment]
-      XDG_DATA_DIRS=/app/share:/usr/share:/usr/share/runtime/share
-    '';
-  };
+  # Apply this through Flatpak itself rather than managing its mutable override
+  # file as a read-only Home Manager symlink. RetroDECK otherwise drops the X11
+  # socket permission after activation and must be repaired manually.
+  home.activation.retrodeckFlatpakOverride = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run ${lib.getExe pkgs.flatpak} override --user --socket=x11 net.retrodeck.retrodeck
+  '';
 
   home.stateVersion = "25.11";
 }
