@@ -115,6 +115,15 @@ let
 
     # Data and diagnostics
     sqlite procps lsof strace gdb
+    util-linux rsync
+
+    # D-Bus and systemd executables for service interaction and inspection
+    # inside the jail. These are binaries only (dbus-daemon, dbus-run-session,
+    # dbus-monitor, systemctl, busctl, journalctl, udevadm) — they do NOT
+    # expose host sockets or grant access to the host's D-Bus/systemd
+    # session. The agent can run its own private dbus-run-session but cannot
+    # reach the host bus unless explicitly bind-mounted (which we never do).
+    dbus systemd
 
     # Nix and repository quality tools. The Nix CLI is available for parsing
     # and local operations, but the daemon socket remains intentionally absent.
@@ -126,6 +135,21 @@ let
   # store read-only, including paths realised after the jail starts. Keep agent
   # users out of nix.settings.trusted-users: daemon access by a trusted user is
   # effectively root access and would defeat the jail's security boundary.
+  #
+  # NIX_CONFIG includes build concurrency limits (max-jobs, cores) to prevent
+  # runaway parallel Nix builds from starving the host. These are reasonable
+  # defaults — override them by editing this list or setting the env var
+  # differently in the agent's environment.
+  #
+  # Recommended follow-up for process/memory limits (not implemented here
+  # because bwrap has no native cgroup controls and requiring systemd-run
+  # inside the wrapper would break non-systemd hosts):
+  #   Wrap the bwrap invocation in:
+  #     systemd-run --user --slice=pi2.slice \
+  #       --property=MemoryMax=16G --property=TasksMax=512 \
+  #       -- bwrap ...
+  #   This requires the host to run systemd and the user session to support
+  #   systemd-run --user. Implement only when a systemd-only path is acceptable.
   nixDaemonJailAccess = combinators:
     with combinators;
     compose [
@@ -133,7 +157,7 @@ let
       (readonly "/nix/store")
       (readonly "/nix/var/nix/daemon-socket")
       (set-env "NIX_REMOTE" "daemon")
-      (set-env "NIX_CONFIG" "experimental-features = nix-command flakes")
+      (set-env "NIX_CONFIG" "experimental-features = nix-command flakes\nmax-jobs = 4\ncores = 8")
       (set-env "NIX_PATH" "nixpkgs=${pkgs.path}")
     ];
 
@@ -175,6 +199,12 @@ let
         jail.enable = true;
         jail.permissions = combinators: with combinators; [
           network
+          # The interactive pi TUI needs direct terminal I/O that --new-session
+          # (bwrap's default) breaks. no-new-session is the narrowest safe
+          # alternative: the jail still has private PID/IPC/mount/user/UTS/cgroup
+          # namespaces and /tmp, /dev, /proc, /home are all tmpfs/procced/deved.
+          # Only terminal session isolation is relaxed. See jail.nix docs for
+          # no-new-session security implications.
           no-new-session
           (persist-home "pi-coder")
           # Allow SSH administration with the user's existing key, config, and
@@ -307,9 +337,15 @@ with open(models_path, "w") as f:
         };
 
         jail.enable = true;
+        # ---- Credential boundary ----
+        # File-backed secrets (FIRECRAWL_API_KEY.file) avoid Nix-store leakage
+        # but are still readable by the jailed agent at runtime. The jail has
+        # network access, so the agent can exfiltrate any readable secret.
+        # Prefer capability/proxy-based access in the future (e.g. a local
+        # HTTP proxy that injects credentials per-request) rather than
+        # exposing raw credential files.
         jail.permissions = combinators: with combinators; [
           network
-          no-new-session
           (persist-home "pi2")
           (set-env "EDITOR" "vim")
           (set-env "VISUAL" "vim")
@@ -323,13 +359,20 @@ with open(models_path, "w") as f:
           # the link resolves. Uses -try because the path is absent on non-WSL
           # hosts, where this becomes a no-op.
           (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
-          # The environment wrapper runs inside the jail, so expose only the
-          # file required by FIRECRAWL_API_KEY.file, read-only.
+          # Firecrawl credential (file-backed, read-only — see credential
+          # boundary note above)
           (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
           (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
           (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
           (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
-        ];
+        ]
+        # SSH runner config (disabled by default — see pimodule.pi2.sshRunner
+        # option). When enabled, bind-mounts a dedicated SSH config directory
+        # read-only into the jail at ~/.ssh. --ro-bind-try makes it a no-op if
+        # the directory doesn't exist, but the option gate means it's only added
+        # when explicitly enabled. Do NOT expose the host's ~/.ssh or SSH agent.
+        ++ lib.optional (cfg.pi2.sshRunner.enable or false)
+          (unsafe-add-raw-args "--ro-bind-try ${config.home.homeDirectory}/.config/pi2-ssh-runner ${config.home.homeDirectory}/.ssh");
 
         models = cloudModelsFile;
         # Provider/model come from pimodule.pi2.{provider,model} so each host
@@ -404,6 +447,19 @@ in
           Model id written to pi2's settings as defaultModel. Must be a model
           the chosen provider serves.
         '';
+      };
+
+      sshRunner = {
+        enable = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Bind-mount a dedicated SSH config directory (~/.config/pi2-ssh-runner)
+            read-only into the pi2 jail at ~/.ssh. Place an SSH config with a
+            controller-box-vm alias and a dedicated private key in that directory.
+            Disabled by default — the jailed agent can use any credential exposed to it.
+          '';
+        };
       };
     };
   };
