@@ -60,7 +60,10 @@ in {
       intel.enable = cfg.intel.enable;
     };
     swaymodule.enable = false;
-    vpnmodule.enable = cfg.vpn.enable;
+    vpnmodule = {
+      enable = cfg.vpn.enable;
+      gui = cfg.vpn.enable;  # desktop gets the GUI (unstable nixpkgs has the option)
+    };
     rdpmodule.enable = cfg.rdp.enable;
   };
 }
