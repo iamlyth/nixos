@@ -1,8 +1,44 @@
- { config, pkgs, lib, ...}:
-with lib; let
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
+with lib;
+let
   cfg = config.gruvboxmodule;
-  gruvbox-gtk = pkgs.gruvbox-gtk-theme.override {
-    iconVariants = [ "Dark" "Light" ];
+  # nixpkgs removed gruvbox-gtk-theme after its GTK 2 murrine engine became
+  # unmaintained. Build the actively used GTK 3/4 theme directly and omit the
+  # GTK 2 runtime dependency; this preserves the Gruvbox desktop theme without
+  # reintroducing gtk-engine-murrine.
+  gruvbox-gtk = pkgs.stdenvNoCC.mkDerivation {
+    pname = "gruvbox-gtk-theme";
+    version = "0-unstable-2025-10-23";
+    src = pkgs.fetchFromGitHub {
+      owner = "Fausto-Korpsvart";
+      repo = "Gruvbox-GTK-Theme";
+      rev = "578cd220b5ff6e86b078a6111d26bb20ec8c733f";
+      hash = "sha256-RXoPj/aj9OCTIi8xWatG0QpDAUh102nFOipdSIiqt7o=";
+    };
+    nativeBuildInputs = [ pkgs.sassc ];
+    buildInputs = [ pkgs.gnome-themes-extra ];
+    dontBuild = true;
+    postPatch = ''
+      patchShebangs themes/install.sh
+    '';
+    installPhase = ''
+      runHook preInstall
+      mkdir -p "$out/share/themes"
+      cd themes
+      ./install.sh -n Gruvbox -d "$out/share/themes"
+      runHook postInstall
+    '';
+    meta = {
+      description = "GTK theme based on the Gruvbox colour palette";
+      homepage = "https://github.com/Fausto-Korpsvart/Gruvbox-GTK-Theme";
+      license = lib.licenses.gpl3Plus;
+      platforms = lib.platforms.unix;
+    };
   };
 
   gruvbox-plus-icons = pkgs.stdenvNoCC.mkDerivation {
@@ -34,7 +70,7 @@ in
   };
   config = mkIf cfg.enable {
     home.packages = [
-      pkgs.gruvbox-gtk-theme
+      gruvbox-gtk
       gruvbox-plus-icons
     ];
 
@@ -42,11 +78,11 @@ in
       enable = true;
       theme = {
         name = "Gruvbox-Light";
-        package = pkgs.gruvbox-gtk-theme;
+        package = gruvbox-gtk;
       };
       iconTheme = {
         name = "Gruvbox-Plus-Dark";
-        package =  gruvbox-plus-icons;
+        package = gruvbox-plus-icons;
       };
       gtk4.theme = null;
     };
@@ -59,18 +95,18 @@ in
     };
     xdg.configFile."gtk-4.0/gtk.css" = lib.mkForce {
       text = ''
-        @import url("${pkgs.gruvbox-gtk-theme}/share/themes/Gruvbox-Light/gtk-4.0/gtk.css");
+        @import url("${gruvbox-gtk}/share/themes/Gruvbox-Light/gtk-4.0/gtk.css");
 
         @media (prefers-color-scheme: dark) {
-          @import url("${pkgs.gruvbox-gtk-theme}/share/themes/Gruvbox-Dark/gtk-4.0/gtk.css");
+          @import url("${gruvbox-gtk}/share/themes/Gruvbox-Dark/gtk-4.0/gtk.css");
         }
       '';
     };
     xdg.configFile."gtk-4.0/gtk-dark.css" = lib.mkForce {
-      source = "${pkgs.gruvbox-gtk-theme}/share/themes/Gruvbox-Dark/gtk-4.0/gtk-dark.css";
+      source = "${gruvbox-gtk}/share/themes/Gruvbox-Dark/gtk-4.0/gtk-dark.css";
     };
     xdg.configFile."gtk-4.0/assets" = lib.mkForce {
-      source = "${pkgs.gruvbox-gtk-theme}/share/themes/Gruvbox-Dark/gtk-4.0/assets";
+      source = "${gruvbox-gtk}/share/themes/Gruvbox-Dark/gtk-4.0/assets";
     };
     xdg.configFile."gtk-4.0/settings.ini" = lib.mkForce {
       text = ''
