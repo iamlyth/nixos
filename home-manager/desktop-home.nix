@@ -34,10 +34,12 @@
   pimodule = {
     enable = true;
     pi.enable = true; # local ollama (gemma4:31b)
+    workspaceRoots = [ "/workspace" ];
     pi2 = {
       enable = true;
       provider = "openai-codex";
       model = "gpt-5.6-sol";
+      sshRunner.enable = true;
     };
   };
   ralphmodule.enable = true;

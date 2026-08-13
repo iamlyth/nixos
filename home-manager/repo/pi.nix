@@ -1,7 +1,20 @@
-{ lib, config, pkgs, inputs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 with lib;
 let
   cfg = config.pimodule;
+  piWorkspace = import ../../lib/pi-workspace.nix { inherit pkgs; };
+  workspaceRootArgs = escapeShellArgs cfg.workspaceRoots;
+  prepareWorkspace = ''
+    export PI_JAIL_HOST_HOME=${escapeShellArg config.home.homeDirectory}
+    export PI_JAIL_WORKSPACE_SOURCE="$(${piWorkspace.validator}/bin/pi-validate-workspace ${workspaceRootArgs})"
+  '';
+  sshRunnerSource = "${config.home.homeDirectory}/.config/pi2-ssh-runner";
 
   # Nix-pinned baseline extensions (context-mode + pi-subagents). To update:
   # scripts/update-deps.sh context-mode "@tintinweb/pi-subagents"
@@ -37,98 +50,252 @@ let
   #
   # llama-server (port 8001): Qwen3.6-35B-A3B with MTP — 81 t/s
   # ollama (port 11434): whatever models you've pulled — use for experiments
-  localModelsFile = pkgs.writeText "pi-local-models.json" (builtins.toJSON {
-    providers.llama-server = {
-      baseUrl = "http://localhost:8001/v1";
-      api = "openai-completions";
-      apiKey = "llama-server";
-      models = [
-        { id = "Qwen3.6-35B-A3B"; reasoning = true; contextWindow = 262144; maxTokens = 262144; }
-      ];
-    };
-    providers.ollama = {
-      baseUrl = "http://localhost:11434/v1";
-      api = "openai-completions";
-      apiKey = "ollama";
-      models = [
-        { id = "gemma4:31b"; }
-      ];
-    };
-  });
+  localModelsFile = pkgs.writeText "pi-local-models.json" (
+    builtins.toJSON {
+      providers.llama-server = {
+        baseUrl = "http://localhost:8001/v1";
+        api = "openai-completions";
+        apiKey = "llama-server";
+        models = [
+          {
+            id = "Qwen3.6-35B-A3B";
+            reasoning = true;
+            contextWindow = 262144;
+            maxTokens = 262144;
+          }
+        ];
+      };
+      providers.ollama = {
+        baseUrl = "http://localhost:11434/v1";
+        api = "openai-completions";
+        apiKey = "ollama";
+        models = [
+          { id = "gemma4:31b"; }
+        ];
+      };
+    }
+  );
 
-  cloudModelsFile = pkgs.writeText "pi-cloud-models.json" (builtins.toJSON {
-    providers.ollama = {
-      baseUrl = "https://ollama.com/v1";
-      api = "openai-completions";
-      # No apiKey here: pi resolves the key from pi2's auth.json.
-      models = [
-        { id = "deepseek-v4-flash"; reasoning = true; }
-        { id = "deepseek-v4-pro"; reasoning = true; }
-        { id = "gemma4:31b"; reasoning = true; input = [ "text" "image" ]; }
-        { id = "glm-5.1"; reasoning = true; }
-        { id = "glm-5.2"; reasoning = true; }
-        { id = "gpt-oss:20b"; reasoning = true; }
-        { id = "gpt-oss:120b"; reasoning = true; }
-        { id = "kimi-k2.5"; reasoning = true; input = [ "text" "image" ]; }
-        { id = "kimi-k2.6"; reasoning = true; input = [ "text" "image" ]; }
-        { id = "kimi-k2.7-code"; reasoning = true; input = [ "text" "image" ]; }
-        { id = "kimi-k3"; reasoning = true; input = [ "text" "image" ]; }
-        { id = "minimax-m2.5"; reasoning = true; }
-        { id = "minimax-m2.7"; reasoning = true; }
-        { id = "minimax-m3"; reasoning = true; input = [ "text" "image" ]; }
-        { id = "mistral-large-3:675b"; input = [ "text" "image" ]; }
-        { id = "nemotron-3-nano:30b"; reasoning = true; }
-        { id = "nemotron-3-super"; reasoning = true; }
-        { id = "nemotron-3-ultra"; reasoning = true; }
-        { id = "qwen3.5:397b"; reasoning = true; input = [ "text" "image" ]; }
-      ];
-    };
-  });
+  cloudModelsFile = pkgs.writeText "pi-cloud-models.json" (
+    builtins.toJSON {
+      providers.ollama = {
+        baseUrl = "https://ollama.com/v1";
+        api = "openai-completions";
+        # No apiKey here: pi resolves the key from pi2's auth.json.
+        models = [
+          {
+            id = "deepseek-v4-flash";
+            reasoning = true;
+          }
+          {
+            id = "deepseek-v4-pro";
+            reasoning = true;
+          }
+          {
+            id = "gemma4:31b";
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+          }
+          {
+            id = "glm-5.1";
+            reasoning = true;
+          }
+          {
+            id = "glm-5.2";
+            reasoning = true;
+          }
+          {
+            id = "gpt-oss:20b";
+            reasoning = true;
+          }
+          {
+            id = "gpt-oss:120b";
+            reasoning = true;
+          }
+          {
+            id = "kimi-k2.5";
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+          }
+          {
+            id = "kimi-k2.6";
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+          }
+          {
+            id = "kimi-k2.7-code";
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+          }
+          {
+            id = "kimi-k3";
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+          }
+          {
+            id = "minimax-m2.5";
+            reasoning = true;
+          }
+          {
+            id = "minimax-m2.7";
+            reasoning = true;
+          }
+          {
+            id = "minimax-m3";
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+          }
+          {
+            id = "mistral-large-3:675b";
+            input = [
+              "text"
+              "image"
+            ];
+          }
+          {
+            id = "nemotron-3-nano:30b";
+            reasoning = true;
+          }
+          {
+            id = "nemotron-3-super";
+            reasoning = true;
+          }
+          {
+            id = "nemotron-3-ultra";
+            reasoning = true;
+          }
+          {
+            id = "qwen3.5:397b";
+            reasoning = true;
+            input = [
+              "text"
+              "image"
+            ];
+          }
+        ];
+      };
+    }
+  );
 
   # ---- Jail permission set shared by both instances ----
   # General-purpose development baseline. add-pkg-deps exposes each package's
   # binaries and runtime closure, but does not expose privileged host sockets
   # (notably Docker or an SSH agent). Nix daemon access is granted separately
   # below so agents can realise project development environments.
-  sharedJailPkgs = (with pkgs; [
-    # Shell, source control, and navigation
-    bash coreutils diffutils fd findutils gawk git gnugrep gnused jq
-    ripgrep vim which tree
+  sharedJailPkgs =
+    (with pkgs; [
+      # Shell, source control, and navigation
+      bash
+      coreutils
+      diffutils
+      fd
+      findutils
+      gawk
+      git
+      gnugrep
+      gnused
+      jq
+      ripgrep
+      vim
+      which
+      tree
 
-    # Network access and remote Git
-    cacert curl wget openssh netcat-openbsd
+      # Network access and remote Git
+      cacert
+      curl
+      wget
+      openssh
+      netcat-openbsd
 
-    # Archives, patches, and file inspection
-    file patch gnutar gzip bzip2 xz zip unzip
+      # Archives, patches, and file inspection
+      file
+      patch
+      gnutar
+      gzip
+      bzip2
+      xz
+      zip
+      unzip
 
-    # Language runtimes and package managers
-    nodejs bun pnpm yarn python313 uv
+      # Language runtimes and package managers
+      nodejs
+      bun
+      pnpm
+      yarn
+      python313
+      uv
 
-    # Native compilation and build systems
-    gcc gnumake cmake ninja meson pkg-config
-    clang clang-tools lld lldb
-    autoconf automake libtool
-    ccache bear mold patchelf
+      # Native compilation and build systems
+      gcc
+      gnumake
+      cmake
+      ninja
+      meson
+      pkg-config
+      clang
+      clang-tools
+      lld
+      lldb
+      autoconf
+      automake
+      libtool
+      ccache
+      bear
+      mold
+      patchelf
 
-    # Native diagnostics, static analysis, profiling, and coverage
-    valgrind linuxPackages.perf cppcheck lcov
+      # Native diagnostics, static analysis, profiling, and coverage
+      valgrind
+      linuxPackages.perf
+      cppcheck
+      lcov
 
-    # Data and diagnostics
-    sqlite procps lsof strace gdb
-    util-linux rsync
+      # Data and diagnostics
+      sqlite
+      procps
+      lsof
+      strace
+      gdb
+      util-linux
+      rsync
 
-    # D-Bus and systemd executables for service interaction and inspection
-    # inside the jail. These are binaries only (dbus-daemon, dbus-run-session,
-    # dbus-monitor, systemctl, busctl, journalctl, udevadm) — they do NOT
-    # expose host sockets or grant access to the host's D-Bus/systemd
-    # session. The agent can run its own private dbus-run-session but cannot
-    # reach the host bus unless explicitly bind-mounted (which we never do).
-    dbus systemd
+      # D-Bus and systemd executables for service interaction and inspection
+      # inside the jail. These are binaries only (dbus-daemon, dbus-run-session,
+      # dbus-monitor, systemctl, busctl, journalctl, udevadm) — they do NOT
+      # expose host sockets or grant access to the host's D-Bus/systemd
+      # session. The agent can run its own private dbus-run-session but cannot
+      # reach the host bus unless explicitly bind-mounted (which we never do).
+      dbus
+      systemd
 
-    # Nix and repository quality tools. The Nix CLI is available for parsing
-    # and local operations, but the daemon socket remains intentionally absent.
-    nix nixfmt-rfc-style statix deadnix shellcheck shfmt
-  ]) ++ cfg.extraJailPackages;
+      # Nix and repository quality tools. The Nix CLI uses the intentionally
+      # exposed daemon socket configured by nixDaemonJailAccess below.
+      nix
+      nixfmt-rfc-style
+      statix
+      deadnix
+      shellcheck
+      shfmt
+    ])
+    ++ cfg.extraJailPackages;
 
   # Let jailed agents evaluate, build, and run project-provided Nix shells and
   # flake apps. The daemon performs store writes while the jail sees the whole
@@ -136,10 +303,9 @@ let
   # users out of nix.settings.trusted-users: daemon access by a trusted user is
   # effectively root access and would defeat the jail's security boundary.
   #
-  # NIX_CONFIG includes build concurrency limits (max-jobs, cores) to prevent
-  # runaway parallel Nix builds from starving the host. These are reasonable
-  # defaults — override them by editing this list or setting the env var
-  # differently in the agent's environment.
+  # NIX_CONFIG includes cooperative Nix build scheduling controls (max-jobs
+  # and cores). They reduce build parallelism but are not hard process, memory,
+  # CPU, or disk limits.
   #
   # Recommended follow-up for process/memory limits (not implemented here
   # because bwrap has no native cgroup controls and requiring systemd-run
@@ -150,7 +316,8 @@ let
   #       -- bwrap ...
   #   This requires the host to run systemd and the user session to support
   #   systemd-run --user. Implement only when a systemd-only path is acceptable.
-  nixDaemonJailAccess = combinators:
+  nixDaemonJailAccess =
+    combinators:
     with combinators;
     compose [
       (unsafe-add-raw-args "--dir /nix/var --dir /nix/var/nix")
@@ -166,81 +333,87 @@ let
   # persisted home "pi-coder", vim editor.
   piMain = inputs.pi-nix.lib.mkCodingAgent {
     inherit pkgs;
-    modules = [{
-      config.pi.coding-agent = {
-        # DECLARATIVE baseline: these are pinned from the nix store and injected
-        # via --extension/--skill on every launch. The entry points come from
-        # each package's "pi" field in package.json.
-        #
-        # You can still EXPERIMENT imperatively: `pi install npm:...` drops an
-        # extension in ~/.pi/agent and pi auto-discovers it alongside these pins.
-        # To keep one, promote it to a pin: `pi uninstall <name>`, add it to
-        # pi-extensions-deps/package.json + this list, run scripts/update-deps.sh,
-        # rebuild. Never leave the same extension both pinned here AND installed
-        # in ~/.pi/agent, or pi loads it twice (conflict diagnostics).
-        extensions = [
-          "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
-          "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
-        ];
-        skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
+    modules = [
+      {
+        config.pi.coding-agent = {
+          # DECLARATIVE baseline: these are pinned from the nix store and injected
+          # via --extension/--skill on every launch. The entry points come from
+          # each package's "pi" field in package.json.
+          #
+          # You can still EXPERIMENT imperatively: `pi install npm:...` drops an
+          # extension in ~/.pi/agent and pi auto-discovers it alongside these pins.
+          # To keep one, promote it to a pin: `pi uninstall <name>`, add it to
+          # pi-extensions-deps/package.json + this list, run scripts/update-deps.sh,
+          # rebuild. Never leave the same extension both pinned here AND installed
+          # in ~/.pi/agent, or pi loads it twice (conflict diagnostics).
+          extensions = [
+            "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
+            "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
+          ];
+          skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
 
-        # Load the Firecrawl credential at runtime so it never enters the Nix
-        # store. pi.nix exports file-backed values before starting the agent.
-        environment = {
-          FIRECRAWL_API_KEY.file = "/etc/nixos/.secrets/firecrawl-api-key";
-          FIRECRAWL_API_URL.value = "https://firecrawl.tatchi.org/v1";
+          # Load the Firecrawl credential at runtime so it never enters the Nix
+          # store. pi.nix exports file-backed values before starting the agent.
+          environment = {
+            FIRECRAWL_API_KEY.file = "/etc/nixos/.secrets/firecrawl-api-key";
+            FIRECRAWL_API_URL.value = "https://firecrawl.tatchi.org/v1";
+          };
+
+          # bubblewrap isolation via jail.nix. The module always binds pi's agent
+          # dir (~/.pi/agent) read-write itself, so it is intentionally absent from
+          # this list; persist-home keeps the imperative npm install root
+          # (~/.local/share/pi/npm) across launches so `pi install` experiments
+          # survive relaunches.
+          jail.enable = true;
+          jail.permissions =
+            combinators: with combinators; [
+              network
+              # The interactive pi TUI needs direct terminal I/O that --new-session
+              # (bwrap's default) breaks. no-new-session is the narrowest safe
+              # alternative: the jail still has private PID/IPC/mount/user/UTS/cgroup
+              # namespaces and /tmp, /dev, /proc, /home are all tmpfs/procced/deved.
+              # Only terminal session isolation is relaxed. See jail.nix docs for
+              # no-new-session security implications.
+              no-new-session
+              (persist-home "pi-coder")
+              # Allow SSH administration with the user's existing key, config, and
+              # known-hosts entries. Read-only preserves the host's credentials;
+              # add remote host keys to ~/.ssh/known_hosts before using pi.
+              (unsafe-add-raw-args "--ro-bind-try ${config.home.homeDirectory}/.ssh ${config.home.homeDirectory}/.ssh")
+              (set-env "EDITOR" "vim")
+              (set-env "VISUAL" "vim")
+              (add-pkg-deps sharedJailPkgs)
+              (nixDaemonJailAccess combinators)
+              # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
+              # recreates the symlink but only bind-mounts targets under /nix/store,
+              # so inside the jail the link dangles, glibc falls back to
+              # 127.0.0.1:53, and every lookup fails with EAI_AGAIN (this breaks
+              # OAuth login, which resolves platform.claude.com). Bind the target so
+              # the link resolves. Uses -try because the path is absent on non-WSL
+              # hosts, where this becomes a no-op.
+              (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
+              # The environment wrapper runs inside the jail, so expose only the
+              # file required by FIRECRAWL_API_KEY.file, read-only.
+              (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
+              (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
+              # The outer wrapper canonicalizes the Git worktree and verifies that
+              # it is a child of an explicitly approved development root. Bind only
+              # that validated project at a stable jail path.
+              (unsafe-add-raw-args ''--dir /workspace --bind "$PI_JAIL_WORKSPACE_SOURCE" /workspace/project'')
+              (unsafe-add-raw-args "--chdir /workspace/project")
+            ];
+
+          models = localModelsFile;
+          settings = {
+            # Ollama is the default (auto-starts at boot, always available).
+            # Switch to llama-server manually in pi settings when you want
+            # MTP 81 t/s speed (after: sudo systemctl start llama-server).
+            defaultProvider = "ollama";
+            defaultModel = "gemma4:31b";
+          };
         };
-
-        # bubblewrap isolation via jail.nix. The module always binds pi's agent
-        # dir (~/.pi/agent) read-write itself, so it is intentionally absent from
-        # this list; persist-home keeps the imperative npm install root
-        # (~/.local/share/pi/npm) across launches so `pi install` experiments
-        # survive relaunches.
-        jail.enable = true;
-        jail.permissions = combinators: with combinators; [
-          network
-          # The interactive pi TUI needs direct terminal I/O that --new-session
-          # (bwrap's default) breaks. no-new-session is the narrowest safe
-          # alternative: the jail still has private PID/IPC/mount/user/UTS/cgroup
-          # namespaces and /tmp, /dev, /proc, /home are all tmpfs/procced/deved.
-          # Only terminal session isolation is relaxed. See jail.nix docs for
-          # no-new-session security implications.
-          no-new-session
-          (persist-home "pi-coder")
-          # Allow SSH administration with the user's existing key, config, and
-          # known-hosts entries. Read-only preserves the host's credentials;
-          # add remote host keys to ~/.ssh/known_hosts before using pi.
-          (unsafe-add-raw-args "--ro-bind-try ${config.home.homeDirectory}/.ssh ${config.home.homeDirectory}/.ssh")
-          (set-env "EDITOR" "vim")
-          (set-env "VISUAL" "vim")
-          (add-pkg-deps sharedJailPkgs)
-          (nixDaemonJailAccess combinators)
-          # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
-          # recreates the symlink but only bind-mounts targets under /nix/store,
-          # so inside the jail the link dangles, glibc falls back to
-          # 127.0.0.1:53, and every lookup fails with EAI_AGAIN (this breaks
-          # OAuth login, which resolves platform.claude.com). Bind the target so
-          # the link resolves. Uses -try because the path is absent on non-WSL
-          # hosts, where this becomes a no-op.
-          (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
-          # The environment wrapper runs inside the jail, so expose only the
-          # file required by FIRECRAWL_API_KEY.file, read-only.
-          (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
-          (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
-          (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
-          (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
-        ];
-
-        models = localModelsFile;
-        settings = {
-          # Ollama is the default (auto-starts at boot, always available).
-          # Switch to llama-server manually in pi settings when you want
-          # MTP 81 t/s speed (after: sudo systemctl start llama-server).
-          defaultProvider = "ollama";
-          defaultModel = "gemma4:31b";
-        };
-      };
-    }];
+      }
+    ];
   };
 
   # Discover live models from both backends on every launch. Probes
@@ -248,62 +421,64 @@ let
   # Keeps the static catalog above as a fallback. Uses Python (always
   # available) instead of jq for the JSON merge.
   piMainDynamic = pkgs.writeShellScriptBin "pi" ''
-    agent_dir="${config.home.homeDirectory}/.pi/agent"
-    ${pkgs.coreutils}/bin/mkdir -p "$agent_dir"
+        ${prepareWorkspace}
 
-    # Start from the static fallback catalog
-    ${pkgs.coreutils}/bin/cp ${localModelsFile} "$agent_dir/models.json"
-    ${pkgs.coreutils}/bin/chmod 0600 "$agent_dir/models.json"
+        agent_dir="${config.home.homeDirectory}/.pi/agent"
+        ${pkgs.coreutils}/bin/mkdir -p "$agent_dir"
 
-    # Probe and merge both backends using Python
-    ${pkgs.python3}/bin/python3 -c '
-import json, urllib.request, sys
+        # Start from the static fallback catalog
+        ${pkgs.coreutils}/bin/cp ${localModelsFile} "$agent_dir/models.json"
+        ${pkgs.coreutils}/bin/chmod 0600 "$agent_dir/models.json"
 
-models_path = sys.argv[1]
-with open(models_path) as f:
-    catalog = json.load(f)
+        # Probe and merge both backends using Python
+        ${pkgs.python3}/bin/python3 -c '
+    import json, urllib.request, sys
 
-for provider, url, reasoning in [
-    ("llama-server", "http://localhost:8001/v1/models", True),
-    ("ollama", "http://localhost:11434/v1/models", False),
-]:
-    try:
-        req = urllib.request.Request(url, headers={"Authorization": "Bearer x"})
-        resp = urllib.request.urlopen(req, timeout=3)
-        data = json.loads(resp.read())
-        models = []
-        for m in data.get("data", []):
-            mid = m.get("id")
-            if mid:
-                entry = {"id": mid}
-                if reasoning:
-                    entry["reasoning"] = True
-                models.append(entry)
-        models.sort(key=lambda x: x["id"])
-        if models:
-            catalog.setdefault("providers", {})[provider] = catalog.get("providers", {}).get(provider, {})
-            merged_models = []
-            for m in models:
+    models_path = sys.argv[1]
+    with open(models_path) as f:
+        catalog = json.load(f)
+
+    for provider, url, reasoning in [
+        ("llama-server", "http://localhost:8001/v1/models", True),
+        ("ollama", "http://localhost:11434/v1/models", False),
+    ]:
+        try:
+            req = urllib.request.Request(url, headers={"Authorization": "Bearer x"})
+            resp = urllib.request.urlopen(req, timeout=3)
+            data = json.loads(resp.read())
+            models = []
+            for m in data.get("data", []):
                 mid = m.get("id")
                 if mid:
                     entry = {"id": mid}
                     if reasoning:
                         entry["reasoning"] = True
-                        entry["contextWindow"] = 262144
-                        entry["maxTokens"] = 262144
-                    merged_models.append(entry)
-            merged_models.sort(key=lambda x: x["id"])
-            if merged_models:
-                catalog["providers"][provider]["models"] = merged_models
-    except Exception:
-        pass  # backend not running — keep static fallback
+                    models.append(entry)
+            models.sort(key=lambda x: x["id"])
+            if models:
+                catalog.setdefault("providers", {})[provider] = catalog.get("providers", {}).get(provider, {})
+                merged_models = []
+                for m in models:
+                    mid = m.get("id")
+                    if mid:
+                        entry = {"id": mid}
+                        if reasoning:
+                            entry["reasoning"] = True
+                            entry["contextWindow"] = 262144
+                            entry["maxTokens"] = 262144
+                        merged_models.append(entry)
+                merged_models.sort(key=lambda x: x["id"])
+                if merged_models:
+                    catalog["providers"][provider]["models"] = merged_models
+        except Exception:
+            pass  # backend not running — keep static fallback
 
-with open(models_path, "w") as f:
-    json.dump(catalog, f)
-' "$agent_dir/models.json"
+    with open(models_path, "w") as f:
+        json.dump(catalog, f)
+    ' "$agent_dir/models.json"
 
-    ${pkgs.coreutils}/bin/chmod 0600 "$agent_dir/models.json"
-    exec ${piMain.package}/bin/pi "$@"
+        ${pkgs.coreutils}/bin/chmod 0600 "$agent_dir/models.json"
+        exec ${piMain.package}/bin/pi "$@"
   '';
 
   # ---- Instance 2: pi2 (secondary, separately configured) ----
@@ -312,77 +487,84 @@ with open(models_path, "w") as f:
   # this block to diverge further (different extensions, jail packages, rules).
   pi2 = inputs.pi-nix.lib.mkCodingAgent {
     inherit pkgs;
-    modules = [{
-      config.pi.coding-agent = {
-        extensions = [
-          "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
-          "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
-        ];
-        skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
+    modules = [
+      {
+        config.pi.coding-agent = {
+          extensions = [
+            "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
+            "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
+          ];
+          skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
 
-        # Separate agent config directory so settings/models don't collide
-        # with the primary instance. CONTEXT_MODE_DATA_DIR isolates the
-        # context-mode session DB from pi's — context-mode hardcodes its
-        # session store under ~/.pi/context-mode/sessions/ using homedir(),
-        # NOT PI_CODING_AGENT_DIR, so without this override both instances
-        # would share the same database and leak conversation history.
-        # Use ~/.pi2 as context-mode's data root (sessions land at
-        # ~/.pi2/context-mode/sessions/), keeping it separate from the
-        # agent config at ~/.pi/agent2.
-        environment = {
-          PI_CODING_AGENT_DIR.value = "${config.home.homeDirectory}/.pi/agent2";
-          CONTEXT_MODE_DATA_DIR.value = "${config.home.homeDirectory}/.pi2";
-          FIRECRAWL_API_KEY.file = "/etc/nixos/.secrets/firecrawl-api-key";
-          FIRECRAWL_API_URL.value = "https://firecrawl.tatchi.org/v1";
+          # Separate agent config directory so settings/models don't collide
+          # with the primary instance. CONTEXT_MODE_DATA_DIR isolates the
+          # context-mode session DB from pi's — context-mode hardcodes its
+          # session store under ~/.pi/context-mode/sessions/ using homedir(),
+          # NOT PI_CODING_AGENT_DIR, so without this override both instances
+          # would share the same database and leak conversation history.
+          # Use ~/.pi2 as context-mode's data root (sessions land at
+          # ~/.pi2/context-mode/sessions/), keeping it separate from the
+          # agent config at ~/.pi/agent2.
+          environment = {
+            PI_CODING_AGENT_DIR.value = "${config.home.homeDirectory}/.pi/agent2";
+            CONTEXT_MODE_DATA_DIR.value = "${config.home.homeDirectory}/.pi2";
+            FIRECRAWL_API_KEY.file = "/etc/nixos/.secrets/firecrawl-api-key";
+            FIRECRAWL_API_URL.value = "https://firecrawl.tatchi.org/v1";
+          };
+
+          jail.enable = true;
+          # ---- Credential boundary ----
+          # File-backed secrets (FIRECRAWL_API_KEY.file) avoid Nix-store leakage
+          # but are still readable by the jailed agent at runtime. The jail has
+          # network access, so the agent can exfiltrate any readable secret.
+          # Prefer capability/proxy-based access in the future (e.g. a local
+          # HTTP proxy that injects credentials per-request) rather than
+          # exposing raw credential files.
+          jail.permissions =
+            combinators:
+            with combinators;
+            [
+              network
+              (persist-home "pi2")
+              (set-env "EDITOR" "vim")
+              (set-env "VISUAL" "vim")
+              (add-pkg-deps sharedJailPkgs)
+              (nixDaemonJailAccess combinators)
+              # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
+              # recreates the symlink but only bind-mounts targets under /nix/store,
+              # so inside the jail the link dangles, glibc falls back to
+              # 127.0.0.1:53, and every lookup fails with EAI_AGAIN (this breaks
+              # OAuth login, which resolves platform.claude.com). Bind the target so
+              # the link resolves. Uses -try because the path is absent on non-WSL
+              # hosts, where this becomes a no-op.
+              (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
+              # Firecrawl credential (file-backed, read-only — see credential
+              # boundary note above)
+              (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
+              (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
+              # See the primary wrapper: both instances use the same fail-closed,
+              # canonical Git-worktree policy and stable destination.
+              (unsafe-add-raw-args ''--dir /workspace --bind "$PI_JAIL_WORKSPACE_SOURCE" /workspace/project'')
+              (unsafe-add-raw-args "--chdir /workspace/project")
+            ]
+            # Optional, dedicated runner credentials only. A mandatory read-only
+            # bind is used so Bubblewrap also fails closed if the directory vanishes
+            # between outer-wrapper validation and jail setup. Never expose the
+            # workstation's normal ~/.ssh or SSH_AUTH_SOCK.
+            ++ lib.optional cfg.pi2.sshRunner.enable (
+              unsafe-add-raw-args "--ro-bind ${escapeShellArg sshRunnerSource} ${escapeShellArg "${config.home.homeDirectory}/.ssh"}"
+            );
+
+          models = cloudModelsFile;
+          # Provider/model come from pimodule.pi2.{provider,model} so each host
+          # can point this instance at whatever it has credentials for.
+          settings = {
+            defaultProvider = cfg.pi2.provider;
+            defaultModel = cfg.pi2.model;
+          };
         };
-
-        jail.enable = true;
-        # ---- Credential boundary ----
-        # File-backed secrets (FIRECRAWL_API_KEY.file) avoid Nix-store leakage
-        # but are still readable by the jailed agent at runtime. The jail has
-        # network access, so the agent can exfiltrate any readable secret.
-        # Prefer capability/proxy-based access in the future (e.g. a local
-        # HTTP proxy that injects credentials per-request) rather than
-        # exposing raw credential files.
-        jail.permissions = combinators: with combinators; [
-          network
-          (persist-home "pi2")
-          (set-env "EDITOR" "vim")
-          (set-env "VISUAL" "vim")
-          (add-pkg-deps sharedJailPkgs)
-          (nixDaemonJailAccess combinators)
-          # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
-          # recreates the symlink but only bind-mounts targets under /nix/store,
-          # so inside the jail the link dangles, glibc falls back to
-          # 127.0.0.1:53, and every lookup fails with EAI_AGAIN (this breaks
-          # OAuth login, which resolves platform.claude.com). Bind the target so
-          # the link resolves. Uses -try because the path is absent on non-WSL
-          # hosts, where this becomes a no-op.
-          (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
-          # Firecrawl credential (file-backed, read-only — see credential
-          # boundary note above)
-          (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
-          (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
-          (unsafe-add-raw-args ''--bind "$PWD" "/workspace/$(basename "$PWD")"'')
-          (unsafe-add-raw-args ''--chdir "/workspace/$(basename "$PWD")"'')
-        ]
-        # SSH runner config (disabled by default — see pimodule.pi2.sshRunner
-        # option). When enabled, bind-mounts a dedicated SSH config directory
-        # read-only into the jail at ~/.ssh. --ro-bind-try makes it a no-op if
-        # the directory doesn't exist, but the option gate means it's only added
-        # when explicitly enabled. Do NOT expose the host's ~/.ssh or SSH agent.
-        ++ lib.optional (cfg.pi2.sshRunner.enable or false)
-          (unsafe-add-raw-args "--ro-bind-try ${config.home.homeDirectory}/.config/pi2-ssh-runner ${config.home.homeDirectory}/.ssh");
-
-        models = cloudModelsFile;
-        # Provider/model come from pimodule.pi2.{provider,model} so each host
-        # can point this instance at whatever it has credentials for.
-        settings = {
-          defaultProvider = cfg.pi2.provider;
-          defaultModel = cfg.pi2.model;
-        };
-      };
-    }];
+      }
+    ];
   };
 
   # mkCodingAgent always produces a binary named "pi". Rename the second
@@ -391,6 +573,11 @@ with open(models_path, "w") as f:
   # here on every launch; this also replaces pi2's previously copied local
   # Ollama catalog while leaving auth.json untouched.
   pi2Renamed = pkgs.writeShellScriptBin "pi2" ''
+    ${prepareWorkspace}
+    ${optionalString cfg.pi2.sshRunner.enable ''
+      ${piWorkspace.sshRunnerValidator}/bin/pi-validate-ssh-runner ${escapeShellArg sshRunnerSource}
+    ''}
+
     ${pkgs.coreutils}/bin/mkdir -p "${config.home.homeDirectory}/.pi/agent2"
     ${pkgs.coreutils}/bin/install -m 0600 ${cloudModelsFile} "${config.home.homeDirectory}/.pi/agent2/models.json"
     exec ${pi2.package}/bin/pi "$@"
@@ -419,6 +606,19 @@ in
       default = [ ];
       internal = true;
       description = "Additional packages exposed inside both Pi jails.";
+    };
+
+    workspaceRoots = mkOption {
+      type = types.listOf types.str;
+      default = [ "/workspace" ];
+      description = ''
+        Host directories allowed to contain jailed Pi Git worktrees. The
+        launcher canonicalizes both the current Git worktree and these roots,
+        rejects a root itself and sensitive paths, then mounts only the
+        validated worktree read-write at /workspace/project. The default
+        development-root convention is /workspace; setting an empty list makes
+        both launchers fail closed.
+      '';
     };
 
     pi2 = {
@@ -454,10 +654,12 @@ in
           type = types.bool;
           default = false;
           description = ''
-            Bind-mount a dedicated SSH config directory (~/.config/pi2-ssh-runner)
-            read-only into the pi2 jail at ~/.ssh. Place an SSH config with a
-            controller-box-vm alias and a dedicated private key in that directory.
-            Disabled by default — the jailed agent can use any credential exposed to it.
+            Bind-mount only ~/.config/pi2-ssh-runner read-only into the pi2
+            jail at ~/.ssh. Enabling this fails closed if that directory is
+            absent or is a symlink. The jailed agent can read and copy every
+            credential exposed there; security therefore also requires a
+            dedicated key, pinned known_hosts, strict client configuration,
+            and a restricted server-side account with a forced command.
           '';
         };
       };
@@ -466,7 +668,7 @@ in
 
   config = mkIf cfg.enable {
     home.packages =
-      optional cfg.pi.enable piMainDynamic     # → `pi` command  (primary, dynamic local Ollama catalog, ~/.pi/agent)
-      ++ optional cfg.pi2.enable pi2Renamed;   # → `pi2` command  (secondary, per-host provider, ~/.pi/agent2)
+      optional cfg.pi.enable piMainDynamic # → `pi` command  (primary, dynamic local Ollama catalog, ~/.pi/agent)
+      ++ optional cfg.pi2.enable pi2Renamed; # → `pi2` command  (secondary, per-host provider, ~/.pi/agent2)
   };
 }
