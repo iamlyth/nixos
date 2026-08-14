@@ -587,6 +587,11 @@ let
             with combinators;
             [
               network
+              # Preserve the controlling terminal session so pi2's interactive
+              # TUI receives terminal resize events. This deliberately omits
+              # bwrap's --new-session protection against terminal-session ioctls
+              # such as TIOCSTI; all other jail namespaces remain private.
+              no-new-session
               (persist-home "pi2")
               (set-env "EDITOR" "vim")
               (set-env "VISUAL" "vim")

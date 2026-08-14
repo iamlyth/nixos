@@ -8,10 +8,14 @@ only by `home-manager/desktop-home.nix`.
 ## Effective boundary
 
 The jail keeps Bubblewrap's private PID, IPC, mount, user, UTS, and cgroup
-namespaces, private home, private `/tmp`, synthetic `/proc` and `/dev`,
-`--die-with-parent`, and `--new-session`. It does **not** expose host input,
-uinput, hidraw, GPU, display, audio, portal, system/user D-Bus, Docker, Podman,
-libvirt, or unrelated runtime sockets.
+namespaces, private home, private `/tmp`, synthetic `/proc` and `/dev`, and
+`--die-with-parent`. Both interactive Pi instances intentionally use jail.nix's
+`no-new-session` mode so their TUIs remain attached to the controlling terminal
+and receive resize events. This omits Bubblewrap's `--new-session` defense
+against terminal-session attacks such as `TIOCSTI` input injection; it does not
+relax the other namespaces. The jail does **not** expose host input, uinput,
+hidraw, GPU, display, audio, portal, system/user D-Bus, Docker, Podman, libvirt,
+or unrelated runtime sockets.
 
 The shared `network` combinator deliberately retains the host network
 namespace. Consequently the agent can reach any destination allowed by host
@@ -132,8 +136,10 @@ nixfmt-rfc-style --check flake.nix home-manager/desktop-home.nix \
 nix flake check
 ```
 
-When inspecting generated scripts, verify `--new-session`, mandatory
-`--ro-bind .../.config/pi2-ssh-runner .../.ssh`, the validated
+When inspecting generated scripts, verify that resize-compatible mode omits
+`--new-session`, while retaining `--unshare-user`, `--unshare-ipc`,
+`--unshare-pid`, `--unshare-uts`, `--unshare-cgroup`, `--die-with-parent`, the
+mandatory `--ro-bind .../.config/pi2-ssh-runner .../.ssh`, and the validated
 `--bind "$PI_JAIL_WORKSPACE_SOURCE" "$PI_JAIL_WORKSPACE_DESTINATION"`, and
 `--chdir "$PI_JAIL_WORKSPACE_DESTINATION"`. Also verify the absence of the workstation's
 normal `.ssh`, `SSH_AUTH_SOCK`, host devices, display/DBus/container sockets,
