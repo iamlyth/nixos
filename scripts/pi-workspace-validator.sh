@@ -50,9 +50,6 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-[ "${#approved_roots[@]}" -gt 0 ] || [ "${#approved_projects[@]}" -gt 0 ] || \
-  fail "no approved workspace roots or projects are configured"
-
 launch_dir="$(realpath -e -- "$PWD" 2>/dev/null)" || \
   fail "cannot canonicalize launch directory: $PWD"
 [ -d "$launch_dir" ] || fail "launch path is not a directory: $launch_dir"
@@ -89,7 +86,14 @@ case "$launch_dir" in
   *) fail "canonical launch directory escaped its Git worktree: $launch_dir" ;;
 esac
 
-approved=false
+# With no allowlist, any non-sensitive canonical Git worktree is valid. If at
+# least one root or project is configured, those entries become a restrictive
+# allowlist.
+approved=true
+if [ "${#approved_roots[@]}" -gt 0 ] || [ "${#approved_projects[@]}" -gt 0 ]; then
+  approved=false
+fi
+
 for configured_root in "${approved_roots[@]}"; do
   approved_root="$(realpath -e -- "$configured_root" 2>/dev/null)" || \
     fail "approved workspace root does not exist: $configured_root"

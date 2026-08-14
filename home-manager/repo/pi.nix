@@ -579,7 +579,7 @@ let
   pi2Renamed = pkgs.writeShellScriptBin "pi2" ''
     ${prepareWorkspace}
     ${optionalString cfg.pi2.sshRunner.enable ''
-      ${piWorkspace.sshRunnerValidator}/bin/pi-validate-ssh-runner ${escapeShellArg sshRunnerSource}
+      ${piWorkspace.sshRunnerValidator}/bin/pi-validate-ssh-runner ${escapeShellArg sshRunnerSource} || exit $?
     ''}
 
     ${pkgs.coreutils}/bin/mkdir -p "${config.home.homeDirectory}/.pi/agent2"
@@ -617,21 +617,23 @@ in
       default = [ ];
       example = [ "${config.home.homeDirectory}/repositories" ];
       description = ''
-        Host directories allowed to contain jailed Pi Git worktrees. A root is
-        only a project container and is never itself mounted. The launcher
-        canonicalizes configured roots and rejects sensitive paths.
+        Optional host directories allowed to contain jailed Pi Git worktrees.
+        A root is only a project container and is never itself mounted. When
+        either this option or workspaceProjects is non-empty, the entries form
+        a restrictive allowlist. With both empty, any safe Git worktree is
+        accepted.
       '';
     };
 
     workspaceProjects = mkOption {
       type = types.listOf types.str;
-      default = [ "${config.home.homeDirectory}/nixos" ];
+      default = [ ];
       description = ''
-        Exact Git worktree roots allowed in addition to projects beneath
-        workspaceRoots. This supports a repository directly under the user's
-        home without approving the whole home directory. The launcher mounts
-        only the matching canonical worktree at /workspace/project. If no root
-        or exact project is configured, both launchers fail closed.
+        Optional exact Git worktree roots allowed in addition to projects
+        beneath workspaceRoots. When either option is non-empty, the entries
+        form a restrictive allowlist. With both empty, the launcher accepts any
+        canonical Git worktree outside sensitive paths and mounts only that
+        worktree at /workspace/project.
       '';
     };
 

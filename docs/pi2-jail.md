@@ -36,18 +36,18 @@ Both `pi` and `pi2` use `pimodule.workspaceRoots` and
    directories, and system roots such as `/dev`, `/proc`, `/sys`, `/run`,
    `/etc`, `/nix`, `/boot`, `/usr`, and `/var`;
 3. resolves the containing Git worktree root and canonicalizes it;
-4. requires that worktree either to be a strict child of one configured
-   development root (the approved root itself is never mounted) or to equal an
-   explicitly approved project; and
+4. optionally applies a restrictive allowlist when `workspaceRoots` or
+   `workspaceProjects` is configured; and
 5. binds exactly that worktree read-write at the stable destination
    `/workspace/project` and changes to it.
 
-Canonical comparison prevents a symlink under an approved root from escaping
-the root. A non-Git directory, missing configured path, unsafe path, or path
-outside all approved roots and projects produces a diagnostic and aborts before
-Bubblewrap starts; there is no broad fallback mount. The desktop profile
-approves the exact `~/nixos` worktree so repositories elsewhere under the
-user's home remain unavailable.
+By default both allowlists are empty, so any canonical Git worktree outside
+sensitive paths is accepted. This permits normal repositories such as
+`~/repos/controller-box` without granting the whole repositories directory.
+When an allowlist is configured, canonical comparison prevents symlink escape
+and rejects projects outside it. A non-Git or unsafe launch directory always
+produces a diagnostic and aborts before Bubblewrap starts; there is no broad
+fallback mount.
 
 ## Credentials
 
