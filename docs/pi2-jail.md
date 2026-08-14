@@ -38,8 +38,9 @@ inline in their generated outer wrappers:
 3. resolves the containing Git worktree root and canonicalizes it;
 4. rejects linked worktrees or submodules whose Git metadata would require a
    mount outside the project; and
-5. binds exactly that worktree read-write at the stable destination
-   `/workspace/project` and changes to it.
+5. derives a readable, stable-per-project destination from the validated
+   worktree basename, binds exactly that worktree read-write there (for example
+   `/workspace/controller-box`), and changes to it.
 
 Any canonical Git worktree outside sensitive paths is accepted. This permits
 normal repositories such as `~/repos/controller-box` without granting the
@@ -133,15 +134,15 @@ nix flake check
 
 When inspecting generated scripts, verify `--new-session`, mandatory
 `--ro-bind .../.config/pi2-ssh-runner .../.ssh`, the validated
-`--bind "$PI_JAIL_WORKSPACE_SOURCE" /workspace/project`, and
-`--chdir /workspace/project`. Also verify the absence of the workstation's
+`--bind "$PI_JAIL_WORKSPACE_SOURCE" "$PI_JAIL_WORKSPACE_DESTINATION"`, and
+`--chdir "$PI_JAIL_WORKSPACE_DESTINATION"`. Also verify the absence of the workstation's
 normal `.ssh`, `SSH_AUTH_SOCK`, host devices, display/DBus/container sockets,
 and unrelated `/run/user` paths.
 
 ## Optional pre-activation smoke test
 
 If the built wrapper can safely use the current user's persistent pi2 home and
-the current checkout is beneath an approved root, running `"$hm_out/home-path/bin/pi2"
+the current checkout is a safe Git worktree, running `"$hm_out/home-path/bin/pi2"
 --help` exercises validation and jail startup without switching generations.
 It is still a real agent launch, not a dry run; skip it if that is undesirable.
 Never print private-key contents during validation.

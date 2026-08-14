@@ -67,8 +67,15 @@ let
       *) pi_workspace_fail "canonical launch directory escaped its Git worktree: $pi_launch_dir" ;;
     esac
 
+    pi_project_name="$(${pkgs.coreutils}/bin/basename -- "$pi_project_dir")" || \
+      pi_workspace_fail "cannot derive project name from: $pi_project_dir"
+    case "$pi_project_name" in
+      "" | "." | "..") pi_workspace_fail "unsafe project name: $pi_project_name" ;;
+    esac
+
     PI_JAIL_WORKSPACE_SOURCE="$pi_project_dir"
-    export PI_JAIL_WORKSPACE_SOURCE
+    PI_JAIL_WORKSPACE_DESTINATION="/workspace/$pi_project_name"
+    export PI_JAIL_WORKSPACE_SOURCE PI_JAIL_WORKSPACE_DESTINATION
   '';
   sshRunnerSource = "${config.home.homeDirectory}/.config/pi2-ssh-runner";
 
@@ -452,11 +459,10 @@ let
               # file required by FIRECRAWL_API_KEY.file, read-only.
               (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
               (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
-              # The outer wrapper canonicalizes the Git worktree and verifies that
-              # it is a child of an explicitly approved development root. Bind only
-              # that validated project at a stable jail path.
-              (unsafe-add-raw-args ''--dir /workspace --bind "$PI_JAIL_WORKSPACE_SOURCE" /workspace/project'')
-              (unsafe-add-raw-args "--chdir /workspace/project")
+              # The outer wrapper canonicalizes the Git worktree and derives a
+              # readable destination from that validated root's basename.
+              (unsafe-add-raw-args ''--dir /workspace --bind "$PI_JAIL_WORKSPACE_SOURCE" "$PI_JAIL_WORKSPACE_DESTINATION"'')
+              (unsafe-add-raw-args ''--chdir "$PI_JAIL_WORKSPACE_DESTINATION"'')
             ];
 
           models = localModelsFile;
@@ -599,9 +605,9 @@ let
               (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
               (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
               # See the primary wrapper: both instances use the same fail-closed,
-              # canonical Git-worktree policy and stable destination.
-              (unsafe-add-raw-args ''--dir /workspace --bind "$PI_JAIL_WORKSPACE_SOURCE" /workspace/project'')
-              (unsafe-add-raw-args "--chdir /workspace/project")
+              # canonical Git-worktree policy and basename-derived destination.
+              (unsafe-add-raw-args ''--dir /workspace --bind "$PI_JAIL_WORKSPACE_SOURCE" "$PI_JAIL_WORKSPACE_DESTINATION"'')
+              (unsafe-add-raw-args ''--chdir "$PI_JAIL_WORKSPACE_DESTINATION"'')
             ]
             # Optional, dedicated runner credentials only. A mandatory read-only
             # bind is used so Bubblewrap also fails closed if the directory vanishes
