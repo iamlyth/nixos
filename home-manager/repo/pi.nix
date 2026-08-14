@@ -9,10 +9,14 @@ with lib;
 let
   cfg = config.pimodule;
   piWorkspace = import ../../lib/pi-workspace.nix { inherit pkgs; };
-  workspaceRootArgs = escapeShellArgs cfg.workspaceRoots;
+  workspacePolicyArgs = concatStringsSep " " (
+    (map (root: "--root ${escapeShellArg root}") cfg.workspaceRoots)
+    ++ (map (project: "--project ${escapeShellArg project}") cfg.workspaceProjects)
+  );
   prepareWorkspace = ''
     export PI_JAIL_HOST_HOME=${escapeShellArg config.home.homeDirectory}
-    export PI_JAIL_WORKSPACE_SOURCE="$(${piWorkspace.validator}/bin/pi-validate-workspace ${workspaceRootArgs})"
+    PI_JAIL_WORKSPACE_SOURCE="$(${piWorkspace.validator}/bin/pi-validate-workspace ${workspacePolicyArgs})" || exit $?
+    export PI_JAIL_WORKSPACE_SOURCE
   '';
   sshRunnerSource = "${config.home.homeDirectory}/.config/pi2-ssh-runner";
 
@@ -610,14 +614,24 @@ in
 
     workspaceRoots = mkOption {
       type = types.listOf types.str;
-      default = [ "/workspace" ];
+      default = [ ];
+      example = [ "${config.home.homeDirectory}/repositories" ];
       description = ''
-        Host directories allowed to contain jailed Pi Git worktrees. The
-        launcher canonicalizes both the current Git worktree and these roots,
-        rejects a root itself and sensitive paths, then mounts only the
-        validated worktree read-write at /workspace/project. The default
-        development-root convention is /workspace; setting an empty list makes
-        both launchers fail closed.
+        Host directories allowed to contain jailed Pi Git worktrees. A root is
+        only a project container and is never itself mounted. The launcher
+        canonicalizes configured roots and rejects sensitive paths.
+      '';
+    };
+
+    workspaceProjects = mkOption {
+      type = types.listOf types.str;
+      default = [ "${config.home.homeDirectory}/nixos" ];
+      description = ''
+        Exact Git worktree roots allowed in addition to projects beneath
+        workspaceRoots. This supports a repository directly under the user's
+        home without approving the whole home directory. The launcher mounts
+        only the matching canonical worktree at /workspace/project. If no root
+        or exact project is configured, both launchers fail closed.
       '';
     };
 

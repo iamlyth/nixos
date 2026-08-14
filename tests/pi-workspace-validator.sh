@@ -21,29 +21,35 @@ expect_failure() {
   grep -F -- "$expected" "$tmp/stderr" >/dev/null
 }
 
-actual="$(cd "$tmp/approved/project/subdir" && "$validator" "$tmp/approved")"
+actual="$(cd "$tmp/approved/project/subdir" && "$validator" --root "$tmp/approved")"
+[ "$actual" = "$(realpath "$tmp/approved/project")" ]
+actual="$(cd "$tmp/approved/project/subdir" && "$validator" --project "$tmp/approved/project")"
 [ "$actual" = "$(realpath "$tmp/approved/project")" ]
 
-expect_failure "no approved workspace roots" \
+expect_failure "no approved workspace roots or projects" \
   bash -c 'cd "$1" && exec "$2"' _ "$tmp/approved/project" "$validator"
-expect_failure "outside the approved workspace roots" \
-  bash -c 'cd "$1" && exec "$2" "$3"' _ "$tmp/outside/project" "$validator" "$tmp/approved"
-expect_failure "outside the approved workspace roots" \
-  bash -c 'cd "$1" && exec "$2" "$3"' _ "$tmp/approved/project" "$validator" "$tmp/approved/project"
+expect_failure "outside the approved workspace roots and projects" \
+  bash -c 'cd "$1" && exec "$2" --root "$3"' _ "$tmp/outside/project" "$validator" "$tmp/approved"
+expect_failure "outside the approved workspace roots and projects" \
+  bash -c 'cd "$1" && exec "$2" --root "$3"' _ "$tmp/approved/project" "$validator" "$tmp/approved/project"
+expect_failure "outside the approved workspace roots and projects" \
+  bash -c 'cd "$1" && exec "$2" --project "$3"' _ "$tmp/outside/project" "$validator" "$tmp/approved/project"
+expect_failure "approved workspace project does not exist" \
+  bash -c 'cd "$1" && exec "$2" --project "$3"' _ "$tmp/approved/project" "$validator" "$tmp/missing"
 expect_failure "refusing sensitive launch directory: /" \
-  bash -c 'cd / && exec "$1" "$2"' _ "$validator" "$tmp/approved"
+  bash -c 'cd / && exec "$1" --root "$2"' _ "$validator" "$tmp/approved"
 expect_failure "refusing sensitive launch directory" \
-  bash -c 'cd "$1" && exec "$2" "$3"' _ "$HOME" "$validator" "$tmp/approved"
+  bash -c 'cd "$1" && exec "$2" --root "$3"' _ "$HOME" "$validator" "$tmp/approved"
 
 ln -s "$tmp/outside/project" "$tmp/approved/escape"
-expect_failure "outside the approved workspace roots" \
-  bash -c 'cd -L "$1" && exec "$2" "$3"' _ "$tmp/approved/escape" "$validator" "$tmp/approved"
+expect_failure "outside the approved workspace roots and projects" \
+  bash -c 'cd -L "$1" && exec "$2" --root "$3"' _ "$tmp/approved/escape" "$validator" "$tmp/approved"
 
 git -C "$tmp/approved/project" \
   -c user.name=test -c user.email=test.invalid \
   commit --allow-empty -q -m initial
 git -C "$tmp/approved/project" worktree add -q "$tmp/approved/linked"
 expect_failure "Git metadata is outside the project" \
-  bash -c 'cd "$1" && exec "$2" "$3"' _ "$tmp/approved/linked" "$validator" "$tmp/approved"
+  bash -c 'cd "$1" && exec "$2" --root "$3"' _ "$tmp/approved/linked" "$validator" "$tmp/approved"
 
 printf 'pi workspace policy tests passed\n'

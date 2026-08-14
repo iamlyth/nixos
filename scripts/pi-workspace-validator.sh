@@ -33,7 +33,25 @@ is_sensitive_path() {
   return 1
 }
 
-[ "$#" -gt 0 ] || fail "no approved workspace roots are configured"
+approved_roots=()
+approved_projects=()
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --root | --project)
+      [ "$#" -ge 2 ] || fail "missing path after $1"
+      if [ "$1" = "--root" ]; then
+        approved_roots+=("$2")
+      else
+        approved_projects+=("$2")
+      fi
+      shift 2
+      ;;
+    *) fail "unknown workspace policy argument: $1" ;;
+  esac
+done
+
+[ "${#approved_roots[@]}" -gt 0 ] || [ "${#approved_projects[@]}" -gt 0 ] || \
+  fail "no approved workspace roots or projects are configured"
 
 launch_dir="$(realpath -e -- "$PWD" 2>/dev/null)" || \
   fail "cannot canonicalize launch directory: $PWD"
@@ -72,7 +90,7 @@ case "$launch_dir" in
 esac
 
 approved=false
-for configured_root in "$@"; do
+for configured_root in "${approved_roots[@]}"; do
   approved_root="$(realpath -e -- "$configured_root" 2>/dev/null)" || \
     fail "approved workspace root does not exist: $configured_root"
   [ -d "$approved_root" ] || \
@@ -86,7 +104,17 @@ for configured_root in "$@"; do
   esac
 done
 
+for configured_project in "${approved_projects[@]}"; do
+  approved_project="$(realpath -e -- "$configured_project" 2>/dev/null)" || \
+    fail "approved workspace project does not exist: $configured_project"
+  [ -d "$approved_project" ] || \
+    fail "approved workspace project is not a directory: $configured_project"
+  is_sensitive_path "$approved_project" && \
+    fail "approved workspace project is sensitive: $approved_project"
+  [ "$project_dir" = "$approved_project" ] && approved=true
+done
+
 $approved || \
-  fail "Git worktree is outside the approved workspace roots: $project_dir"
+  fail "Git worktree is outside the approved workspace roots and projects: $project_dir"
 
 printf '%s\n' "$project_dir"

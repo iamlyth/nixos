@@ -34,7 +34,8 @@
   pimodule = {
     enable = true;
     pi.enable = true; # local ollama (gemma4:31b)
-    workspaceRoots = [ "/workspace" ];
+    workspaceRoots = [ ];
+    workspaceProjects = [ "${config.home.homeDirectory}/nixos" ];
     pi2 = {
       enable = true;
       provider = "openai-codex";
