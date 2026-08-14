@@ -192,9 +192,6 @@
         ] ./hosts/pijukeboxOS.nix;
       };
 
-      checks.${system}.pi-workspace-policy =
-        (import ./lib/pi-workspace.nix { pkgs = nixpkgs.legacyPackages.${system}; }).test;
-
       packages.${system} =
         let
           nvim = inputs.nixvim.legacyPackages.${system}.makeNixvim (import ./config/nvim.nix);

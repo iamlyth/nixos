@@ -8,14 +8,66 @@
 with lib;
 let
   cfg = config.pimodule;
-  piWorkspace = import ../../lib/pi-workspace.nix { inherit pkgs; };
-  workspacePolicyArgs = concatStringsSep " " (
-    (map (root: "--root ${escapeShellArg root}") cfg.workspaceRoots)
-    ++ (map (project: "--project ${escapeShellArg project}") cfg.workspaceProjects)
-  );
   prepareWorkspace = ''
-    export PI_JAIL_HOST_HOME=${escapeShellArg config.home.homeDirectory}
-    PI_JAIL_WORKSPACE_SOURCE="$(${piWorkspace.validator}/bin/pi-validate-workspace ${workspacePolicyArgs})" || exit $?
+    pi_workspace_fail() {
+      printf 'pi jail: %s\n' "$*" >&2
+      exit 1
+    }
+
+    pi_workspace_sensitive() {
+      case "$1" in
+        / | /boot | /boot/* | /dev | /dev/* | /etc | /etc/* | /nix | /nix/* | \
+          /proc | /proc/* | /root | /root/* | /run | /run/* | /sys | /sys/* | \
+          /tmp | /tmp/* | /usr | /usr/* | /var | /var/* | /mnt | /mnt/* | \
+          /media | /media/* | /opt | /opt/* | /srv | /srv/* | \
+          "$pi_host_home" | "$pi_host_home"/.cache | "$pi_host_home"/.cache/* | \
+          "$pi_host_home"/.config | "$pi_host_home"/.config/* | \
+          "$pi_host_home"/.gnupg | "$pi_host_home"/.gnupg/* | \
+          "$pi_host_home"/.local | "$pi_host_home"/.local/* | \
+          "$pi_host_home"/.password-store | "$pi_host_home"/.password-store/* | \
+          "$pi_host_home"/.ssh | "$pi_host_home"/.ssh/*)
+          return 0
+          ;;
+      esac
+      return 1
+    }
+
+    pi_host_home=${escapeShellArg config.home.homeDirectory}
+    pi_launch_dir="$(${pkgs.coreutils}/bin/realpath -e -- "$PWD" 2>/dev/null)" || \
+      pi_workspace_fail "cannot canonicalize launch directory: $PWD"
+    [ -d "$pi_launch_dir" ] || \
+      pi_workspace_fail "launch path is not a directory: $pi_launch_dir"
+    pi_workspace_sensitive "$pi_launch_dir" && \
+      pi_workspace_fail "refusing sensitive launch directory: $pi_launch_dir"
+
+    pi_project_dir="$(${pkgs.git}/bin/git -C "$pi_launch_dir" rev-parse --show-toplevel 2>/dev/null)" || \
+      pi_workspace_fail "launch directory is not inside a Git worktree: $pi_launch_dir"
+    pi_project_dir="$(${pkgs.coreutils}/bin/realpath -e -- "$pi_project_dir" 2>/dev/null)" || \
+      pi_workspace_fail "cannot canonicalize Git worktree root: $pi_project_dir"
+    [ -d "$pi_project_dir" ] || \
+      pi_workspace_fail "Git worktree root is not a directory: $pi_project_dir"
+    pi_workspace_sensitive "$pi_project_dir" && \
+      pi_workspace_fail "refusing sensitive Git worktree root: $pi_project_dir"
+
+    pi_git_common_dir="$(${pkgs.git}/bin/git -C "$pi_project_dir" rev-parse --git-common-dir 2>/dev/null)" || \
+      pi_workspace_fail "cannot resolve Git metadata for: $pi_project_dir"
+    case "$pi_git_common_dir" in
+      /*) ;;
+      *) pi_git_common_dir="$pi_project_dir/$pi_git_common_dir" ;;
+    esac
+    pi_git_common_dir="$(${pkgs.coreutils}/bin/realpath -e -- "$pi_git_common_dir" 2>/dev/null)" || \
+      pi_workspace_fail "cannot canonicalize Git metadata: $pi_git_common_dir"
+    case "$pi_git_common_dir" in
+      "$pi_project_dir" | "$pi_project_dir"/*) ;;
+      *) pi_workspace_fail "Git metadata is outside the project (linked worktrees and submodules are unsupported): $pi_git_common_dir" ;;
+    esac
+
+    case "$pi_launch_dir" in
+      "$pi_project_dir" | "$pi_project_dir"/*) ;;
+      *) pi_workspace_fail "canonical launch directory escaped its Git worktree: $pi_launch_dir" ;;
+    esac
+
+    PI_JAIL_WORKSPACE_SOURCE="$pi_project_dir"
     export PI_JAIL_WORKSPACE_SOURCE
   '';
   sshRunnerSource = "${config.home.homeDirectory}/.config/pi2-ssh-runner";
@@ -579,7 +631,11 @@ let
   pi2Renamed = pkgs.writeShellScriptBin "pi2" ''
     ${prepareWorkspace}
     ${optionalString cfg.pi2.sshRunner.enable ''
-      ${piWorkspace.sshRunnerValidator}/bin/pi-validate-ssh-runner ${escapeShellArg sshRunnerSource} || exit $?
+      if [ ! -d ${escapeShellArg sshRunnerSource} ] || [ -L ${escapeShellArg sshRunnerSource} ]; then
+        printf 'pi2: SSH runner is enabled, but the dedicated directory is missing or is a symlink: %s\n' \
+          ${escapeShellArg sshRunnerSource} >&2
+        exit 1
+      fi
     ''}
 
     ${pkgs.coreutils}/bin/mkdir -p "${config.home.homeDirectory}/.pi/agent2"
@@ -610,31 +666,6 @@ in
       default = [ ];
       internal = true;
       description = "Additional packages exposed inside both Pi jails.";
-    };
-
-    workspaceRoots = mkOption {
-      type = types.listOf types.str;
-      default = [ ];
-      example = [ "${config.home.homeDirectory}/repositories" ];
-      description = ''
-        Optional host directories allowed to contain jailed Pi Git worktrees.
-        A root is only a project container and is never itself mounted. When
-        either this option or workspaceProjects is non-empty, the entries form
-        a restrictive allowlist. With both empty, any safe Git worktree is
-        accepted.
-      '';
-    };
-
-    workspaceProjects = mkOption {
-      type = types.listOf types.str;
-      default = [ ];
-      description = ''
-        Optional exact Git worktree roots allowed in addition to projects
-        beneath workspaceRoots. When either option is non-empty, the entries
-        form a restrictive allowlist. With both empty, the launcher accepts any
-        canonical Git worktree outside sensitive paths and mounts only that
-        worktree at /workspace/project.
-      '';
     };
 
     pi2 = {

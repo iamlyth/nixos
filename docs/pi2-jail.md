@@ -28,24 +28,22 @@ controls.
 
 ## Workspace policy
 
-Both `pi` and `pi2` use `pimodule.workspaceRoots` and
-`pimodule.workspaceProjects`. Before starting Bubblewrap, the outer wrapper:
+Before starting Bubblewrap, both `pi` and `pi2` validate the launch directory
+inline in their generated outer wrappers:
 
 1. canonicalizes the launch directory;
 2. rejects `/`, the home directory, sensitive home configuration/credential
    directories, and system roots such as `/dev`, `/proc`, `/sys`, `/run`,
    `/etc`, `/nix`, `/boot`, `/usr`, and `/var`;
 3. resolves the containing Git worktree root and canonicalizes it;
-4. optionally applies a restrictive allowlist when `workspaceRoots` or
-   `workspaceProjects` is configured; and
+4. rejects linked worktrees or submodules whose Git metadata would require a
+   mount outside the project; and
 5. binds exactly that worktree read-write at the stable destination
    `/workspace/project` and changes to it.
 
-By default both allowlists are empty, so any canonical Git worktree outside
-sensitive paths is accepted. This permits normal repositories such as
-`~/repos/controller-box` without granting the whole repositories directory.
-When an allowlist is configured, canonical comparison prevents symlink escape
-and rejects projects outside it. A non-Git or unsafe launch directory always
+Any canonical Git worktree outside sensitive paths is accepted. This permits
+normal repositories such as `~/repos/controller-box` without granting the
+whole repositories directory. A non-Git or unsafe launch directory always
 produces a diagnostic and aborts before Bubblewrap starts; there is no broad
 fallback mount.
 
@@ -114,7 +112,7 @@ less "$outer"
 
 # The outer script's final exec names the generated pi.nix package. Resolve
 # that bin/pi and inspect it and the jail.nix Bubblewrap launcher it references.
-grep -nE 'pi-validate-workspace|pi2-ssh-runner|^exec .*/bin/pi' "$outer"
+grep -nE 'PI_JAIL_WORKSPACE_SOURCE|pi2-ssh-runner|^exec .*/bin/pi' "$outer"
 inner=$(grep -E '^exec .*/bin/pi ' "$outer" | tail -1 | awk '{gsub(/"/, "", $2); print $2}')
 printf 'inner=%s\n' "$(readlink -f "$inner")"
 less "$(readlink -f "$inner")"
@@ -128,9 +126,8 @@ used as one.
 Useful checks:
 
 ```bash
-nix build --no-link .#checks.x86_64-linux.pi-workspace-policy
 nixfmt-rfc-style --check flake.nix home-manager/desktop-home.nix \
-  home-manager/repo/pi.nix lib/pi-workspace.nix
+  home-manager/repo/pi.nix
 nix flake check
 ```
 
