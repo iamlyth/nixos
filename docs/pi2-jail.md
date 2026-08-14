@@ -75,8 +75,15 @@ Bubblewrap then mounts only that directory, read-only, at pi2's `~/.ssh` using
 mandatory `--ro-bind` (not `--ro-bind-try`). Absence therefore fails closed both
 before launch and if the directory disappears during setup.
 
+Home Manager manages only the `factory-ssh` symlink inside this external
+directory. It points directly to `${pkgs.openssh}/bin/ssh`, updates on each
+activation when the pinned OpenSSH package changes, and remains rooted by the
+active generation. The credential, config, and host-key files remain unmanaged
+and outside Git; no manual symlink repair is required after nixpkgs updates.
+
 The dedicated client config must select its dedicated identity, set
-`UserKnownHostsFile ~/.ssh/known_hosts`, and require strict host-key checking.
+`UserKnownHostsFile ~/.ssh/known_hosts`, set `UpdateHostKeys no`, and require
+strict host-key checking.
 The pinned ED25519 host key must be verified through an authenticated channel;
 do not trust unauthenticated `ssh-keyscan` output merely because it was
 returned by the target address.

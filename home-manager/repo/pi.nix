@@ -728,5 +728,14 @@ in
     home.packages =
       optional cfg.pi.enable piMainDynamic # → `pi` command  (primary, dynamic local Ollama catalog, ~/.pi/agent)
       ++ optional cfg.pi2.enable pi2Renamed; # → `pi2` command  (secondary, per-host provider, ~/.pi/agent2)
+
+    # Keep the runner's reviewed launcher usable inside the jail. Home Manager
+    # updates this one symlink whenever the pinned OpenSSH package changes and
+    # the active generation keeps its Nix store target rooted. Other files in
+    # the external runner directory remain unmanaged and outside Git.
+    home.file.".config/pi2-ssh-runner/factory-ssh" = mkIf (cfg.pi2.enable && cfg.pi2.sshRunner.enable) {
+      source = "${pkgs.openssh}/bin/ssh";
+      force = true;
+    };
   };
 }
