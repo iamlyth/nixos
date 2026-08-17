@@ -335,16 +335,17 @@ in {
       postStop = ''
         true  # cleanup via ExecStopPost below
       '';
+
+      serviceConfig.ExecStopPost = [
+        "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
+      ];
     };
 
-    # Run drop_caches as root for all services
+    # Run drop_caches as root for the default and single-slot services
     systemd.services.llama-server.serviceConfig.ExecStopPost = [
       "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
     ];
     systemd.services.llama-server-single.serviceConfig.ExecStopPost = [
-      "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
-    ];
-    systemd.services.llama-server-qwen38-27b.serviceConfig.ExecStopPost = mkIf (cfg.qwen38ModelPath != null) [
       "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
     ];
 
