@@ -135,8 +135,8 @@
       #   hf download unsloth/Qwen3.8-27B-GGUF \
       #     --include "*Q4_K_XL.gguf" \
       #     --local-dir ~/.models/qwen3.8-27b
-      #   hf download unsloth/Qwen3.8-27B-MTP-GGUF \
-      #     --include "*MTP-ONLY*Q4_K_M.gguf" \
+      #   hf download a4lg/Qwen3.8-27B-MTP-ONLY-GGUF \
+      #     --include "*Q4_K_M.gguf" \
       #     --local-dir ~/.models/qwen3.8-27b
       qwen38ModelPath = "/home/lalobied/.models/qwen3.8-27b/Qwen3.8-27B-UD-Q4_K_XL.gguf";
       qwen38DraftModelPath = "/home/lalobied/.models/qwen3.8-27b/Qwen3.8-27B-MTP-ONLY-Q4_K_M.gguf";
