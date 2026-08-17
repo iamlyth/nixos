@@ -98,8 +98,12 @@
 
   # # # AI
   # Ollama + Open WebUI auto-start at boot (Ollama models always available).
-  # llama-server starts manually for MTP 81 t/s inference:
-  #   sudo systemctl start llama-server
+  # llama-server starts manually for MTP inference:
+  #   sudo systemctl start llama-server              # Qwen3.6-35B-A3B (port 8001)
+  #   sudo systemctl start llama-server-single       # same, single slot, full 262k ctx (port 8001)
+  #   sudo systemctl start llama-server-qwen38-27b   # Qwen3.8-27B (port 8002)
+  # llama-server and -single are mutually exclusive (share port 8001).
+  # llama-server-qwen38-27b runs independently on port 8002 — can coexist.
   #
   # Download model:
   #   hf download unsloth/Qwen3.6-35B-A3B-MTP-GGUF \
@@ -124,6 +128,19 @@
       port = 8001;
       contextSize = 1048576;  # 262144 per slot × 4 parallel slots (native max)
       kvCacheType = "q8_0";
+
+      # Qwen3.8-27B (dense 28B, separate MTP draft head).
+      # sudo systemctl start llama-server-qwen38-27b
+      # Download:
+      #   hf download unsloth/Qwen3.8-27B-GGUF \
+      #     --include "*Q4_K_XL.gguf" \
+      #     --local-dir ~/.models/qwen3.8-27b
+      #   hf download unsloth/Qwen3.8-27B-MTP-GGUF \
+      #     --include "*MTP-ONLY*Q4_K_M.gguf" \
+      #     --local-dir ~/.models/qwen3.8-27b
+      qwen38ModelPath = "/home/lalobied/.models/qwen3.8-27b/Qwen3.8-27B-UD-Q4_K_XL.gguf";
+      qwen38DraftModelPath = "/home/lalobied/.models/qwen3.8-27b/Qwen3.8-27B-MTP-ONLY-Q4_K_M.gguf";
+      qwen38Alias = "Qwen3.8-27B";
     };
   };
 

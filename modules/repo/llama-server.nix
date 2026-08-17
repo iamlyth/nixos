@@ -114,6 +114,33 @@ in {
       default = [];
       description = "Additional flags to pass to llama-server.";
     };
+
+    # ── Qwen3.8-27B (dense, separate MTP draft head) ──────────────
+    # sudo systemctl start llama-server-qwen38-27b
+    # Runs on its own port (8002) — can coexist with llama-server / -single.
+    qwen38Port = mkOption {
+      type = types.port;
+      default = 8002;
+      description = "Port for the Qwen3.8-27B llama-server instance.";
+    };
+
+    qwen38ModelPath = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Absolute path to the Qwen3.8-27B main GGUF model file.";
+    };
+
+    qwen38DraftModelPath = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Path to the Qwen3.8-27B MTP-only draft head GGUF.";
+    };
+
+    qwen38Alias = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Display name for Qwen3.8-27B (shows in Open WebUI /v1/models).";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -192,7 +219,7 @@ in {
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
       wantedBy = mkForce [];
-      # Prevent both from running at the same time — they share port 8001.
+      # Prevent concurrent instances — they share port 8001.
       conflicts = [ "llama-server.service" ];
       partOf = [ "llama-server.service" ];
 
@@ -248,14 +275,80 @@ in {
       '';
     };
 
-    # Run drop_caches as root for both services
+    # ── Qwen3.8-27B instance ──────────────────────────────────────
+    # Dense 28B with separate MTP draft head.
+    # sudo systemctl start llama-server-qwen38-27b
+    # Runs on its own port (8002) — can coexist with llama-server / -single.
+    systemd.services.llama-server-qwen38-27b = mkIf (cfg.qwen38ModelPath != null) {
+      description = "llama.cpp Vulkan — Qwen3.8-27B (dense, MTP)";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = mkForce [];
+
+      serviceConfig = {
+        Type = "simple";
+        User = cfg.user;
+        Group = "video";
+        Restart = "on-failure";
+        RestartSec = 10;
+        Environment = [
+          "GGML_VK_PREFER_HOST_MEMORY=ON"
+          "XDG_CACHE_HOME=/var/cache/llama-cpp"
+          "MESA_SHADER_CACHE_DIR=/var/cache/llama-cpp"
+        ];
+        StateDirectory = "llama-cpp";
+        CacheDirectory = "llama-cpp";
+      };
+
+      scriptArgs = builtins.concatStringsSep " " ([
+        "-m" cfg.qwen38ModelPath
+        "--spec-type" "draft-mtp"
+        "--spec-draft-n-max" (toString cfg.specDraftNMax)
+        "-ngl" (toString cfg.gpuLayers)
+        "-ngld" (toString cfg.draftGpuLayers)
+        "--ctx-size" "262144"
+        "--port" (toString cfg.qwen38Port)
+        "--host" cfg.host
+        "--no-warmup"
+        "--jinja"
+        "--ubatch-size" (toString cfg.ubatchSize)
+        "-fa" (if cfg.flashAttention then "1" else "0")
+        "-ctk" cfg.kvCacheType
+        "-ctv" cfg.kvCacheType
+        "--cache-prompt"
+        "--reasoning-budget" (toString cfg.reasoningBudget)
+        "--reasoning-format" "auto"
+        "--parallel" "1"
+      ] ++ (optional cfg.mmap "--load-mode mmap")
+        ++ (optionals (cfg.qwen38DraftModelPath != null) [
+          "-md" cfg.qwen38DraftModelPath
+        ])
+        ++ (optionals (cfg.qwen38Alias != null) [
+          "--alias" cfg.qwen38Alias
+        ])
+        ++ cfg.extraFlags);
+
+      script = ''
+        exec ${cfg.package}/bin/llama-server "$@"
+      '';
+
+      postStop = ''
+        true  # cleanup via ExecStopPost below
+      '';
+    };
+
+    # Run drop_caches as root for all services
     systemd.services.llama-server.serviceConfig.ExecStopPost = [
       "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
     ];
     systemd.services.llama-server-single.serviceConfig.ExecStopPost = [
       "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
     ];
+    systemd.services.llama-server-qwen38-27b.serviceConfig.ExecStopPost = mkIf (cfg.qwen38ModelPath != null) [
+      "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
+    ];
 
-    networking.firewall.allowedTCPPorts = [ cfg.port ];
+    networking.firewall.allowedTCPPorts = [ cfg.port ]
+      ++ (optional (cfg.qwen38ModelPath != null) cfg.qwen38Port);
   };
 }

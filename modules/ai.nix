@@ -111,6 +111,33 @@ in {
         default = "q8_0";
         description = "KV cache type (-ctk/-ctv).";
       };
+
+      # Qwen3.8-27B alternate model (dense, separate MTP draft head).
+      # sudo systemctl start llama-server-qwen38-27b
+      # Runs on its own port (8002) — can coexist with llama-server / -single.
+      qwen38Port = mkOption {
+        type = types.port;
+        default = 8002;
+        description = "Port for the Qwen3.8-27B llama-server instance.";
+      };
+
+      qwen38ModelPath = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Path to the Qwen3.8-27B main GGUF. Null disables the unit.";
+      };
+
+      qwen38DraftModelPath = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Path to the Qwen3.8-27B MTP-only draft head GGUF.";
+      };
+
+      qwen38Alias = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Display name for Qwen3.8-27B in Open WebUI.";
+      };
     };
   };
 
@@ -139,6 +166,10 @@ in {
       port = cfg.llamaServer.port;
       contextSize = cfg.llamaServer.contextSize;
       kvCacheType = cfg.llamaServer.kvCacheType;
+      qwen38ModelPath = cfg.llamaServer.qwen38ModelPath;
+      qwen38DraftModelPath = cfg.llamaServer.qwen38DraftModelPath;
+      qwen38Alias = cfg.llamaServer.qwen38Alias;
+      qwen38Port = cfg.llamaServer.qwen38Port;
     };
   };
 }

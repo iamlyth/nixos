@@ -109,9 +109,10 @@ let
 
   # Per-instance models.json contents. Both providers are listed so pi can
   # use whichever backend is running. The dynamic discovery script below
-  # probes both endpoints and merges live model lists.
+  # probes all endpoints and merges live model lists.
   #
   # llama-server (port 8001): Qwen3.6-35B-A3B with MTP — 81 t/s
+  # llama-server-qwen38 (port 8002): Qwen3.8-27B (dense) — separate unit
   # ollama (port 11434): whatever models you've pulled — use for experiments
   localModelsFile = pkgs.writeText "pi-local-models.json" (
     builtins.toJSON {
@@ -122,6 +123,19 @@ let
         models = [
           {
             id = "Qwen3.6-35B-A3B";
+            reasoning = true;
+            contextWindow = 262144;
+            maxTokens = 262144;
+          }
+        ];
+      };
+      providers.llama-server-qwen38 = {
+        baseUrl = "http://localhost:8002/v1";
+        api = "openai-completions";
+        apiKey = "llama-server";
+        models = [
+          {
+            id = "Qwen3.8-27B";
             reasoning = true;
             contextWindow = 262144;
             maxTokens = 262144;
@@ -502,6 +516,7 @@ let
 
     for provider, url, reasoning in [
         ("llama-server", "http://localhost:8001/v1/models", True),
+        ("llama-server-qwen38", "http://localhost:8002/v1/models", True),
         ("ollama", "http://localhost:11434/v1/models", False),
     ]:
         try:
