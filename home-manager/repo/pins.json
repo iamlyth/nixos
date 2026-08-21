@@ -34,7 +34,7 @@
     "nixpkgs": "pi-nix.inputs.nixpkgs",
     "fetcherVersion": 2,
     "managePackages": true,
-    "npmDepsHash": "sha256-0U89rqOew3RtNX3/RJ+V3beY/hVIkcjbK8SuS4UNykE="
+    "npmDepsHash": "sha256-biptmC8Yh1EQOWlE8CTG4Th6/bVVWkZnc89O52QyI+o="
   },
   "ralph-orchestrator": {
     "type": "github-release",

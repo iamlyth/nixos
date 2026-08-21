@@ -14,8 +14,19 @@ namespaces, private home, private `/tmp`, synthetic `/proc` and `/dev`, and
 and receive resize events. This omits Bubblewrap's `--new-session` defense
 against terminal-session attacks such as `TIOCSTI` input injection; it does not
 relax the other namespaces. The jail does **not** expose host input, uinput,
-hidraw, GPU, display, audio, portal, system/user D-Bus, Docker, Podman, libvirt,
-or unrelated runtime sockets.
+hidraw, GPU, display, portal, system/user D-Bus, Docker, Podman, libvirt, direct
+`/dev/snd` access, or unrelated runtime sockets.
+
+Both instances expose the user's PipeWire socket and three pinned ALSA plugin
+configuration files for the `@juicesharp/rpiv-voice` extension. The files are
+mounted individually under `/etc/alsa/conf.d`; the host's activation-managed
+`/etc/alsa` and `/etc/static` trees remain hidden. Its decibri addon records
+through ALSA's PipeWire default device and receives no direct sound-device
+mount. PipeWire is the audio authorization boundary: a jailed
+process can capture inputs and interact with the user's audio graph to the
+extent allowed by that PipeWire session. `LD_LIBRARY_PATH` exposes only the
+pinned nixpkgs `libasound.so.2` needed by decibri's upstream prebuilt addon.
+On hosts without a working user PipeWire session, `/voice` is unavailable.
 
 The shared `network` combinator deliberately retains the host network
 namespace. Consequently the agent can reach any destination allowed by host
@@ -102,7 +113,9 @@ toolchains and build systems, diagnostics (`gdb`, `strace`, `lsof`,
 `valgrind`), Nix quality tools (`nixfmt-rfc-style`, `statix`, `deadnix`,
 `shellcheck`, `shfmt`), and network tools (`curl`, `wget`, `openssh`, `rsync`,
 `netcat`). `systemd` and D-Bus executables are present, but no host bus socket
-is mounted.
+is mounted. The declarative Pi extension set also includes
+`@juicesharp/rpiv-voice`; its first `/voice` run downloads and extracts the
+Whisper model into each instance's separate persistent home.
 
 ## Build and generated-wrapper inspection
 
@@ -148,9 +161,12 @@ When inspecting generated scripts, verify that resize-compatible mode omits
 `--unshare-pid`, `--unshare-uts`, `--unshare-cgroup`, `--die-with-parent`, the
 mandatory `--ro-bind .../.config/pi2-ssh-runner .../.ssh`, and the validated
 `--bind "$PI_JAIL_WORKSPACE_SOURCE" "$PI_JAIL_WORKSPACE_DESTINATION"`, and
-`--chdir "$PI_JAIL_WORKSPACE_DESTINATION"`. Also verify the absence of the workstation's
-normal `.ssh`, `SSH_AUTH_SOCK`, host devices, display/DBus/container sockets,
-and unrelated `/run/user` paths.
+`--chdir "$PI_JAIL_WORKSPACE_DESTINATION"`. Also verify the absence of the
+workstation's normal `.ssh`, `SSH_AUTH_SOCK`, `/dev/snd`, other host devices,
+display/DBus/container sockets, and unrelated `/run/user` paths. The only
+expected audio mounts are the three files under `/etc/alsa/conf.d` and the
+current user's `$XDG_RUNTIME_DIR/pipewire-0` socket; `/etc/static` must remain
+absent.
 
 ## Optional pre-activation smoke test
 
@@ -165,7 +181,14 @@ activate automatically.
 
 ## Acceptance after human activation
 
-From a fresh pi2 session, run:
+From fresh interactive `pi` and `pi2` sessions, run `/voice`. The first run
+needs network access and roughly 650 MB of temporary free space for the model;
+later runs are offline. Confirm that dictation opens, captures the default
+microphone, and inserts the transcript. If capture fails, inspect
+`~/.config/rpiv-voice/errors.log` inside the corresponding persisted jail
+home.
+
+For the optional SSH runner, from a fresh pi2 session run:
 
 ```bash
 ssh dev-runner-vm 'id && pwd && systemctl --user is-system-running && nix --version'

@@ -79,8 +79,9 @@ let
   '';
   sshRunnerSource = "${config.home.homeDirectory}/.config/pi2-ssh-runner";
 
-  # Nix-pinned baseline extensions (context-mode + pi-subagents). To update:
-  # scripts/update-deps.sh context-mode "@tintinweb/pi-subagents"
+  # Nix-pinned baseline extensions (context-mode + pi-subagents + rpiv-voice).
+  # To update:
+  # scripts/update-deps.sh context-mode "@juicesharp/rpiv-voice" "@tintinweb/pi-subagents"
   #
   # Built with pi.nix's own nixpkgs, not ours: context-mode ships the native
   # better-sqlite3 addon, which must match the node ABI that pi itself is
@@ -405,6 +406,34 @@ let
       (set-env "NIX_PATH" "nixpkgs=${pkgs.path}")
     ];
 
+  # Keep the ALSA-to-PipeWire module declaration self-contained in the jail.
+  # Binding the host's /etc/alsa directory is insufficient on NixOS because
+  # its entries are activation-managed symlinks whose /etc/static targets are
+  # intentionally absent from the jail.
+  pipewireAlsaModulesConfig = pkgs.writeText "pi-jail-pipewire-alsa-modules.conf" ''
+    pcm_type.pipewire {
+      libs.native = ${pkgs.pipewire}/lib/alsa-lib/libasound_module_pcm_pipewire.so ;
+    }
+    ctl_type.pipewire {
+      libs.native = ${pkgs.pipewire}/lib/alsa-lib/libasound_module_ctl_pipewire.so ;
+    }
+  '';
+
+  # rpiv-voice's decibri native addon records through ALSA. On our desktop
+  # hosts, ALSA's default device is the PipeWire plugin, so expose the user's
+  # PipeWire socket and mount only the three pinned ALSA configuration files
+  # needed by that plugin rather than granting access to /dev/snd or /etc/static.
+  # The addon is an upstream prebuilt ELF without a Nix RPATH; LD_LIBRARY_PATH
+  # supplies its libasound.so.2 dependency from the pinned nixpkgs closure.
+  microphoneJailAccess =
+    combinators:
+    with combinators;
+    compose [
+      pipewire
+      (unsafe-add-raw-args "--dir /etc/alsa --dir /etc/alsa/conf.d --ro-bind ${pipewireAlsaModulesConfig} /etc/alsa/conf.d/49-pipewire-modules.conf --ro-bind ${pkgs.pipewire}/share/alsa/alsa.conf.d/50-pipewire.conf /etc/alsa/conf.d/50-pipewire.conf --ro-bind ${pkgs.pipewire}/share/alsa/alsa.conf.d/99-pipewire-default.conf /etc/alsa/conf.d/99-pipewire-default.conf")
+      (set-env "LD_LIBRARY_PATH" "${lib.getLib pkgs.alsa-lib}/lib")
+    ];
+
   # ---- Instance 1: pi (primary coding agent) ----
   # Same config as before: context-mode + pi-subagents, gemma4:31b,
   # persisted home "pi-coder", vim editor.
@@ -425,6 +454,7 @@ let
           # in ~/.pi/agent, or pi loads it twice (conflict diagnostics).
           extensions = [
             "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
+            "${piExtensionDeps}/node_modules/@juicesharp/rpiv-voice/index.ts"
             "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
           ];
           skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
@@ -460,6 +490,7 @@ let
               (set-env "EDITOR" "vim")
               (set-env "VISUAL" "vim")
               (add-pkg-deps sharedJailPkgs)
+              (microphoneJailAccess combinators)
               (nixDaemonJailAccess combinators)
               # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
               # recreates the symlink but only bind-mounts targets under /nix/store,
@@ -569,6 +600,7 @@ let
         config.pi.coding-agent = {
           extensions = [
             "${piExtensionDeps}/node_modules/context-mode/build/adapters/pi/extension.js"
+            "${piExtensionDeps}/node_modules/@juicesharp/rpiv-voice/index.ts"
             "${piExtensionDeps}/node_modules/@tintinweb/pi-subagents/src/index.ts"
           ];
           skills = [ "${piExtensionDeps}/node_modules/context-mode/skills" ];
@@ -611,6 +643,7 @@ let
               (set-env "EDITOR" "vim")
               (set-env "VISUAL" "vim")
               (add-pkg-deps sharedJailPkgs)
+              (microphoneJailAccess combinators)
               (nixDaemonJailAccess combinators)
               # WSL: /etc/resolv.conf is a symlink to /mnt/wsl/resolv.conf. jail.nix
               # recreates the symlink but only bind-mounts targets under /nix/store,
