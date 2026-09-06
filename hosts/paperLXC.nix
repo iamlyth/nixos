@@ -53,6 +53,14 @@
     '';
   };
 
+  # Regenerate /etc/pam.d/vsftpd with the default PAM stack (pam_unix).
+  # The nixos-26.05 vsftpd module (upstream 4b864991, "replace 'text' with
+  # structured PAM rules") only defines the PAM service when virtual users
+  # are enabled; with localUsers-only the file vanished and vsftpd fell back
+  # to /etc/pam.d/other (pam_warn + pam_deny), rejecting every login with
+  # "530 Login incorrect" — including the printer's scan-to-FTP upload.
+  security.pam.services.vsftpd = { };
+
   services.cron = {
     enable = true;
     systemCronJobs = [
