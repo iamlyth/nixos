@@ -4,6 +4,7 @@
     ../templates/pitemplate.nix
     ../modules/librespot.nix
     ../modules/pibluetooth.nix
+    ../modules/ghostty-terminfo.nix
   ];
 
   networking.hostName = "controls-jukebox";

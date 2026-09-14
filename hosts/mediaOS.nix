@@ -4,6 +4,7 @@
   imports =
     [
       ../modules/default.nix
+      ../modules/ghostty-terminfo.nix
       (modulesPath + "/profiles/qemu-guest.nix")
     ];
 

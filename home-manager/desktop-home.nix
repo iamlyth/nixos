@@ -18,6 +18,9 @@
     ./repo/ghostty.nix
     ./repo/tmux.nix
   ];
+
+  home.packages = [ pkgs.adwaita-fonts ];
+
   nvimmodule = {
     enable = true;
   };
@@ -51,6 +54,8 @@
   };
   ghosttymodule = {
     enable = true;
+    font = "Adwaita Mono";
+    fontSize = 11;
   };
   tmuxmodule = {
     enable = true;

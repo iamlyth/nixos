@@ -4,6 +4,7 @@
   imports = [
     ../templates/lxctemplate.nix
     ../modules/paper.nix
+    ../modules/ghostty-terminfo.nix
   ];
 
   # Hardware (Proxmox VM disk + CIFS family vault).
