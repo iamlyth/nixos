@@ -49,19 +49,17 @@ inline in their generated outer wrappers:
 1. canonicalizes the launch directory;
 2. rejects `/`, the home directory, sensitive home configuration/credential
    directories, and system roots such as `/dev`, `/proc`, `/sys`, `/run`,
-   `/etc`, `/nix`, `/boot`, `/usr`, and `/var`;
-3. resolves the containing Git worktree root and canonicalizes it;
-4. rejects linked worktrees or submodules whose Git metadata would require a
-   mount outside the project; and
-5. derives a readable, stable-per-project destination from the validated
-   worktree basename, binds exactly that worktree read-write there (for example
-   `/workspace/controller-box`), and changes to it.
+   `/etc`, `/nix`, `/boot`, `/usr`, and `/var`; and
+3. derives a readable, stable-per-project destination from the launch
+   directory basename, binds exactly that directory read-write there (for
+   example `/workspace/controller-box`), and changes to it.
 
-Any canonical Git worktree outside sensitive paths is accepted. This permits
-normal repositories such as `~/repos/controller-box` without granting the
-whole repositories directory. A non-Git or unsafe launch directory always
-produces a diagnostic and aborts before Bubblewrap starts; there is no broad
-fallback mount.
+A Git worktree is **no longer required** — any directory outside sensitive
+paths is accepted. This permits normal project directories such as
+`~/repos/controller-box` (with or without Git initialised) without granting
+the whole repositories directory. An unsafe launch directory always produces
+a diagnostic and aborts before Bubblewrap starts; there is no broad fallback
+mount.
 
 ## Credentials
 
@@ -171,7 +169,7 @@ absent.
 ## Optional pre-activation smoke test
 
 If the built wrapper can safely use the current user's persistent pi2 home and
-the current checkout is a safe Git worktree, running `"$hm_out/home-path/bin/pi2"
+the current checkout is a safe launch directory, running `"$hm_out/home-path/bin/pi2"
 --help` exercises validation and jail startup without switching generations.
 It is still a real agent launch, not a dry run; skip it if that is undesirable.
 Never print private-key contents during validation.

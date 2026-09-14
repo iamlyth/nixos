@@ -40,32 +40,8 @@ let
     pi_workspace_sensitive "$pi_launch_dir" && \
       pi_workspace_fail "refusing sensitive launch directory: $pi_launch_dir"
 
-    pi_project_dir="$(${pkgs.git}/bin/git -C "$pi_launch_dir" rev-parse --show-toplevel 2>/dev/null)" || \
-      pi_workspace_fail "launch directory is not inside a Git worktree: $pi_launch_dir"
-    pi_project_dir="$(${pkgs.coreutils}/bin/realpath -e -- "$pi_project_dir" 2>/dev/null)" || \
-      pi_workspace_fail "cannot canonicalize Git worktree root: $pi_project_dir"
-    [ -d "$pi_project_dir" ] || \
-      pi_workspace_fail "Git worktree root is not a directory: $pi_project_dir"
-    pi_workspace_sensitive "$pi_project_dir" && \
-      pi_workspace_fail "refusing sensitive Git worktree root: $pi_project_dir"
-
-    pi_git_common_dir="$(${pkgs.git}/bin/git -C "$pi_project_dir" rev-parse --git-common-dir 2>/dev/null)" || \
-      pi_workspace_fail "cannot resolve Git metadata for: $pi_project_dir"
-    case "$pi_git_common_dir" in
-      /*) ;;
-      *) pi_git_common_dir="$pi_project_dir/$pi_git_common_dir" ;;
-    esac
-    pi_git_common_dir="$(${pkgs.coreutils}/bin/realpath -e -- "$pi_git_common_dir" 2>/dev/null)" || \
-      pi_workspace_fail "cannot canonicalize Git metadata: $pi_git_common_dir"
-    case "$pi_git_common_dir" in
-      "$pi_project_dir" | "$pi_project_dir"/*) ;;
-      *) pi_workspace_fail "Git metadata is outside the project (linked worktrees and submodules are unsupported): $pi_git_common_dir" ;;
-    esac
-
-    case "$pi_launch_dir" in
-      "$pi_project_dir" | "$pi_project_dir"/*) ;;
-      *) pi_workspace_fail "canonical launch directory escaped its Git worktree: $pi_launch_dir" ;;
-    esac
+    # No Git worktree required — the launch directory itself is the workspace.
+    pi_project_dir="$pi_launch_dir"
 
     pi_project_name="$(${pkgs.coreutils}/bin/basename -- "$pi_project_dir")" || \
       pi_workspace_fail "cannot derive project name from: $pi_project_dir"

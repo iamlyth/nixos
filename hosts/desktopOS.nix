@@ -242,6 +242,17 @@
   # fwupd Firmware updater
   services.fwupd.enable = true;
 
+  # InputPlumber — advanced input device manager (controllers, gyro, etc.)
+  services.inputplumber.enable = true;
+
+  # This line is needed until nixpkgs PR #522249 reaches your channel
+  # Without it, InputPlumber can't find its config files and fails with
+  # "Config base path not found"
+  environment.pathsToLink = [ "/share/inputplumber" ];
+
+  # Your user needs input + uinput permissions to create virtual controllers
+  # (groups added to users.users.lalobied.extraGroups below)
+
   # Bootloader.
   boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.lanzaboote = {
@@ -326,7 +337,7 @@
   users.users.lalobied = {
     isNormalUser = true;
     home = "/home/lalobied";
-  extraGroups = [ "wheel" ]; #  Enable ‘sudo’ for the user.
+  extraGroups = [ "wheel" "input" "uinput" ]; #  Enable 'sudo' + InputPlumber virtual controller access
   };
 
   # Disable system from sleeping
