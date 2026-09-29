@@ -164,7 +164,7 @@
   };
 
   # fileSystems."/home/lalobied/Cloud" = {
-  #  device = "//192.168.5.114/Personal-Drive";
+  #  device = "//192.168.10.50/Personal-Drive";
   #  fsType = "cifs";
   #  options = [
   #    "credentials=/etc/nixos/.secrets/smbcred"

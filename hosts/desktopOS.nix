@@ -269,20 +269,13 @@
       allowedUDPPortRanges = allowedTCPPortRanges;
     };
     hostName = "desktop"; #  Define your hostname.
-    nameservers = ["192.168.5.111"];
-    interfaces.enp191s0.ipv4.addresses = [{
-      address = "192.168.5.117";
-      prefixLength = 16;
-    }];
-    defaultGateway = {
-      address = "192.168.4.1";
-      interface = "enp191s0";
-    };
+    nameservers = ["192.168.10.10"];
+    interfaces.enp191s0.useDHCP = true;
   };
 
 
     fileSystems."/run/media/gamestore" = {
-    device = "//192.168.5.114/gamestore";
+    device = "//192.168.10.50/gamestore";
     fsType = "cifs";
     options = [
       "credentials=/etc/nixos/.secrets/smbcred"
@@ -301,7 +294,7 @@
   };
   
   fileSystems."/home/lalobied/Cloud" = {
-    device = "//192.168.5.114/Personal-Drive";
+    device = "//192.168.10.50/Personal-Drive";
     fsType = "cifs";
     options = [
       "credentials=/etc/nixos/.secrets/smbcred"

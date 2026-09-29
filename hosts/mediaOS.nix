@@ -81,17 +81,17 @@
     hostName = "mOS"; #  Define your hostname.
     nameservers = ["1.1.1.1" "1.0.0.1"];
     interfaces.ens18.ipv4.addresses = [{
-      address = "192.168.5.106";
+      address = "192.168.10.11";
       prefixLength = 16;
     }];
     defaultGateway = {
-      address = "192.168.4.1";
+      address = "192.168.10.1";
       interface = "ens18";
     };
   };
 
   fileSystems."/run/media/media" = {
-    device = "192.168.5.114:/var/nfs/shared/media";
+    device = "192.168.10.50:/var/nfs/shared/media";
     fsType = "nfs";
     options = [
       # "bind"
