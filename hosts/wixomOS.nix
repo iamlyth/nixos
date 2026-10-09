@@ -3,6 +3,7 @@
   imports =
     [
       ../modules/desktop.nix
+      ../modules/ssh.nix
       (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
@@ -89,6 +90,11 @@
     nvidia.enable = false;
     intel.enable = false;
     rdp.enable = false;
+  };
+
+  sshmodule = {
+    enable = true;
+    port = [55];
   };
 
   # for DNS

@@ -33,6 +33,16 @@
   claudemodule = {
     enable = true;
   };
+  pimodule = {
+    enable = true;
+    pi.enable = false; # local ollama (gemma4:31b)
+    pi2 = {
+      enable = true;
+      provider = "openai-codex";
+      model = "gpt-6-sol";
+      sshRunner.enable = false;
+    };
+  };
 
   home.stateVersion = "26.05";
 }
