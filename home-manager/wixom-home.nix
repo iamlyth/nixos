@@ -36,6 +36,7 @@
   pimodule = {
     enable = true;
     pi.enable = false; # local ollama (gemma4:31b)
+    firecrawl.enable = false; # no Firecrawl secret on this host
     pi2 = {
       enable = true;
       provider = "openai-codex";

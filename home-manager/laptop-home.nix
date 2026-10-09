@@ -32,6 +32,7 @@
   pimodule = {
     enable = true;
     pi.enable = false;   # no local ollama on laptop
+    firecrawl.enable = true; # /etc/nixos/.secrets/firecrawl-api-key
     pi2.enable = true;   # API-key-based pi2 only
   };
 

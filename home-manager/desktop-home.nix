@@ -37,6 +37,7 @@
   pimodule = {
     enable = true;
     pi.enable = true; # local ollama (gemma4:31b)
+    firecrawl.enable = true; # /etc/nixos/.secrets/firecrawl-api-key
     pi2 = {
       enable = true;
       provider = "openai-codex";

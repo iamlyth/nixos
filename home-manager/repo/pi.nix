@@ -8,6 +8,18 @@
 with lib;
 let
   cfg = config.pimodule;
+
+  # Firecrawl credential, shared by both instances and gated by
+  # pimodule.firecrawl.enable so hosts without the secret file skip it.
+  firecrawlEnv = optionalAttrs cfg.firecrawl.enable {
+    FIRECRAWL_API_KEY.file = "/etc/nixos/.secrets/firecrawl-api-key";
+    FIRECRAWL_API_URL.value = "https://firecrawl.tatchi.org/v1";
+  };
+  firecrawlJailArgs =
+    combinators:
+    optional cfg.firecrawl.enable (
+      combinators.unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key"
+    );
   prepareWorkspace = ''
     pi_workspace_fail() {
       printf 'pi jail: %s\n' "$*" >&2
@@ -437,10 +449,7 @@ let
 
           # Load the Firecrawl credential at runtime so it never enters the Nix
           # store. pi.nix exports file-backed values before starting the agent.
-          environment = {
-            FIRECRAWL_API_KEY.file = "/etc/nixos/.secrets/firecrawl-api-key";
-            FIRECRAWL_API_URL.value = "https://firecrawl.tatchi.org/v1";
-          };
+          environment = firecrawlEnv;
 
           # bubblewrap isolation via jail.nix. The module always binds pi's agent
           # dir (~/.pi/agent) read-write itself, so it is intentionally absent from
@@ -476,15 +485,15 @@ let
               # the link resolves. Uses -try because the path is absent on non-WSL
               # hosts, where this becomes a no-op.
               (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
-              # The environment wrapper runs inside the jail, so expose only the
-              # file required by FIRECRAWL_API_KEY.file, read-only.
-              (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
               (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
               # The outer wrapper canonicalizes the Git worktree and derives a
               # readable destination from that validated root's basename.
               (unsafe-add-raw-args ''--dir /workspace --bind "$PI_JAIL_WORKSPACE_SOURCE" "$PI_JAIL_WORKSPACE_DESTINATION"'')
               (unsafe-add-raw-args ''--chdir "$PI_JAIL_WORKSPACE_DESTINATION"'')
-            ];
+            ]
+            # The environment wrapper runs inside the jail, so expose only the
+            # file required by FIRECRAWL_API_KEY.file, read-only.
+            ++ firecrawlJailArgs combinators;
 
           models = localModelsFile;
           settings = {
@@ -593,9 +602,8 @@ let
           environment = {
             PI_CODING_AGENT_DIR.value = "${config.home.homeDirectory}/.pi/agent2";
             CONTEXT_MODE_DATA_DIR.value = "${config.home.homeDirectory}/.pi2";
-            FIRECRAWL_API_KEY.file = "/etc/nixos/.secrets/firecrawl-api-key";
-            FIRECRAWL_API_URL.value = "https://firecrawl.tatchi.org/v1";
-          };
+          }
+          // firecrawlEnv;
 
           jail.enable = true;
           # ---- Credential boundary ----
@@ -629,15 +637,15 @@ let
               # the link resolves. Uses -try because the path is absent on non-WSL
               # hosts, where this becomes a no-op.
               (unsafe-add-raw-args "--ro-bind-try /mnt/wsl/resolv.conf /mnt/wsl/resolv.conf")
-              # Firecrawl credential (file-backed, read-only — see credential
-              # boundary note above)
-              (unsafe-add-raw-args "--dir /etc/nixos --dir /etc/nixos/.secrets --ro-bind-try /etc/nixos/.secrets/firecrawl-api-key /etc/nixos/.secrets/firecrawl-api-key")
               (unsafe-add-raw-args "--dir /usr/bin --symlink ${pkgs.coreutils}/bin/env /usr/bin/env")
               # See the primary wrapper: both instances use the same fail-closed,
               # canonical Git-worktree policy and basename-derived destination.
               (unsafe-add-raw-args ''--dir /workspace --bind "$PI_JAIL_WORKSPACE_SOURCE" "$PI_JAIL_WORKSPACE_DESTINATION"'')
               (unsafe-add-raw-args ''--chdir "$PI_JAIL_WORKSPACE_DESTINATION"'')
             ]
+            # Firecrawl credential (file-backed, read-only — see credential
+            # boundary note above)
+            ++ firecrawlJailArgs combinators
             # Optional, dedicated runner credentials only. A mandatory read-only
             # bind is used so Bubblewrap also fails closed if the directory vanishes
             # between outer-wrapper validation and jail setup. Never expose the
@@ -701,6 +709,17 @@ in
       default = [ ];
       internal = true;
       description = "Additional packages exposed inside both Pi jails.";
+    };
+
+    firecrawl = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Expose the Firecrawl credential (/etc/nixos/.secrets/firecrawl-api-key)
+          and API URL to both pi instances. Enable only on hosts that have the secret.
+        '';
+      };
     };
 
     pi2 = {

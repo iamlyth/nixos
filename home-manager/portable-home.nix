@@ -25,6 +25,7 @@
 
   pimodule = {
     enable = true;
+    firecrawl.enable = true; # /etc/nixos/.secrets/firecrawl-api-key
     pi2 = {
       enable = true;
       provider = "anthropic";
