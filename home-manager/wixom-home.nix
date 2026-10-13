@@ -10,6 +10,7 @@
     ./repo/ghostty.nix
     ./repo/tmux.nix
     ./repo/claude.nix
+    ./repo/chatgpt.nix
   ];
   nvimmodule = {
     enable = true;
@@ -31,6 +32,9 @@
     enable = true;
   };
   claudemodule = {
+    enable = true;
+  };
+  chatgptmodule = {
     enable = true;
   };
   pimodule = {

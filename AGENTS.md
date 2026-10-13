@@ -16,7 +16,7 @@ Your role is that of a **NixOS Configuration Architect**. Your goal is to mainta
 - **`/home-manager`**: The user-space layer.
     - `/home-manager/repo/`: Atomized tool configurations (Zsh, Tmux, Nixvim).
     - `*-home.nix`: Role-based user profiles (Server, Desktop, Portable).
-- **`home-manager/repo/pins.json`**: Single source of truth for pins that `nix flake update` cannot reach (GitHub revs/hashes for Claude Code plugins and skills, npm deps hashes for the Claude and pi context-mode/extension builds). Consumed via `importJSON` by `claude.nix` and `pi.nix`. Each entry carries a `type` field (schema in the `update-deps.sh` header); new entries become update targets automatically.
+- **`home-manager/repo/pins.json`**: Single source of truth for pins that `nix flake update` cannot reach (GitHub revs/hashes for Claude Code plugins and skills, npm deps hashes for the Claude and pi context-mode/extension builds, apt-repo .deb pins such as the ChatGPT desktop app). Consumed via `importJSON` by `claude.nix` and `pi.nix`. Each entry carries a `type` field (schema in the `update-deps.sh` header); new entries become update targets automatically.
 - **`/scripts`**: Maintenance tooling. `update-deps.sh` updates pins.json and the pi extension versions, per target or `all`, with a `--check` mode. Targets are derived from pins.json, not hardcoded.
 
 ## 🛠️ Operational Workflows

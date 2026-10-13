@@ -17,11 +17,16 @@
 #   github-release  { owner, repo, rev, hash, version }    -> update to latest release tag
 #   npm-deps        { dir, nixpkgs, npmDepsHash,           -> regenerate dir's lockfile and
 #                     fetcherVersion?, managePackages? }      recompute npmDepsHash
+#   apt             { repo, suite, component, arch,        -> update to the newest version in
+#                     package, version, filename, hash }      the repo's Packages index
 # Optional on any entry: "note" (printed after updating it).
 # npm-deps fields: "dir" is repo-relative; "nixpkgs" is the flake-input
 # attrpath whose nixpkgs builds the deps (node ABI must match the consumer);
 # "managePackages": true additionally exposes each dependency in dir's
 # package.json as its own update target (bump to latest from the registry).
+# apt fields: "filename" is the pool path relative to "repo"; "hash" is the
+# SRI form of the index's SHA256, so updating never downloads the .deb itself
+# (the next build verifies it).
 #
 # Flake inputs are NOT handled here; use `nix flake update [input]`.
 # nixpkgs-ollama stays deliberately frozen; see the comment in flake.nix.
@@ -56,13 +61,14 @@ jset() { # jset FILE value key [key...]
 
 # --- pin registry, derived from pins.json ------------------------------------
 
-declare -A GH_MODE NPM_DIR NPM_DIRTY PKG_OWNER
+declare -A GH_MODE NPM_DIR NPM_DIRTY PKG_OWNER APT
 
 load_pins() {
   while IFS=$'\t' read -r key type; do
     case "$type" in
       github-head)    GH_MODE[$key]=head ;;
       github-release) GH_MODE[$key]=release ;;
+      apt)            APT[$key]=1 ;;
       npm-deps)
         NPM_DIR[$key]="$ROOT/$(jget "$PINS" "$key" dir)"
         if [ "$(jget "$PINS" "$key" managePackages)" = "true" ]; then
@@ -84,6 +90,9 @@ print_targets() {
   done
   for k in "${!NPM_DIR[@]}"; do
     echo "  $k  [npm-deps: regenerate lock + npmDepsHash]"
+  done
+  for k in "${!APT[@]}"; do
+    echo "  $k  [apt: $(jget "$PINS" "$k" package) from $(jget "$PINS" "$k" repo)]"
   done
   for k in "${!PKG_OWNER[@]}"; do
     echo "  $k  [npm package in ${PKG_OWNER[$k]}]"
@@ -138,6 +147,47 @@ check_github_pin() { # PIN_KEY
     echo "$key: up to date (${cur:0:12})"
   else
     echo "$key: ${cur:0:12} -> ${rev:0:12} available"
+  fi
+}
+
+# --- apt pins -----------------------------------------------------------------
+
+latest_apt() { # PIN_KEY -> "version filename sha256hex" (newest in the index)
+  local key="$1" index
+  index="$(jget "$PINS" "$key" repo)/dists/$(jget "$PINS" "$key" suite)/$(jget "$PINS" "$key" component)/binary-$(jget "$PINS" "$key" arch)/Packages"
+  curl -fsSL "$index" | PKG="$(jget "$PINS" "$key" package)" node -e '
+    const stanzas = require("fs").readFileSync(0, "utf8").split(/\n\n+/).map(s =>
+      Object.fromEntries(s.split("\n").filter(l => /^\S+: /.test(l)).map(l => l.split(/: (.*)/s).slice(0, 2))));
+    const cmp = (a, b) => a.localeCompare(b, undefined, { numeric: true });
+    const hit = stanzas.filter(s => s.Package === process.env.PKG).sort((a, b) => cmp(a.Version, b.Version)).pop();
+    if (!hit) { console.error(`package ${process.env.PKG} not in index`); process.exit(1); }
+    console.log(`${hit.Version} ${hit.Filename} ${hit.SHA256}`);
+  '
+}
+
+update_apt_pin() { # PIN_KEY
+  local key="$1" cur version filename sha
+  cur=$(jget "$PINS" "$key" version)
+  read -r version filename sha < <(latest_apt "$key")
+  if [ "$version" = "$cur" ]; then
+    echo "$key: up to date ($cur)"
+    return
+  fi
+  echo "$key: $cur -> $version"
+  jset "$PINS" "$version" "$key" version
+  jset "$PINS" "$filename" "$key" filename
+  jset "$PINS" "$(nix hash convert --hash-algo sha256 --to sri "$sha")" "$key" hash
+  print_note "$key"
+}
+
+check_apt_pin() { # PIN_KEY
+  local key="$1" cur version _rest
+  cur=$(jget "$PINS" "$key" version)
+  read -r version _rest < <(latest_apt "$key")
+  if [ "$version" = "$cur" ]; then
+    echo "$key: up to date ($cur)"
+  else
+    echo "$key: $cur -> $version available"
   fi
 }
 
@@ -248,6 +298,7 @@ case "$1" in -h|--help|help) usage; exit 0 ;; esac
 
 if [ "$1" = --check ]; then
   for k in "${!GH_MODE[@]}"; do check_github_pin "$k"; done
+  for k in "${!APT[@]}"; do check_apt_pin "$k"; done
   for k in "${!PKG_OWNER[@]}"; do check_npm_pkg "$k"; done
   for k in "${!NPM_DIR[@]}"; do echo "$k: hash-only target (regenerates on demand or when its packages update)"; done
   exit 0
@@ -255,12 +306,14 @@ fi
 
 targets=("$@")
 if [ "${targets[0]}" = all ]; then
-  targets=("${!GH_MODE[@]}" "${!PKG_OWNER[@]}" "${!NPM_DIR[@]}")
+  targets=("${!GH_MODE[@]}" "${!APT[@]}" "${!PKG_OWNER[@]}" "${!NPM_DIR[@]}")
 fi
 
 for t in "${targets[@]}"; do
   if [ -n "${GH_MODE[$t]:-}" ]; then
     update_github_pin "$t"
+  elif [ -n "${APT[$t]:-}" ]; then
+    update_apt_pin "$t"
   elif [ -n "${PKG_OWNER[$t]:-}" ]; then
     update_npm_pkg "$t"
   elif [ -n "${NPM_DIR[$t]:-}" ]; then
