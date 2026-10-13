@@ -41,5 +41,6 @@
     extraGroups = [ "wheel" ];
   };
 
-  system.stateVersion = "25.11";
+  # mkDefault so hosts can pin their actual install version (radiusLXC uses 26.05)
+  system.stateVersion = lib.mkDefault "25.11";
 }

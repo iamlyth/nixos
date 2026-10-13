@@ -11,3 +11,6 @@ result-*
 .claude/
 
 *.img
+
+# Secrets — local only, never committed
+secrets/radiussecrets.nix
