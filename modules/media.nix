@@ -107,7 +107,7 @@ in {
         protocol = "both";
       }];
       accessibleFrom = [
-        "192.168.0.0/16"
+        "192.168.10.0/24"
         "127.0.0.1"
       ];
       portMappings = [
