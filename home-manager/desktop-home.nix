@@ -12,7 +12,6 @@
     ./repo/lutris.nix
     ./repo/gruvbox.nix
     ./repo/pi.nix
-    ./repo/ralph.nix
     ./repo/python.nix
     ./repo/rust.nix
     ./repo/ghostty.nix
@@ -45,7 +44,6 @@
       sshRunner.enable = true;
     };
   };
-  ralphmodule.enable = true;
   pythonmodule = {
     enable = true;
     extras = false;
