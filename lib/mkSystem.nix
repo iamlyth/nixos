@@ -48,6 +48,11 @@ in
 nixpkgs.lib.nixosSystem {
   specialArgs = { inherit inputs system; } // specialArgs;
   modules = [
+    # Pin nixpkgs registry to the stable input on all hosts, so `nix flake lock`
+    # resolves nixpkgs correctly even on unstable hosts. Set to.path directly
+    # (not .flake) because nix-flakes.nix doesn't propagate priority through
+    # the flake→to.path derivation, causing a conflict with nixpkgs-flake.nix.
+    { nix.registry.nixpkgs.to.path = nixpkgs.lib.mkOverride 10 inputs.nixpkgs.outPath; }
     home-manager.nixosModules.home-manager
     {
       home-manager.useGlobalPkgs = true;

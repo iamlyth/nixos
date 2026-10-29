@@ -91,6 +91,7 @@
   # HARDWARE CONFIG ENDS HERE
 
   nixpkgs.config.allowUnfree = true; #  allow proprietary packages
+  nixpkgs.config.problems.handlers.posthog.broken = "warn"; # open-webui dep, broken upstream
 
   # # # SHELL
   programs.zsh.enable = true;
