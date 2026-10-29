@@ -5,18 +5,6 @@
     # than temporary: stays as long as this host runs the CachyOS kernel.
     # Overlay added 2026-04-11.
     inputs.nix-cachyos-kernel.overlays.default
-    # FIXME: Remove this once ctranslate2 hash mismatch is fixed upstream.
-    # Overlay added 2026-07-08.
-    # Checked 2026-07-14: fixed on nixpkgs master 2026-07-05 (PR #538805,
-    # same hash as below), but the current unstable pin predates it.
-    # Droppable after the next flake update.
-    (final: prev: {
-      ctranslate2 = prev.ctranslate2.overrideAttrs (oldAttrs: {
-        src = (oldAttrs.src or { }).override {
-          hash = "sha256-cchwv+esysn/0v6RqD5zp306HfzOjjlCxH5usLETXs0=";
-        };
-      });
-    })
     # ollama-rocm pinned to older nixpkgs — Ollama forces thinking for /v1
     # tool requests and leaks Gemma 4's reasoning (tracker #10976, PR #16758
     # unmerged). Kept for occasional model exploration via `ollama run`.
@@ -118,7 +106,9 @@
     models = [];
     idleTimeout = "5min";
 
-    openwebui.enable = true;
+    # FIXME: temporarily disabled — posthog broken + ctranslate2 version mismatch
+    # in nixpkgs-unstable. Re-enable once PR #578265 (posthog unbreak) merges.
+    openwebui.enable = false;
     openwebui.corsOrigin = "https://ai.tatchi.org";
     openwebui.openaiBaseUrl = "http://localhost:8001/v1";
 
