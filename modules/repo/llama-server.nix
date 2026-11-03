@@ -197,6 +197,11 @@ in {
           RestartSec = 10;
           StateDirectory = "llama-cpp";
           CacheDirectory = "llama-cpp";
+          # Free page cache when the model unloads so mmap'd weights
+          # don't linger in RAM after stopping the service.
+          ExecStopPost = [
+            "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
+          ];
         }
         (mkIf (cfg.acceleration == "vulkan") {
           # Shader cache fix (nixpkgs#441531)
@@ -396,10 +401,7 @@ in {
       ];
     };
 
-    # Run drop_caches as root for the default and single-slot services
-    systemd.services.llama-server.serviceConfig.ExecStopPost = [
-      "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
-    ];
+    # Run drop_caches as root for the single-slot service
     systemd.services.llama-server-single.serviceConfig.ExecStopPost = [
       "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
     ];
