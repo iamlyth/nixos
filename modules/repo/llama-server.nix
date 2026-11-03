@@ -1,17 +1,52 @@
-# llama.cpp Vulkan server with MTP speculative decoding.
-# Runs a single model via systemd. Does not auto-start at boot —
-# start manually: sudo systemctl start llama-server
+# llama.cpp server with Vulkan (Strix Halo) or CUDA (Jetson) backend.
+# Supports MTP speculative decoding (optional) and hybrid-thinking reasoning.
+# Auto-start configurable; default is manual start: sudo systemctl start llama-server
 { pkgs, lib, config, ... }:
 with lib; let
   cfg = config.llamaservermodule;
+  llamaPackage = if cfg.acceleration == "cuda" then
+    (pkgs.llama-cpp.override { cudaSupport = true; })
+  else
+    pkgs.llama-cpp-vulkan;
+  jetsonFixRules = pkgs.writeTextFile {
+    name = "99-z-llama-jetson-fix";
+    destination = "/lib/udev/rules.d/99-z-llama-jetson-fix.rules";
+    text = ''
+      KERNEL=="nvhost-sched-gpu", GROUP="video", MODE="0660"
+    '';
+  };
 in {
   options.llamaservermodule = {
-    enable = mkEnableOption "llama.cpp Vulkan server with MTP speculative decoding";
+    enable = mkEnableOption "llama.cpp server (Vulkan or CUDA backend)";
 
     package = mkOption {
       type = types.package;
-      default = pkgs.llama-cpp-vulkan;
-      description = "llama.cpp package (Vulkan build recommended for Strix Halo).";
+      default = llamaPackage;
+      description = "llama.cpp package (Vulkan for Strix Halo, CUDA for Jetson).";
+    };
+
+    acceleration = mkOption {
+      type = types.enum [ "vulkan" "cuda" ];
+      default = "vulkan";
+      description = "GPU acceleration backend.";
+    };
+
+    enableMtp = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Enable MTP speculative decoding. Disable on memory-constrained devices.";
+    };
+
+    enableReasoning = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Enable hybrid-thinking reasoning. Disable on memory-constrained devices.";
+    };
+
+    autoStart = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Auto-start llama-server at boot.";
     };
 
     modelPath = mkOption {
@@ -147,34 +182,47 @@ in {
     environment.systemPackages = [ cfg.package ];
 
     systemd.services.llama-server = {
-      description = "llama.cpp Vulkan server — MTP speculative decoding (Strix Halo)";
+      description = "llama.cpp server — MTP speculative decoding (Vulkan/CUDA)";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
-      # Manual start only — don't auto-start at boot.
-      wantedBy = mkForce [];
+      # Auto-start or manual start based on config.
+      wantedBy = if cfg.autoStart then [ "multi-user.target" ] else (mkForce [ ]);
 
-      serviceConfig = {
-        Type = "simple";
-        User = cfg.user;
-        Group = "video";
-        Restart = "on-failure";
-        RestartSec = 10;
-        # Shader cache fix (nixpkgs#441531)
-        Environment = [
-          "GGML_VK_PREFER_HOST_MEMORY=ON"
-          "XDG_CACHE_HOME=/var/cache/llama-cpp"
-          "MESA_SHADER_CACHE_DIR=/var/cache/llama-cpp"
-        ];
-        StateDirectory = "llama-cpp";
-        CacheDirectory = "llama-cpp";
-      };
+      serviceConfig = mkMerge [
+        {
+          Type = "simple";
+          User = cfg.user;
+          Group = "video";
+          Restart = "on-failure";
+          RestartSec = 10;
+          StateDirectory = "llama-cpp";
+          CacheDirectory = "llama-cpp";
+        }
+        (mkIf (cfg.acceleration == "vulkan") {
+          # Shader cache fix (nixpkgs#441531)
+          Environment = [
+            "GGML_VK_PREFER_HOST_MEMORY=ON"
+            "XDG_CACHE_HOME=/var/cache/llama-cpp"
+            "MESA_SHADER_CACHE_DIR=/var/cache/llama-cpp"
+          ];
+        })
+        (mkIf (cfg.acceleration == "cuda") {
+          # Jetson CUDA: need device access and CUDA runtime libraries
+          DevicePolicy = mkForce "auto";
+          DeviceAllow = mkForce [];
+          PrivateDevices = mkForce false;
+          SupplementaryGroups = [ "video" ];
+          PrivateUsers = mkForce false;
+          ProtectProc = mkForce "default";
+          Environment = [
+            "LD_LIBRARY_PATH=${cfg.package}/lib:/run/opengl-driver/lib"
+          ];
+        })
+      ];
 
       scriptArgs = builtins.concatStringsSep " " ([
         "-m" cfg.modelPath
-        "--spec-type" "draft-mtp"
-        "--spec-draft-n-max" (toString cfg.specDraftNMax)
         "-ngl" (toString cfg.gpuLayers)
-        "-ngld" (toString cfg.draftGpuLayers)
         "--ctx-size" (toString cfg.contextSize)
         "--port" (toString cfg.port)
         "--host" cfg.host
@@ -185,15 +233,22 @@ in {
         "-ctk" cfg.kvCacheType
         "-ctv" cfg.kvCacheType
         "--cache-prompt"
-        "--reasoning-budget" (toString cfg.reasoningBudget)
-        "--reasoning-format" "auto"
         "--parallel" (toString cfg.parallel)
-      ] ++ (optional cfg.mmap "--load-mode mmap")
+      ] ++ (optionals cfg.enableMtp [
+        "--spec-type" "draft-mtp"
+        "--spec-draft-n-max" (toString cfg.specDraftNMax)
+        "-ngld" (toString cfg.draftGpuLayers)
+      ])
+        ++ (optional cfg.mmap "--load-mode mmap")
         ++ (optionals (cfg.draftModelPath != null) [
           "-md" cfg.draftModelPath
         ])
         ++ (optionals (cfg.alias != null) [
           "--alias" cfg.alias
+        ])
+        ++ (optionals cfg.enableReasoning [
+          "--reasoning-budget" (toString cfg.reasoningBudget)
+          "--reasoning-format" "auto"
         ])
         ++ cfg.extraFlags);
 
@@ -348,6 +403,13 @@ in {
     systemd.services.llama-server-single.serviceConfig.ExecStopPost = [
       "+${pkgs.bash}/bin/bash -c 'echo 3 > /proc/sys/vm/drop_caches || true'"
     ];
+
+    # Jetson CUDA udev rules for GPU access
+    services.udev.packages = mkIf (cfg.acceleration == "cuda") [ jetsonFixRules ];
+    services.udev.extraRules = mkIf (cfg.acceleration == "cuda") ''
+      SUBSYSTEM=="nvidia-gpu", GROUP="video", MODE="0660"
+      KERNEL=="nvmap", GROUP="video", MODE="0660"
+    '';
 
     networking.firewall.allowedTCPPorts = [ cfg.port ]
       ++ (optional (cfg.qwen38ModelPath != null) cfg.qwen38Port);

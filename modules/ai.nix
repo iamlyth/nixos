@@ -2,7 +2,8 @@
 #
 # Desktop: Ollama + Open WebUI auto-start at boot. llama-server starts
 #   manually for MTP 81 t/s inference. Open WebUI connects to both.
-# Tatchi: Ollama + Open WebUI auto-start. No llama-server.
+# Tatchi: llama-server (CUDA) auto-starts at boot with the fine-tuned HA
+#   model. Ollama disabled to maximize memory headroom on 8GB Jetson.
 { lib, config, ... }:
 with lib; let
   cfg = config.ai;
@@ -72,10 +73,10 @@ in {
       };
     };
 
-    # llama.cpp Vulkan server with MTP speculative decoding.
-    # Does not auto-start — run: sudo systemctl start llama-server
+    # llama.cpp server with Vulkan (desktop) or CUDA (Jetson) backend.
+    # Supports MTP speculative decoding and hybrid-thinking reasoning.
     llamaServer = {
-      enable = mkEnableOption "llama.cpp Vulkan server (MTP speculative decoding)";
+      enable = mkEnableOption "llama.cpp server (Vulkan or CUDA backend)";
 
       modelPath = mkOption {
         type = types.str;
@@ -110,6 +111,78 @@ in {
         type = types.str;
         default = "q8_0";
         description = "KV cache type (-ctk/-ctv).";
+      };
+
+      acceleration = mkOption {
+        type = types.enum [ "vulkan" "cuda" ];
+        default = "vulkan";
+        description = "GPU acceleration backend for llama-server.";
+      };
+
+      enableMtp = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enable MTP speculative decoding. Disable on memory-constrained devices.";
+      };
+
+      enableReasoning = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enable hybrid-thinking reasoning. Disable on memory-constrained devices.";
+      };
+
+      autoStart = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Auto-start llama-server at boot.";
+      };
+
+      parallel = mkOption {
+        type = types.int;
+        default = 4;
+        description = "Number of concurrent request slots.";
+      };
+
+      ubatchSize = mkOption {
+        type = types.int;
+        default = 1024;
+        description = "Micro-batch size for prompt processing.";
+      };
+
+      gpuLayers = mkOption {
+        type = types.int;
+        default = 99;
+        description = "Number of layers to offload to GPU (-ngl).";
+      };
+
+      flashAttention = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enable flash attention (-fa 1).";
+      };
+
+      mmap = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Use mmap for model weights.";
+      };
+
+      reasoningBudget = mkOption {
+        type = types.int;
+        default = 4096;
+        description = "Token cap for hybrid-thinking reasoning. 0 disables thinking.";
+      };
+
+      user = mkOption {
+        type = types.str;
+        default = "lalobied";
+        description = "User account to run the service as (for GPU access).";
+      };
+
+      extraFlags = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        description = "Additional flags to pass to llama-server.";
       };
 
       # Qwen3.8-27B alternate model (dense, separate MTP draft head).
@@ -160,12 +233,24 @@ in {
 
     llamaservermodule = mkIf cfg.llamaServer.enable {
       enable = true;
+      acceleration = cfg.llamaServer.acceleration;
+      enableMtp = cfg.llamaServer.enableMtp;
+      enableReasoning = cfg.llamaServer.enableReasoning;
+      autoStart = cfg.llamaServer.autoStart;
       modelPath = cfg.llamaServer.modelPath;
       draftModelPath = cfg.llamaServer.draftModelPath;
       alias = cfg.llamaServer.alias;
       port = cfg.llamaServer.port;
       contextSize = cfg.llamaServer.contextSize;
       kvCacheType = cfg.llamaServer.kvCacheType;
+      parallel = cfg.llamaServer.parallel;
+      ubatchSize = cfg.llamaServer.ubatchSize;
+      gpuLayers = cfg.llamaServer.gpuLayers;
+      flashAttention = cfg.llamaServer.flashAttention;
+      mmap = cfg.llamaServer.mmap;
+      reasoningBudget = cfg.llamaServer.reasoningBudget;
+      user = cfg.llamaServer.user;
+      extraFlags = cfg.llamaServer.extraFlags;
       qwen38ModelPath = cfg.llamaServer.qwen38ModelPath;
       qwen38DraftModelPath = cfg.llamaServer.qwen38DraftModelPath;
       qwen38Alias = cfg.llamaServer.qwen38Alias;

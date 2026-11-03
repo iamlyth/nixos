@@ -48,6 +48,40 @@
   
   ai.enable = true;
   ai.acceleration = "jetson-cuda";
+
+  # Disable Ollama — use llama.cpp for lower memory overhead on 8GB Jetson.
+  # llama.cpp gives ~200-400MB back from Ollama's runtime, plus fine-grained
+  # KV cache quantization and flash attention control.
+  ai.ollama.enable = false;
+
+  # llama.cpp CUDA server with the fine-tuned HA e4b model.
+  # Maximizes memory headroom for context:
+  #   - q4_0 KV cache (~75% reduction vs f16)
+  #   - Flash attention enabled
+  #   - No MTP speculative decoding (saves draft model memory)
+  #   - No hybrid-thinking reasoning (saves context tokens)
+  #   - Single slot (HA needs one request at a time)
+  #   - Smaller ubatch for prompt processing memory
+  # Model: place the fine-tuned GGUF at /home/lalobied/models/ha-gemma4-e4b.gguf
+  ai.llamaServer = {
+    enable = true;
+    acceleration = "cuda";
+    autoStart = true;
+    modelPath = "/home/lalobied/models/ha-gemma4-e4b.gguf";
+    alias = "ha-gemma4-e4b";
+    port = 8001;
+    contextSize = 32768;
+    kvCacheType = "q4_0";
+    enableMtp = false;
+    enableReasoning = false;
+    reasoningBudget = 0;
+    parallel = 1;
+    ubatchSize = 256;
+    gpuLayers = 99;
+    flashAttention = true;
+    mmap = true;
+    user = "lalobied";
+  };
   
   # Set your time zone.
   # time.timeZone = "Europe/Amsterdam";
