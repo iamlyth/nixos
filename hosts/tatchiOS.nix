@@ -55,14 +55,16 @@
   ai.ollama.enable = false;
 
   # llama.cpp CUDA server with the fine-tuned HA e4b model.
-  # Maximizes memory headroom for context:
+  # NVIDIA's Nemotron 3.5 Bolt E4B Q4_K_M profile for Jetson Orin Nano 8GB:
+  #   - mmap: PLE embeddings (3.5B params) evicted under pressure, ~3GB active
   #   - q4_0 KV cache (~75% reduction vs f16)
   #   - Flash attention enabled
   #   - No MTP speculative decoding (saves draft model memory)
   #   - No hybrid-thinking reasoning (saves context tokens)
   #   - Single slot (HA needs one request at a time)
-  #   - Smaller ubatch for prompt processing memory
-  # Model: place the fine-tuned GGUF at /home/lalobied/models/ha-gemma4-e4b.gguf
+  #   - 64K context (matches NVIDIA's own Jetson config)
+  #   - ubatch 512 (faster prompt processing for large HA system prompts)
+  # Model: place the fine-tuned Q4_K_M GGUF at /home/lalobied/models/ha-gemma4-e4b.gguf
   ai.llamaServer = {
     enable = true;
     acceleration = "cuda";
@@ -70,13 +72,13 @@
     modelPath = "/home/lalobied/models/ha-gemma4-e4b.gguf";
     alias = "ha-gemma4-e4b";
     port = 8001;
-    contextSize = 32768;
+    contextSize = 65536;
     kvCacheType = "q4_0";
     enableMtp = false;
     enableReasoning = false;
     reasoningBudget = 0;
     parallel = 1;
-    ubatchSize = 256;
+    ubatchSize = 512;
     gpuLayers = 99;
     flashAttention = true;
     mmap = true;
