@@ -39,6 +39,7 @@
   hardware.nvidia-jetpack.carrierBoard = "devkit";
   hardware.graphics.enable = true;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.trusted-users = [ "root" "lalobied" ];
   environment.systemPackages = with pkgs; [
     git
   ];
