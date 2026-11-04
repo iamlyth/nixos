@@ -131,6 +131,12 @@ in {
         description = "Speculative decoding type. Use draft-dflash for NVIDIA DFlash drafter.";
       };
 
+      specDraftNMax = mkOption {
+        type = types.int;
+        default = 3;
+        description = "Max draft tokens for speculative decoding. NVIDIA recommends 7 for DFlash.";
+      };
+
       enableReasoning = mkOption {
         type = types.bool;
         default = true;
@@ -242,6 +248,7 @@ in {
       acceleration = cfg.llamaServer.acceleration;
       enableSpeculative = cfg.llamaServer.enableSpeculative;
       specType = cfg.llamaServer.specType;
+      specDraftNMax = cfg.llamaServer.specDraftNMax;
       enableReasoning = cfg.llamaServer.enableReasoning;
       autoStart = cfg.llamaServer.autoStart;
       modelPath = cfg.llamaServer.modelPath;
