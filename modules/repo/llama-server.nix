@@ -244,7 +244,7 @@ in {
         "--spec-draft-n-max" (toString cfg.specDraftNMax)
         "-ngld" (toString cfg.draftGpuLayers)
       ])
-        ++ (optional cfg.mmap "--load-mode mmap")
+        ++ (optional cfg.mmap "--mmap")
         ++ (optionals (cfg.draftModelPath != null) [
           "-md" cfg.draftModelPath
         ])
@@ -317,7 +317,7 @@ in {
         "--reasoning-budget" (toString cfg.reasoningBudget)
         "--reasoning-format" "auto"
         "--parallel" "1"
-      ] ++ (optional cfg.mmap "--load-mode mmap")
+      ]        ++ (optional cfg.mmap "--mmap")
         ++ (optionals (cfg.draftModelPath != null) [
           "-md" cfg.draftModelPath
         ])
@@ -379,7 +379,7 @@ in {
         "--reasoning-budget" (toString cfg.reasoningBudget)
         "--reasoning-format" "auto"
         "--parallel" "1"
-      ] ++ (optional cfg.mmap "--load-mode mmap")
+      ]        ++ (optional cfg.mmap "--mmap")
         ++ (optionals (cfg.qwen38DraftModelPath != null) [
           "-md" cfg.qwen38DraftModelPath
         ])
