@@ -103,21 +103,20 @@ in {
   };
 
   # DFlash-capable llama.cpp (>= b11459) for the Jetson's CUDA llama-server.
-  # Pin stable nixpkgs' CUDA toolchain: unstable's default cudaPackages are
-  # CUDA 13, whose runtime the Orin's JetPack 6 driver (540.x / CUDA 12.6)
-  # cannot initialize — ggml_cuda_init fails with "driver version is
-  # insufficient for CUDA runtime version". Stable's toolchain is proven
-  # on this driver (the b9190 build initialized CUDA0: Orin).
-  # DFlash itself is not CUDA-13-only; upstream supports CUDA 12.
+  # unstable's default cudaPackages are CUDA 13 — its runtime cannot initialize
+  # on the Orin's JetPack 6 driver (540.x, CUDA 12.6 max): ggml_cuda_init fails
+  # with "driver version is insufficient for CUDA runtime version". DFlash
+  # itself is not CUDA-13-only; upstream supports CUDA 12.
   #
-  # Attribute rename bridge: stable's set names the CCCL headers package
-  # `cuda_cccl`; unstable's llama-cpp expects it as `cccl`. Same package,
-  # different attribute across nixpkgs generations.
+  # Use unstable's OWN cudaPackages_12_9 set — the same generation of CUDA
+  # packaging machinery that unstable's llama-cpp expects (cccl attrname,
+  # markForCudatoolkitRootHook). Mixing in stable's older-generation set broke
+  # the build twice: missing cccl attribute, then a corrupted CUDAToolkit_ROOT.
+  # CUDA 12.9 is driver-compatible here — stable's set is also 12.9, and the
+  # earlier b9190 build initialized CUDA0: Orin on this same driver.
   llamaservermodule.package = unstable.llama-cpp.override {
     cudaSupport = true;
-    cudaPackages = pkgs.cudaPackages // {
-      cccl = pkgs.cudaPackages.cuda_cccl;
-    };
+    cudaPackages = unstable.cudaPackages_12_9;
   };
   
   # Set your time zone.
