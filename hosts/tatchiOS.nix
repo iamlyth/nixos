@@ -109,9 +109,15 @@ in {
   # insufficient for CUDA runtime version". Stable's toolchain is proven
   # on this driver (the b9190 build initialized CUDA0: Orin).
   # DFlash itself is not CUDA-13-only; upstream supports CUDA 12.
+  #
+  # Attribute rename bridge: stable's set names the CCCL headers package
+  # `cuda_cccl`; unstable's llama-cpp expects it as `cccl`. Same package,
+  # different attribute across nixpkgs generations.
   llamaservermodule.package = unstable.llama-cpp.override {
     cudaSupport = true;
-    cudaPackages = pkgs.cudaPackages; # CUDA 12 — driver-matched
+    cudaPackages = pkgs.cudaPackages // {
+      cccl = pkgs.cudaPackages.cuda_cccl;
+    };
   };
   
   # Set your time zone.
