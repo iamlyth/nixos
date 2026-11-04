@@ -251,7 +251,7 @@ in {
         "--spec-draft-n-max" (toString cfg.specDraftNMax)
         "--spec-draft-ngl" (toString cfg.draftGpuLayers)
       ])
-        ] ++ (optionals (cfg.enableSpeculative && cfg.specType == "draft-mtp") [
+        ++ (optionals (cfg.enableSpeculative && cfg.specType == "draft-mtp") [
           "--spec-type" "draft-mtp"
           "--spec-draft-n-max" (toString cfg.specDraftNMax)
           "-ngld" (toString cfg.draftGpuLayers)
