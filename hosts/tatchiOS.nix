@@ -65,13 +65,13 @@
   #   - Single slot (HA needs one request at a time)
   #   - 64K context (matches NVIDIA's own Jetson config)
   #   - ubatch 512 (faster prompt processing for large HA system prompts)
-  # Model: place the fine-tuned Q4_K_M GGUF at /home/lalobied/models/ha-gemma4-e4b.gguf
+  # Model: place the fine-tuned Q4_K_M GGUF at /home/lalobied/models/nemotron-e4b-ha.gguf
   ai.llamaServer = {
     enable = true;
     acceleration = "cuda";
     autoStart = true;
-    modelPath = "/home/lalobied/models/ha-gemma4-e4b.gguf";
-    alias = "ha-gemma4-e4b";
+    modelPath = "/home/lalobied/models/nemotron-e4b-ha.gguf";
+    alias = "nemotron-e4b-ha";
     port = 8001;
     contextSize = 65536;
     kvCacheType = "q4_0";
