@@ -119,10 +119,16 @@ in {
         description = "GPU acceleration backend for llama-server.";
       };
 
-      enableMtp = mkOption {
+      enableSpeculative = mkOption {
         type = types.bool;
         default = true;
-        description = "Enable MTP speculative decoding. Disable on memory-constrained devices.";
+        description = "Enable speculative decoding (MTP or DFlash). Disable on memory-constrained devices.";
+      };
+
+      specType = mkOption {
+        type = types.enum [ "draft-mtp" "draft-dflash" ];
+        default = "draft-mtp";
+        description = "Speculative decoding type. Use draft-dflash for NVIDIA DFlash drafter.";
       };
 
       enableReasoning = mkOption {
@@ -234,7 +240,8 @@ in {
     llamaservermodule = mkIf cfg.llamaServer.enable {
       enable = true;
       acceleration = cfg.llamaServer.acceleration;
-      enableMtp = cfg.llamaServer.enableMtp;
+      enableSpeculative = cfg.llamaServer.enableSpeculative;
+      specType = cfg.llamaServer.specType;
       enableReasoning = cfg.llamaServer.enableReasoning;
       autoStart = cfg.llamaServer.autoStart;
       modelPath = cfg.llamaServer.modelPath;

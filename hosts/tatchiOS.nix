@@ -50,6 +50,8 @@
   ai.enable = true;
   ai.acceleration = "jetson-cuda";
 
+  hardware.nvidia-jetpack.maxClock = true;  # MAXN_SUPER + jetson_clocks at boot
+
   # Disable Ollama — use llama.cpp for lower memory overhead on 8GB Jetson.
   # llama.cpp gives ~200-400MB back from Ollama's runtime, plus fine-grained
   # KV cache quantization and flash attention control.
@@ -60,22 +62,27 @@
   #   - mmap: PLE embeddings (3.5B params) evicted under pressure, ~3GB active
   #   - q4_0 KV cache (~75% reduction vs f16)
   #   - Flash attention enabled
-  #   - No MTP speculative decoding (saves draft model memory)
+  #   - DFlash speculative decoding (NVIDIA companion drafter, 2-7x generation)
   #   - No hybrid-thinking reasoning (saves context tokens)
   #   - Single slot (HA needs one request at a time)
-  #   - 64K context (matches NVIDIA's own Jetson config)
+  #   - 16K context (sufficient for HA system prompt + tools + conversation,
+  #     frees KV cache memory for the DFlash drafter model)
   #   - ubatch 512 (faster prompt processing for large HA system prompts)
   # Model: place the fine-tuned Q4_K_M GGUF at /home/lalobied/models/nemotron-e4b-ha.gguf
+  # Drafter: place the DFlash BF16 GGUF at /home/lalobied/models/nemotron-e4b-dflash.gguf
   ai.llamaServer = {
     enable = true;
     acceleration = "cuda";
     autoStart = true;
     modelPath = "/home/lalobied/models/nemotron-e4b-ha.gguf";
+    draftModelPath = "/home/lalobied/models/nemotron-e4b-dflash.gguf";
     alias = "nemotron-e4b-ha";
     port = 8001;
-    contextSize = 65536;
+    contextSize = 16384;
     kvCacheType = "q4_0";
-    enableMtp = false;
+    enableSpeculative = true;
+    specType = "draft-dflash";
+    specDraftNMax = 7;
     enableReasoning = false;
     reasoningBudget = 0;
     parallel = 1;

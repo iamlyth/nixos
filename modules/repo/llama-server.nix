@@ -31,10 +31,16 @@ in {
       description = "GPU acceleration backend.";
     };
 
-    enableMtp = mkOption {
+    enableSpeculative = mkOption {
       type = types.bool;
       default = true;
-      description = "Enable MTP speculative decoding. Disable on memory-constrained devices.";
+      description = "Enable speculative decoding (MTP or DFlash). Disable on memory-constrained devices.";
+    };
+
+    specType = mkOption {
+      type = types.enum [ "draft-mtp" "draft-dflash" ];
+      default = "draft-mtp";
+      description = "Speculative decoding type. Use draft-dflash for NVIDIA DFlash drafter.";
     };
 
     enableReasoning = mkOption {
@@ -239,15 +245,20 @@ in {
         "-ctv" cfg.kvCacheType
         "--cache-prompt"
         "--parallel" (toString cfg.parallel)
-      ] ++ (optionals cfg.enableMtp [
+      ] ++ (optionals (cfg.enableSpeculative && cfg.specType == "draft-dflash") [
+        "--spec-type" "draft-dflash"
+        "--spec-draft-model" cfg.draftModelPath
+        "--spec-draft-n-max" (toString cfg.specDraftNMax)
+        "--spec-draft-ngl" (toString cfg.draftGpuLayers)
+      ])
+        ++ (optionals (cfg.enableSpeculative && cfg.specType == "draft-mtp") [
         "--spec-type" "draft-mtp"
         "--spec-draft-n-max" (toString cfg.specDraftNMax)
         "-ngld" (toString cfg.draftGpuLayers)
+      ] ++ (optionals (cfg.draftModelPath != null && cfg.specType != "draft-dflash") [
+        "-md" cfg.draftModelPath
       ])
         ++ (optional cfg.mmap "--mmap")
-        ++ (optionals (cfg.draftModelPath != null) [
-          "-md" cfg.draftModelPath
-        ])
         ++ (optionals (cfg.alias != null) [
           "--alias" cfg.alias
         ])
