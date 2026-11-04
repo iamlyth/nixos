@@ -1,6 +1,23 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{ config, lib, pkgs, inputs, modulesPath, ... }:
+let
+  # llama.cpp from nixpkgs-unstable — stable's build (b9190) predates DFlash
+  # speculative decoding (needs >= b11459); this pin carries 0.7.0 / b11669.
+  # Direct import (not an overlay), added 2026-11-04. Drop once the stable
+  # nixpkgs llama-cpp is >= b11459 (re-check on input bumps).
+  unstable = import inputs.nixpkgs-unstable {
+    system = "aarch64-linux";
+    config = {
+      allowUnfree = true; # cudaPackages are unfree
+      # The system's pkgs gets its CUDA capability from the jetpack module
+      # (SoM-based: "8.7" for Orin). A fresh import does not — without
+      # this, ggml-cuda builds without sm_87 SASS and the JetPack 540
+      # driver's PTX JIT rejects the nvcc-12.9 PTX at runtime:
+      # "the provided PTX was compiled with an unsupported toolchain".
+      cudaCapabilities = [ "8.7" ]; # Orin sm_87
+    };
+  };
+in {
 
-{
   imports = [
     ../modules/ai.nix
     (modulesPath + "/installer/scan/not-detected.nix")
@@ -50,6 +67,8 @@
   ai.enable = true;
   ai.acceleration = "jetson-cuda";
 
+  hardware.nvidia-jetpack.maxClock = true;  # MAXN_SUPER + jetson_clocks at boot
+
   # Disable Ollama — use llama.cpp for lower memory overhead on 8GB Jetson.
   # llama.cpp gives ~200-400MB back from Ollama's runtime, plus fine-grained
   # KV cache quantization and flash attention control.
@@ -60,22 +79,27 @@
   #   - mmap: PLE embeddings (3.5B params) evicted under pressure, ~3GB active
   #   - q4_0 KV cache (~75% reduction vs f16)
   #   - Flash attention enabled
-  #   - No MTP speculative decoding (saves draft model memory)
+  #   - DFlash speculative decoding (NVIDIA companion drafter — speedup TBD, benchmark on Orin)
   #   - No hybrid-thinking reasoning (saves context tokens)
   #   - Single slot (HA needs one request at a time)
-  #   - 64K context (matches NVIDIA's own Jetson config)
+  #   - 16K context (sufficient for HA system prompt + tools + conversation,
+  #     frees KV cache memory for the DFlash drafter model)
   #   - ubatch 512 (faster prompt processing for large HA system prompts)
-  # Model: place the fine-tuned Q4_K_M GGUF at /home/lalobied/models/ha-gemma4-e4b.gguf
+  # Model: place the fine-tuned Q4_K_M GGUF at /home/lalobied/models/nemotron-e4b-ha.gguf
+  # Drafter: place the DFlash BF16 GGUF at /home/lalobied/models/nemotron-e4b-dflash.gguf
   ai.llamaServer = {
     enable = true;
     acceleration = "cuda";
     autoStart = true;
-    modelPath = "/home/lalobied/models/ha-gemma4-e4b.gguf";
-    alias = "ha-gemma4-e4b";
+    modelPath = "/home/lalobied/models/nemotron-e4b-ha.gguf";
+    draftModelPath = "/home/lalobied/models/nemotron-e4b-dflash.gguf";
+    alias = "nemotron-e4b-ha";
     port = 8001;
-    contextSize = 65536;
+    contextSize = 16384;
     kvCacheType = "q4_0";
-    enableMtp = false;
+    enableSpeculative = true;
+    specType = "draft-dflash";
+    specDraftNMax = 7;
     enableReasoning = false;
     reasoningBudget = 0;
     parallel = 1;
@@ -84,6 +108,35 @@
     flashAttention = true;
     mmap = true;
     user = "lalobied";
+    # --metrics enables the /metrics Prometheus endpoint for request-level stats.
+    extraFlags = [ "--metrics" ];
+  };
+
+  # Disable Nemotron's thinking mode for every request (the reasoning trace
+  # burned ~280 tokens / ~14s per voice command). Pass the chat-template
+  # kwargs via the arg-parser env var, NOT an ExecStart flag: systemd's
+  # command-line parser strips the JSON's inner double quotes, so the server
+  # receives invalid JSON and exits at argument parsing. The env var
+  # bypasses systemd quoting entirely.
+  systemd.services.llama-server.environment = {
+    LLAMA_ARG_CHAT_TEMPLATE_KWARGS = ''{"enable_thinking":false}'';
+  };
+
+  # DFlash-capable llama.cpp (>= b11459) for the Jetson's CUDA llama-server.
+  # unstable's default cudaPackages are CUDA 13 — its runtime cannot initialize
+  # on the Orin's JetPack 6 driver (540.x, CUDA 12.6 max): ggml_cuda_init fails
+  # with "driver version is insufficient for CUDA runtime version". DFlash
+  # itself is not CUDA-13-only; upstream supports CUDA 12.
+  #
+  # Use unstable's OWN cudaPackages_12_9 set — the same generation of CUDA
+  # packaging machinery that unstable's llama-cpp expects (cccl attrname,
+  # markForCudatoolkitRootHook). Mixing in stable's older-generation set broke
+  # the build twice: missing cccl attribute, then a corrupted CUDAToolkit_ROOT.
+  # CUDA 12.9 is driver-compatible here — stable's set is also 12.9, and the
+  # earlier b9190 build initialized CUDA0: Orin on this same driver.
+  llamaservermodule.package = unstable.llama-cpp.override {
+    cudaSupport = true;
+    cudaPackages = unstable.cudaPackages_12_9;
   };
   
   # Set your time zone.
