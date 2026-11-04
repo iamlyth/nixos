@@ -103,7 +103,16 @@ in {
   };
 
   # DFlash-capable llama.cpp (>= b11459) for the Jetson's CUDA llama-server.
-  llamaservermodule.package = unstable.llama-cpp.override { cudaSupport = true; };
+  # Pin stable nixpkgs' CUDA toolchain: unstable's default cudaPackages are
+  # CUDA 13, whose runtime the Orin's JetPack 6 driver (540.x / CUDA 12.6)
+  # cannot initialize — ggml_cuda_init fails with "driver version is
+  # insufficient for CUDA runtime version". Stable's toolchain is proven
+  # on this driver (the b9190 build initialized CUDA0: Orin).
+  # DFlash itself is not CUDA-13-only; upstream supports CUDA 12.
+  llamaservermodule.package = unstable.llama-cpp.override {
+    cudaSupport = true;
+    cudaPackages = pkgs.cudaPackages; # CUDA 12 — driver-matched
+  };
   
   # Set your time zone.
   # time.timeZone = "Europe/Amsterdam";
