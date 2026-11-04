@@ -7,6 +7,8 @@
     ../modules/ghostty-terminfo.nix
   ];
 
+  nix.settings.trusted-users = [ "root" "lalobied" ];
+
   networking.hostName = "controls-jukebox";
 
   programs.zsh.enable = true;
