@@ -258,7 +258,7 @@ in {
         ]) ++ (optionals (cfg.draftModelPath != null && cfg.specType != "draft-dflash") [
         "-md" cfg.draftModelPath
       ])
-        ++ (optional cfg.mmap "--mmap")
+        ++ (optional cfg.mmap "--load-mode mmap")
         ++ (optionals (cfg.alias != null) [
           "--alias" cfg.alias
         ])
@@ -328,7 +328,7 @@ in {
         "--reasoning-budget" (toString cfg.reasoningBudget)
         "--reasoning-format" "auto"
         "--parallel" "1"
-      ]        ++ (optional cfg.mmap "--mmap")
+      ]        ++ (optional cfg.mmap "--load-mode mmap")
         ++ (optionals (cfg.draftModelPath != null) [
           "-md" cfg.draftModelPath
         ])
@@ -390,7 +390,7 @@ in {
         "--reasoning-budget" (toString cfg.reasoningBudget)
         "--reasoning-format" "auto"
         "--parallel" "1"
-      ]        ++ (optional cfg.mmap "--mmap")
+      ]        ++ (optional cfg.mmap "--load-mode mmap")
         ++ (optionals (cfg.qwen38DraftModelPath != null) [
           "-md" cfg.qwen38DraftModelPath
         ])

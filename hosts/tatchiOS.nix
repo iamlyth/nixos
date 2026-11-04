@@ -1,6 +1,15 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{ config, lib, pkgs, inputs, modulesPath, ... }:
+let
+  # llama.cpp from nixpkgs-unstable — stable's build (b9190) predates DFlash
+  # speculative decoding (needs >= b11459); this pin carries 0.7.0 / b11669.
+  # Direct import (not an overlay), added 2026-11-04. Drop once the stable
+  # nixpkgs llama-cpp is >= b11459 (re-check on input bumps).
+  unstable = import inputs.nixpkgs-unstable {
+    system = "aarch64-linux";
+    config.allowUnfree = true; # cudaPackages are unfree
+  };
+in {
 
-{
   imports = [
     ../modules/ai.nix
     (modulesPath + "/installer/scan/not-detected.nix")
@@ -62,7 +71,7 @@
   #   - mmap: PLE embeddings (3.5B params) evicted under pressure, ~3GB active
   #   - q4_0 KV cache (~75% reduction vs f16)
   #   - Flash attention enabled
-  #   - DFlash speculative decoding (NVIDIA companion drafter, 2-7x generation)
+  #   - DFlash speculative decoding (NVIDIA companion drafter — speedup TBD, benchmark on Orin)
   #   - No hybrid-thinking reasoning (saves context tokens)
   #   - Single slot (HA needs one request at a time)
   #   - 16K context (sufficient for HA system prompt + tools + conversation,
@@ -92,6 +101,9 @@
     mmap = true;
     user = "lalobied";
   };
+
+  # DFlash-capable llama.cpp (>= b11459) for the Jetson's CUDA llama-server.
+  llamaservermodule.package = unstable.llama-cpp.override { cudaSupport = true; };
   
   # Set your time zone.
   # time.timeZone = "Europe/Amsterdam";
