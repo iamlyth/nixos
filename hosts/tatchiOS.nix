@@ -6,7 +6,15 @@ let
   # nixpkgs llama-cpp is >= b11459 (re-check on input bumps).
   unstable = import inputs.nixpkgs-unstable {
     system = "aarch64-linux";
-    config.allowUnfree = true; # cudaPackages are unfree
+    config = {
+      allowUnfree = true; # cudaPackages are unfree
+      # The system's pkgs gets its CUDA capability from the jetpack module
+      # (SoM-based: "8.7" for Orin). A fresh import does not — without
+      # this, ggml-cuda builds without sm_87 SASS and the JetPack 540
+      # driver's PTX JIT rejects the nvcc-12.9 PTX at runtime:
+      # "the provided PTX was compiled with an unsupported toolchain".
+      cudaCapabilities = [ "8.7" ]; # Orin sm_87
+    };
   };
 in {
 
