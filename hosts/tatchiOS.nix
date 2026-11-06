@@ -108,6 +108,16 @@ in {
     flashAttention = true;
     mmap = true;
     user = "lalobied";
+    # Disable Nemotron's thinking mode for every request: the reasoning trace
+    # burned ~280 tokens (~14s) per voice command. The template honors
+    # enable_thinking (verified per-request); this sets it as the server
+    # default. JSON has no spaces — scriptArgs is space-joined into argv.
+    # --metrics enables the Prometheus endpoint for request-level stats.
+    extraFlags = [
+      "--metrics"
+      "--chat-template-kwargs"
+      ''{"enable_thinking":false}''
+    ];
   };
 
   # DFlash-capable llama.cpp (>= b11459) for the Jetson's CUDA llama-server.
