@@ -108,16 +108,18 @@ in {
     flashAttention = true;
     mmap = true;
     user = "lalobied";
-    # Disable Nemotron's thinking mode for every request: the reasoning trace
-    # burned ~280 tokens (~14s) per voice command. The template honors
-    # enable_thinking (verified per-request); this sets it as the server
-    # default. JSON has no spaces — scriptArgs is space-joined into argv.
-    # --metrics enables the Prometheus endpoint for request-level stats.
-    extraFlags = [
-      "--metrics"
-      "--chat-template-kwargs"
-      ''{"enable_thinking":false}''
-    ];
+    # --metrics enables the /metrics Prometheus endpoint for request-level stats.
+    extraFlags = [ "--metrics" ];
+  };
+
+  # Disable Nemotron's thinking mode for every request (the reasoning trace
+  # burned ~280 tokens / ~14s per voice command). Pass the chat-template
+  # kwargs via the arg-parser env var, NOT an ExecStart flag: systemd's
+  # command-line parser strips the JSON's inner double quotes, so the server
+  # receives invalid JSON and exits at argument parsing. The env var
+  # bypasses systemd quoting entirely.
+  systemd.services.llama-server.environment = {
+    LLAMA_ARG_CHAT_TEMPLATE_KWARGS = ''{"enable_thinking":false}'';
   };
 
   # DFlash-capable llama.cpp (>= b11459) for the Jetson's CUDA llama-server.
