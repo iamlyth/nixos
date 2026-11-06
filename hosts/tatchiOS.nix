@@ -103,7 +103,7 @@ in {
     enableReasoning = false;
     reasoningBudget = 0;
     parallel = 1;
-    ubatchSize = 512;
+    ubatchSize = 1024;
     gpuLayers = 99;
     flashAttention = true;
     mmap = true;
