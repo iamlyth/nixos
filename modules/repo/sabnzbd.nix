@@ -135,10 +135,7 @@ in {
         enable = true;
         vpnNamespace = "wg";
       };
-
-      systemd.services.sabnzbd.serviceConfig = {
-        Wants = [ "vpnNamespaces-wg.service" ];
-        After = [ "vpnNamespaces-wg.service" ];
-      };
+      systemd.services.sabnzbd.wants = mkIf cfg.vpn.enable [ "vpnNamespaces-wg.service" ];
+      systemd.services.sabnzbd.after = mkIf cfg.vpn.enable [ "vpnNamespaces-wg.service" ];
     };
 }
