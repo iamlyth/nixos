@@ -20,6 +20,7 @@ in {
 
   imports = [
     ../modules/ai.nix
+    ../modules/ghostty-terminfo.nix
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
