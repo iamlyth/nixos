@@ -14,3 +14,4 @@ result-*
 
 # Secrets — local only, never committed
 secrets/radiussecrets.nix
+secrets/monitoringsecrets.nix
