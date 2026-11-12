@@ -42,6 +42,7 @@ in
   monitoringmodule = {
     enable = true;
     grafanaSecretKey = secrets.grafanaSecretKey;
+    haAuthToken = secrets.haAuthToken;
   };
 
   system.stateVersion = "26.05";

@@ -18,6 +18,11 @@ in
       type = types.str;
       description = "Grafana secret key for encrypting stored secrets. Generate with: openssl rand -base64 32";
     };
+
+    haAuthToken = mkOption {
+      type = types.str;
+      description = "Home Assistant long-lived access token for the Prometheus scrape endpoint";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -41,6 +46,14 @@ in
           job_name = "node";
           static_configs = [{
             targets = [ "localhost:${toString config.services.prometheus.exporters.node.port}" ];
+          }];
+        }
+        {
+          job_name = "homeassistant";
+          metrics_path = "/api/prometheus";
+          authorization.credentials = cfg.haAuthToken;
+          static_configs = [{
+            targets = [ "192.168.10.13:8123" ];
           }];
         }
       ];
