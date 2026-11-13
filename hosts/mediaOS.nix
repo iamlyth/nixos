@@ -79,6 +79,7 @@
 
   networking = {
     hostName = "mOS"; #  Define your hostname.
+    enableIPv6 = false;
     nameservers = ["1.1.1.1" "1.0.0.1"];
     interfaces.ens18.ipv4.addresses = [{
       address = "192.168.10.11";
