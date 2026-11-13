@@ -230,6 +230,23 @@
   # Flatpak
   services.flatpak.enable = true;
 
+  # xdg-desktop-portal 1.22 merges Settings backends across configuration files.
+  # Disable GTK's Settings implementation so GNOME is the sole provider even
+  # when the vendor defaults add GTK. Keep GTK's other portal implementations.
+  xdg.portal.extraPortals = lib.mkForce [
+    pkgs.xdg-desktop-portal-gnome
+    (pkgs.xdg-desktop-portal-gtk.overrideAttrs (old: {
+      mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dsettings=disabled" ];
+    }))
+  ];
+
+  # Preserve GNOME's other portal defaults, including GTK fallback and Secret.
+  xdg.portal.config.gnome = {
+    default = [ "gnome" "gtk" ];
+    "org.freedesktop.impl.portal.Settings" = [ "gnome" ];
+    "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
+  };
+
   # fwupd Firmware updater
   services.fwupd.enable = true;
 
