@@ -3,6 +3,7 @@
   imports =
     [
       ../modules/desktop.nix
+      ../modules/gnome-portals.nix
       (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
