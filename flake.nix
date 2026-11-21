@@ -187,6 +187,12 @@
           homeStateVersion = "25.11";
         };
 
+        streamLXC = mkSystem {
+          hostModule = ./hosts/streamLXC.nix;
+          homeProfile = ./home-manager/server-home.nix;
+          homeStateVersion = "25.11";
+        };
+
         # The bare Pi base. Also the source for packages.aarch64-linux.piImage,
         # so it pulls in nixos-raspberrypi's sd-image module.
         pitemplate = mkPiSystem [

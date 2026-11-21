@@ -43,11 +43,5 @@ in {
       user = "plex";
       group = "media";
     };
-    services.caddy = {
-      enable = true;
-      virtualHosts."http://mos.tatchi.org".extraConfig = ''
-        respond "Hello, world!"
-      '';  
-    };
   };
 }

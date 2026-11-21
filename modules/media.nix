@@ -37,6 +37,16 @@ in {
       '';
     };
 
+    plex.enable = mkOption {
+      type = types.bool;
+      default = false;
+      example = true;
+      description = ''
+        Whether to enable Plex on this host. Disabled by default —
+        Plex has been split off to streamLXC for security isolation.
+      '';
+    };
+
     mediaDir = mkOption {
       type = types.path;
       default = "/run/media/media";
@@ -67,8 +77,8 @@ in {
       libraryOwner.group = "media";
     };
 
-    # PLEX
-    plexmodule = {
+    # PLEX (opt-in — split to streamLXC for isolation)
+    plexmodule = mkIf cfg.plex.enable {
       enable = true;
     };
 

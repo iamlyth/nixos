@@ -62,6 +62,7 @@
   media = {
     enable = true;
     vpn.enable = true;
+    plex.enable = true; # TODO: disable after streamLXC (CT 127) is deployed
   };
   users.groups.media = { };
 
