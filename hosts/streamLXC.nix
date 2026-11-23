@@ -16,21 +16,18 @@
     fsType = "ext4";
   };
 
-  # Media library — read-only NFS bind mount from the Proxmox host.
-  # The actual NFS mount is managed by Proxmox (pct set 127 -mp0 ...);
+  # Media library — read-only CIFS bind mount from the Proxmox host.
+  # The actual mount is managed by Proxmox (pct set 127 -mp0 /mnt/pve/media,mp=/media,ro=1);
   # this fileSystems entry is documentation-only in an unprivileged LXC.
-  # Host-side: 192.168.10.50:/var/nfs/shared/media → bind ro into /run/media/media
-  fileSystems."/run/media/media" = {
-    device = "192.168.10.50:/var/nfs/shared/media";
-    fsType = "nfs";
-    options = [
-      "defaults"
-      "ro"
-      "nofail"
-      "exec"
-      "relatime"
-    ];
-  };
+  # NixOS systemd manages /run as tmpfs, which overwrites Proxmox bind mounts
+  # under /run/ — using /media avoids that conflict.
+  # Host-side: //192.168.10.50/media → bind ro into /media
+
+  # Suppress NFS rpc_pipefs mount — fails in unprivileged LXC (permission denied).
+  # The bind mount from Proxmox replaces NFS-in-container entirely.
+  systemd.suppressedSystemUnits = [
+    "var-lib-nfs-rpc_pipefs.mount"
+  ];
 
   nixpkgs.config.allowUnfree = true; # Plex is unfree
 

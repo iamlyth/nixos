@@ -43,4 +43,8 @@
 
   # mkDefault so hosts can pin their actual install version (radiusLXC uses 26.05)
   system.stateVersion = lib.mkDefault "25.11";
+
+  # Back up existing dotfiles instead of failing when home-manager
+  # would clobber them (e.g. .zshrc on fresh containers).
+  home-manager.backupFileExtension = "backup";
 }

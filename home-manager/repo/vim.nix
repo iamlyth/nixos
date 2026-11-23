@@ -26,7 +26,7 @@ in {
       plugins = with pkgs.vimPlugins; [
         vim-airline
         indentLine
-        sensible  #  sensible vimrc settings
+        vim-sensible  #  sensible vimrc settings (renamed from 'sensible' on 2026-02-04)
         vim-surround
       ];
       settings = { ignorecase = true; };
