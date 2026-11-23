@@ -1,12 +1,14 @@
 # hosts/streamLXC.nix
-# Dedicated Plex LXC — isolated in the DMZ VLAN with a read-only NFS library
-# mount. Split from mediaOS for security isolation following the Plex data
-# breach. Only Plex runs here; radarr/sonarr/sabnzbd stay on mediaOS.
+# Dedicated Plex + Jellyfin LXC — isolated in the DMZ VLAN with a
+# read-only CIFS library mount. Split from mediaOS for security
+# isolation following the Plex data breach. Only media servers run
+# here; radarr/sonarr/sabnzbd stay on mediaOS.
 { config, lib, pkgs, ... }:
 {
   imports = [
     ../templates/lxctemplate.nix
     ../modules/repo/plex.nix
+    ../modules/repo/jellyfin.nix
     ../modules/ghostty-terminfo.nix
   ];
 
@@ -31,11 +33,31 @@
 
   nixpkgs.config.allowUnfree = true; # Plex is unfree
 
-  # Plex service
+  # Hardware transcoding — Intel UHD 630 QuickSync via VAAPI.
+  # Jellyfin uses ffmpeg which needs system-level VAAPI drivers
+  # (unlike Plex which bundles its own Intel Media SDK).
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [
+      intel-vaapi-driver
+      intel-media-driver
+    ];
+  };
+
+  # Media services
   users.groups.media = { };
   plexmodule = {
     enable = true;
     openFirewall = true;
+  };
+  jellyfinmodule = {
+    enable = true;
+    openFirewall = false; # managed in networking.firewall below
+  };
+
+  # Tailscale — default, ACLs from control plane
+  services.tailscale = {
+    enable = true;
   };
 
   networking = {
@@ -49,6 +71,6 @@
       address = "10.23.15.1";
       interface = "eth0";
     };
-    firewall.allowedTCPPorts = [ 32400 ]; # Plex
+    firewall.allowedTCPPorts = [ 32400 8096 ]; # Plex, Jellyfin
   };
 }
