@@ -279,12 +279,14 @@
       "rw"
       "file_mode=0757"
       "dir_mode=0757"
-       "x-systemd.requires=network-online.target"
-      "x-systemd.after=network-online.target" 
+      "x-systemd.requires=network-online.target"
+      "x-systemd.after=network-online.target"
       "_netdev"
+      "multichannel"
+      "noatime"
     ];
   };
-  
+
   fileSystems."/home/lalobied/Cloud" = {
     device = "//192.168.10.50/Personal-Drive";
     fsType = "cifs";
@@ -299,9 +301,11 @@
       "rw"
       "file_mode=0757"
       "dir_mode=0757"
-       "x-systemd.requires=network-online.target"
-      "x-systemd.after=network-online.target" 
+      "x-systemd.requires=network-online.target"
+      "x-systemd.after=network-online.target"
       "_netdev"
+      "multichannel"
+      "noatime"
     ];
   };
 
