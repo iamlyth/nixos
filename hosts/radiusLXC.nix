@@ -48,7 +48,7 @@ in
     enable = true;
     dbPassword = secrets.dbPassword;
     radiusSecret = secrets.radiusSecret;
-    unifiSubnet = "192.168.1.0/24";
+    unifiSubnet = "10.23.1.0/24";
   };
 
   # This container was first built from nixos-26.05 — pin the actual
