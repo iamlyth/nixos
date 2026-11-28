@@ -171,7 +171,7 @@
     geary
     gparted
     darktable        #  photo editing  
-    discord-ptb
+    discord
     mumble                                     #  game chat
     (mumble.override { pulseSupport = true; }) #  to add audio to mumble
     zed-editor                                 #  for software development
